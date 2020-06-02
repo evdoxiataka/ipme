@@ -1,12 +1,13 @@
 from ..interfaces.grid import Cell
 from ..utils.stats import hist
+from ..utils.functions import replace_inf_with_nan
 
 import pandas as pd
 import numpy as np
 from functools import partial
 
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, HoverTool, LabelSet, NumeralTickFormatter
+from bokeh.models import ColumnDataSource, HoverTool, LabelSet
 
 class PredictiveChecksCell(Cell):
     def __init__(self, name, function='min'):
@@ -23,7 +24,6 @@ class PredictiveChecksCell(Cell):
         self._source={} 
         self._reconstructed={} 
         self._seg={}
-        self._seg_rec={}
         self._pvalue = {} 
         self._pvalue_rec = {}
         self._func=function 
@@ -43,9 +43,11 @@ class PredictiveChecksCell(Cell):
                 space="posterior_predictive"
             elif space == "prior" and "prior_predictive" in Cell._data.get_spaces():
                 space="prior_predictive"
-        samples = Cell._data.get_samples(self._name,space)         
-        if 0 not in samples.shape:            
-            if self._func == "min":
+        samples = Cell._data.get_samples(self._name,space)
+        samples = replace_inf_with_nan(samples)
+        data = replace_inf_with_nan(data)          
+        if 0 not in samples.shape:                                   
+            if self._func == "min":                
                 samples = np.nanmin(samples.T,axis=1)
                 data = np.nanmin(data)
             elif self._func == "max":
@@ -60,28 +62,30 @@ class PredictiveChecksCell(Cell):
             else:
                 samples = np.empty([1, 2]) 
                 data = np.empty([1, 2]) 
+            samples = replace_inf_with_nan(samples)
+            data = replace_inf_with_nan(data)    
         else:
             samples = np.empty([1, 2]) 
-            data = np.empty([1, 2])     
+            data = np.empty([1, 2])    
         return (data,samples)     
 
-    def initialize_fig(self,space):
-        
+    def initialize_fig(self,space):        
         self._plot[space] = figure(tools="wheel_zoom,reset", toolbar_location='right', plot_width=Cell._PLOT_WIDTH, 
                                     plot_height=Cell._PLOT_HEIGHT, sizing_mode=Cell._SIZING_MODE)        
         self._plot[space].toolbar.logo = None  
         self._plot[space].xaxis.axis_label = self._func+"(p-value="+format(self._pvalue[space],'.4f')+")"
-        self._plot[space].xaxis[0].formatter = NumeralTickFormatter(format="0a")
         self._plot[space].border_fill_color = Cell._BORDER_COLORS[0]
+        self._plot[space].xaxis[0].ticker.desired_num_ticks = 3
         Cell._sample_inds[space].on_change('data',partial(self._sample_inds_callback, space))
     
     def initialize_cds(self,space):
         ## ColumnDataSource for full sample set
         data, samples = self._get_data_for_cur_idx_dims_values(space) 
-        if samples.size:                  
+        if samples.size:    
+            samples = samples[~np.isnan(samples)]              
             self._pvalue[space] = np.count_nonzero(samples>=data) / len(samples)  
             # self._pvalue_rec[space] = -1           
-            his, edges= hist(samples,density=False,bins=20)
+            his, edges= hist(samples, density=False,bins=20)
             self._source[space] = ColumnDataSource(data=dict(left=edges[:-1],top=his,right=edges[1:], bottom=np.zeros(len(his))))
             self._seg[space] = ColumnDataSource(data=dict(x0=[data],x1=[data],y0=[0],y1=[his.max()+0.1*his.max()],text=[format(data,'.4f')]))
         else:
@@ -123,8 +127,9 @@ class PredictiveChecksCell(Cell):
             inds=Cell._sample_inds[space].data['inds']
             if len(inds):
                 sel_sample = samples[inds]
+                sel_sample = sel_sample[~np.isnan(sel_sample)]  
                 # self._pvalue_rec[space] = np.count_nonzero(sel_sample>data) / len(sel_sample) 
-                his, edges= hist(sel_sample,density=False,bins=20)
+                his, edges= hist(sel_sample, density=False,bins=20)
                 self._reconstructed[space].data=dict(left=edges[:-1],top=his, right = edges[1:], bottom=np.zeros(len(his)))
             else:
                 # self._pvalue_rec[space] = -1

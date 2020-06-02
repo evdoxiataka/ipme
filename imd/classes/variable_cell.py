@@ -6,7 +6,7 @@ from ..utils.js_code import HOVER_CODE
 from functools import partial
 
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, BoxSelectTool, HoverTool,  CustomJS, NumeralTickFormatter,LogTickFormatter,FuncTickFormatter
+from bokeh.models import ColumnDataSource, BoxSelectTool, HoverTool,  CustomJS
 from bokeh import events
 
 class VariableCell(Cell):   
@@ -50,41 +50,13 @@ class VariableCell(Cell):
     def initialize_fig(self,space):
         self._plot[space]=figure( tools="wheel_zoom,reset", toolbar_location='right', 
                             plot_width=Cell._PLOT_WIDTH, plot_height=Cell._PLOT_HEIGHT,  sizing_mode=Cell._SIZING_MODE)            
-
-        self._plot[space].border_fill_color = Cell._BORDER_COLORS[0]       
-
+        self._plot[space].border_fill_color = Cell._BORDER_COLORS[0]    
         self._plot[space].xaxis.axis_label = ""
         self._plot[space].yaxis.visible=False            
         self._plot[space].toolbar.logo=None
         self._plot[space].y_range.only_visible=True
         self._plot[space].x_range.only_visible=True
         self._plot[space].xaxis[0].ticker.desired_num_ticks = 3
-
-        # code = '''
-        #         this.precision = this.precision || (ticks.length > 5 ? 1 : 2);
-        #         min_tick=Math.min(ticks);
-        #         max_tick=Math.max(ticks);
-        #         if(Math.abs(max_tick-min_tick)>1000){
-        #             return 
-        #         }
-        #         int_part=Math.floor(tick) ;
-        #         dec_part=(tick % 1);
-        #         if(dec_part > 0){
-
-        #         } else if(int_part>99 || int_part<-99){
-
-        #         }
-        #         //return (tick % 1).toFixed(this.precision);
-        #         return  Math.floor(tick)+ " + " + (tick % 1).toFixed(this.precision);
-        #         '''
-
-        # self._plot[space].xaxis[0].formatter = NumeralTickFormatter(format="0000")
-        # self._plot[space].xaxis[0].formatter =FuncTickFormatter(code=code)
-        # self._plot[space].xaxis[0].formatter =LogTickFormatter()
-        #self._plot[space].toolbar.autohide = True
-        #self._plot[space].xaxis[0].formatter = PrintfTickFormatter(format="%4.1e")
-        #self._plot[space].left[0].formatter.use_scientific = False
-
         ##Tools
         self._plot[space].add_tools(BoxSelectTool(dimensions='width'))   
         ##Events
@@ -254,7 +226,6 @@ class VariableCell(Cell):
     ## Update reconstructed ColumnDataSource
     def _update_reconstructed_cds(self,space):
         samples = self._get_data_for_cur_idx_dims_values(space)
-        print("samples.T shape",samples.T.shape)
         sel_sample=[]
         for i in Cell._sample_inds[space].data['inds']:
             sel_samp=samples.T[i]

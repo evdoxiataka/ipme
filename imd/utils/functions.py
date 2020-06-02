@@ -44,3 +44,9 @@ def find_highest_point( x, y):
         return (x[max_idx],y[max_idx])
     else:
         return ()
+
+def replace_inf_with_nan(np_array):
+    if isinstance(np_array, np.ndarray):            
+        np_array[np_array == np.inf] = np.nan
+        np_array[np_array == -np.inf] = np.nan
+    return np_array

@@ -4,6 +4,27 @@ from .predictive_ckecks_cell import PredictiveChecksCell
 import panel as pn
 
 class PredictiveChecks(Grid):
+    def __init__(self, data_obj, predictive_ckecks = []):
+        """
+            Parameters:
+            --------
+                data_obj                A Data object.       
+                predictive_ckecks       A List of observed variables to plot predictive checks.    
+            Sets:
+            --------
+                _data                   A Data object.                
+                _grids                  A Dict of pn.GridSpec objects 
+                                        Either {<var_name>:{<space>:pn.GridSpec}}
+                                        Or {<space>:pn.GridSpec}
+                _cells                  A List of Cell objects.
+                _cells_widgets          A Dict dict1 of the form (key1,value1) = (<widget_name>, dict2)
+                                        dict2 of the form (key1,value1) = (<space>, List of tuples (<cell_id>,<widget_id>)
+                                        of the widgets with same name).
+                _plotted_widgets        A List of widget objects to be plotted.
+        """
+        self._pred_checks = predictive_ckecks
+        Grid.__init__(self, data_obj)
+
     def _create_grids(self): 
         """
             Creates a 2x2 grid of the prior and posterior predictive checks
@@ -31,7 +52,7 @@ class PredictiveChecks(Grid):
                             start_point = ( row, int(col + i*Grid._COLS_PER_VAR) )  
                             end_point = ( row+1, int(col + (i+1)*Grid._COLS_PER_VAR) )
                             if row == 0 and i == 0:
-                                self._predictive_grids_grids[var][space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = \
+                                self._grids[var][space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = \
                                                                 pn.Column(c_min.get_plot(space,add_info=False), width=220, height=220)
                             elif row == 0 and i == 1:
                                 self._grids[var][space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = \

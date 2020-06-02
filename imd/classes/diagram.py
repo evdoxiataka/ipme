@@ -46,7 +46,7 @@ class Diagram():
                 tabs.append((space, pn.Row(g_col)))
         ## Tabs for predictive checks
         if self._pred_checks:
-            pc_grids = PredictiveChecks(self._data).get_grids()
+            pc_grids = PredictiveChecks(self._data,self._pred_checks).get_grids()
             for var in pc_grids:
                 for space in pc_grids[var]:
                     g_col = pn.Column(pc_grids[var][space])
