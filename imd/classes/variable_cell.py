@@ -72,7 +72,7 @@ class VariableCell(Cell):
         self._selection[space] = ColumnDataSource(data=dict(x=[],y=[])) 
         self._reconstructed[space] = ColumnDataSource(data=dict(x=[],y=[]))    
         self._clear_selection[space] = ColumnDataSource(data=dict(x=[],y=[],isIn=[])) 
-        Cell._var_x_range[(space,self._name)]=ColumnDataSource(data=dict(xmin=[],xmax=[]))
+        Cell._var_x_range[(space,self._name)] = ColumnDataSource(data=dict(xmin=[],xmax=[]))
 
     def initialize_glyphs(self,space):
         p_source=self._plot[space].patch('x', 'y', color = Cell._COLORS[0], line_color = Cell._COLORS[0], 

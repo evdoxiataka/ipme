@@ -34,8 +34,8 @@ def kde(samples):
         print("KDE cannot be estimated because %s samples were provided to kde" % str(len(samples)))
         return dict(x=[],y=[]) 
 
-def hist(x,density=True,bins=20):
-    return np.histogram(x, density=density, bins=bins)
+def hist(x, range=(), density=True, bins=20):
+    return np.histogram(x, range=range, density=density, bins=bins)
 
 def hpd_area(x, y, credible_interval=0.94, smooth = True):
         """

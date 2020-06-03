@@ -7,7 +7,7 @@ import numpy as np
 from functools import partial
 
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, HoverTool, LabelSet
+from bokeh.models import ColumnDataSource, HoverTool, Legend, LegendItem
 
 class PredictiveChecksCell(Cell):
     def __init__(self, name, function='min'):
@@ -15,18 +15,21 @@ class PredictiveChecksCell(Cell):
             Parameters:
             --------
                 name            A String within the set {"<variableName>"}.
+                function        A String in {"min","max","mean","std"}.
             Sets:
             --------
+                _func
                 _source
-                _selection
                 _reconstructed
-        """         
+                _seg
+
+        """   
+        self._func=function       
         self._source={} 
         self._reconstructed={} 
         self._seg={}
         self._pvalue = {} 
-        self._pvalue_rec = {}
-        self._func=function 
+        self._pvalue_rec = {}        
         Cell.__init__(self, name) 
 
     def _get_data_for_cur_idx_dims_values(self,space):
@@ -73,7 +76,7 @@ class PredictiveChecksCell(Cell):
         self._plot[space] = figure(tools="wheel_zoom,reset", toolbar_location='right', plot_width=Cell._PLOT_WIDTH, 
                                     plot_height=Cell._PLOT_HEIGHT, sizing_mode=Cell._SIZING_MODE)        
         self._plot[space].toolbar.logo = None  
-        self._plot[space].xaxis.axis_label = self._func+"(p-value="+format(self._pvalue[space],'.4f')+")"
+        self._plot[space].xaxis.axis_label = self._func+"("+self._name+")"
         self._plot[space].border_fill_color = Cell._BORDER_COLORS[0]
         self._plot[space].xaxis[0].ticker.desired_num_ticks = 3
         Cell._sample_inds[space].on_change('data',partial(self._sample_inds_callback, space))
@@ -82,27 +85,41 @@ class PredictiveChecksCell(Cell):
         ## ColumnDataSource for full sample set
         data, samples = self._get_data_for_cur_idx_dims_values(space) 
         if samples.size:    
-            samples = samples[~np.isnan(samples)]              
-            self._pvalue[space] = np.count_nonzero(samples>=data) / len(samples)  
-            # self._pvalue_rec[space] = -1           
-            his, edges= hist(samples, density=False,bins=20)
+            samples = samples[~np.isnan(samples)]  
+            #pvalue            
+            pv = np.count_nonzero(samples>=data) / len(samples)               
+            #histogram        
+            his, edges= hist(samples, range=(samples.min(),samples.max()), density=False,bins=20)
+            #cds
+            self._pvalue[space] = ColumnDataSource(data=dict(pv=[pv]))
             self._source[space] = ColumnDataSource(data=dict(left=edges[:-1],top=his,right=edges[1:], bottom=np.zeros(len(his))))
-            self._seg[space] = ColumnDataSource(data=dict(x0=[data],x1=[data],y0=[0],y1=[his.max()+0.1*his.max()],text=[format(data,'.4f')]))
+            self._seg[space] = ColumnDataSource(data=dict(x0=[data],x1=[data],y0=[0],y1=[his.max()+0.1*his.max()]))
         else:
+            self._pvalue[space] = ColumnDataSource(data=dict(pv=[]))
             self._source[space] = ColumnDataSource(data=dict(left=[],top=[],right=[], bottom=[]))
-            self._seg[space] = ColumnDataSource(data=dict(x0=[],x1=[],y0=[],y1=[],text=[]))
+            self._seg[space] = ColumnDataSource(data=dict(x0=[],x1=[],y0=[],y1=[]))
 
         ## ColumnDataSource for restricted sample set
-        self._reconstructed[space] = ColumnDataSource(data=dict(left=[],top=[],right=[], bottom=[]))
+        self._pvalue_rec[space] = ColumnDataSource(data=dict(pv=[]))
+        self._pvalue_rec[space].on_change('data',partial(self._update_legends, space))
+        self._reconstructed[space] = ColumnDataSource(data=dict(left=[],top=[],right=[], bottom=[]))        
 
     def initialize_glyphs(self,space):        
-        q=self._plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._source[space], fill_color=Cell._COLORS[0], line_color="white", fill_alpha=1.0, name="hist_full")
-        self._plot[space].segment(x0 = 'x0', y0 ='y0', x1='x1',y1='y1', source=self._seg[space], color="black", name="seg_full", line_width=2)
-        q_sel=self._plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._reconstructed[space], fill_color=Cell._COLORS[1], line_color="white", fill_alpha=0.7, name="hist_sel")
+        q=self._plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._source[space], \
+                                fill_color=Cell._COLORS[0], line_color="white", fill_alpha=1.0,name="full")
+        seg=self._plot[space].segment(x0 = 'x0', y0 ='y0', x1='x1',y1='y1', source=self._seg[space], \
+                                 color="black", line_width=2,name="seg")
+        q_sel=self._plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._reconstructed[space], \
+                                    fill_color=Cell._COLORS[1], line_color="white", fill_alpha=0.7,name="sel")
 
-        ## Add label to line
-        label = LabelSet(x='x1', y='y1', text='text', x_offset=-5, y_offset=0.08, source=self._seg[space],text_font_size='10px')
-        self._plot[space].add_layout(label)
+        ## Add Legends
+        data = self._seg[space].data['x0']
+        pvalue = self._pvalue[space].data["pv"]
+        if len(data) and len(pvalue):
+            legend = Legend(items=[ (self._func+"(obs) = "+format(data[0],'.2f'), [seg]),
+                                    ("p-value = "+format(pvalue[0],'.4f'), [q]),
+                                    ], location="top_left")
+            self._plot[space].add_layout(legend, 'above')
 
         ## Add Tooltips for hist
         #Correct overlap of tooltips##########################################################
@@ -120,6 +137,16 @@ class PredictiveChecksCell(Cell):
             self.initialize_fig(space)
             self.initialize_glyphs(space)            
 
+    ## Update legends when data in _pvalue_rec cds is updated
+    def _update_legends(self, space, attr, old, new):
+        if len(self._plot[space].legend.items) == 3:
+            self._plot[space].legend.items.pop()
+        r = self._plot[space].select(name="sel")
+        pvalue = self._pvalue_rec[space].data["pv"]
+        if len(r) and len(pvalue):
+            self._plot[space].legend.items.append(LegendItem(label="p-value = "+format(pvalue[0],'.4f'), \
+                                                                renderers=[r[0]]))
+
     ## Update plots when indices of selected samples are updated
     def _sample_inds_callback(self, space, attr, old, new):
         data, samples = self._get_data_for_cur_idx_dims_values(space)
@@ -128,15 +155,20 @@ class PredictiveChecksCell(Cell):
             if len(inds):
                 sel_sample = samples[inds]
                 sel_sample = sel_sample[~np.isnan(sel_sample)]  
-                # self._pvalue_rec[space] = np.count_nonzero(sel_sample>data) / len(sel_sample) 
-                his, edges= hist(sel_sample, density=False,bins=20)
-                self._reconstructed[space].data=dict(left=edges[:-1],top=his, right = edges[1:], bottom=np.zeros(len(his)))
+                samples = samples[~np.isnan(samples)] 
+                #pvalue in restricted space
+                sel_pv = np.count_nonzero(sel_sample>data) / len(sel_sample)                 
+                #compute updated histogram
+                his, edges= hist(sel_sample, range=(samples.min(),samples.max()), density=False,bins=20)
+                #update reconstructed cds
+                self._pvalue_rec[space].data = dict(pv=[sel_pv])
+                self._reconstructed[space].data = dict(left=edges[:-1],top=his, right = edges[1:], bottom=np.zeros(len(his)))
             else:
-                # self._pvalue_rec[space] = -1
-                self._reconstructed[space].data=dict(left=[],top=[],right=[], bottom=[])
+                self._pvalue_rec[space].data = dict(pv=[])
+                self._reconstructed[space].data = dict(left=[],top=[],right=[], bottom=[])
         else:
-            self._pvalue_rec[space] = -1
-            self._reconstructed[space].data=dict(left=[],top=[],right=[], bottom=[])  
+            self._pvalue_rec[space].data = dict(pv=[])
+            self._reconstructed[space].data = dict(left=[],top=[],right=[], bottom=[])  
 
     def _update_plot(self,space):
         pass
