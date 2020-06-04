@@ -56,6 +56,10 @@ class Data_Interface(ABC):
         pass
 
     @abstractmethod
+    def get_var_dist_type(self,var_name):
+        pass
+
+    @abstractmethod
     def get_var_parents(self,var_name):
         pass
 

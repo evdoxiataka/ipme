@@ -2,6 +2,8 @@ from scipy.stats.kde import gaussian_kde
 from scipy.interpolate import griddata
 from scipy.signal import savgol_filter
 
+from .functions import get_finite_samples
+
 import numpy as np
 import arviz as az
 
@@ -18,8 +20,10 @@ def kde_support(bw, bin_range=(0,1), n_samples=100, cut=3, clip=(None,None)):
 
 def kde(samples):
     try:
-        samples=np.asarray(samples, dtype=np.float64).flatten()
-        samples= samples[np.isfinite(samples)]
+        # samples = np.asarray(samples, dtype=np.float64).flatten()
+        samples = samples.flatten()
+        if ~np.isfinite(samples).all():
+            samples = get_finite_samples(samples)
         kde = gaussian_kde(samples)
         bw = kde.scotts_factor() * samples.std(ddof=1)
         #x = _kde_support(bw, bin_range=(samples.min(),samples.max()), clip=(samples.min(),samples.max()))
@@ -34,7 +38,19 @@ def kde(samples):
         print("KDE cannot be estimated because %s samples were provided to kde" % str(len(samples)))
         return dict(x=[],y=[]) 
 
-def hist(x, range=(), density=True, bins=20):
+def pmf(samples):
+    """
+        Estimate probability mass function.
+    """
+    # samples = np.asarray(samples, dtype=np.float64).flatten()
+    samples = samples.flatten()
+    if ~np.isfinite(samples).all():
+        samples = get_finite_samples(samples)
+    x = np.sort( np.unique(samples))
+    y = [ np.count_nonzero(samples == xi) / len(samples) for xi in x]
+    return dict(x=x,y=y,y0=np.zeros(len(x)))
+
+def hist(x, density=True, bins=20, range=()):    
     return np.histogram(x, range=range, density=density, bins=bins)
 
 def hpd_area(x, y, credible_interval=0.94, smooth = True):

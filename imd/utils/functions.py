@@ -45,8 +45,59 @@ def find_highest_point( x, y):
     else:
         return ()
 
-def replace_inf_with_nan(np_array):
-    if isinstance(np_array, np.ndarray):            
-        np_array[np_array == np.inf] = np.nan
-        np_array[np_array == -np.inf] = np.nan
+def get_samples_for_pred_check(samples, func):
+    # samples = np.asarray(samples)
+    shape = samples.shape
+    if 0 not in shape:               
+        if len(shape) == 1:
+            axis = 0
+        else:
+            axis = 1    
+        if len(shape) > 2:
+            fir_dim = shape[0]
+            sec_dim = 1
+            for i in np.arange(1,len(shape),1):
+                sec_dim = sec_dim*shape[i]  
+            samples=samples.reshape(fir_dim,sec_dim)                      
+        if func == "min":                
+            samples = samples.min(axis=axis)            
+        elif func == "max":
+            samples = samples.max(axis=axis)
+        elif func == "mean":
+            samples = samples.mean(axis=axis)
+        elif func == "std":
+            samples = samples.std(axis=axis)
+        else:
+            samples = np.empty([1, 2])   
+        if ~np.isfinite(samples).all():
+            samples = get_finite_samples(samples)         
+    else:
+        samples = np.empty([1, 2]) 
+    return samples
+
+def get_finite_samples(np_array):
+    if isinstance(np_array, np.ndarray):  
+        shape = len(np_array.shape)
+        if shape == 1:
+            np_array = np_array[np.isfinite(np_array)]
+        elif shape > 1:
+            samples_idx = np.isfinite(np_array).all(axis=shape-1)
+            for axis in np.arange(shape-2,0,-1):          
+                samples_idx = np.isfinite(np_array).all(axis=axis)
+            np_array = np_array[samples_idx]
     return np_array
+
+def get_hist_bins_range(samples, var_type):
+    """
+        samples: flatten finite samples
+    """
+    if var_type == "Discrete":
+        values = np.unique(samples)
+        min_v = values.min()
+        max_v = values.max()
+        bins = len(values)       
+        range = ( min_v, max_v + (max_v - min_v) / (bins - 1))     
+    else:
+        bins = 20
+        range = (samples.min(),samples.max())
+    return (bins, range)

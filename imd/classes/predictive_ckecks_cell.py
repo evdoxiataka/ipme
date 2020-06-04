@@ -1,8 +1,7 @@
 from ..interfaces.grid import Cell
 from ..utils.stats import hist
-from ..utils.functions import replace_inf_with_nan
+from ..utils.functions import get_finite_samples, get_samples_for_pred_check, get_hist_bins_range
 
-import pandas as pd
 import numpy as np
 from functools import partial
 
@@ -46,30 +45,7 @@ class PredictiveChecksCell(Cell):
                 space="posterior_predictive"
             elif space == "prior" and "prior_predictive" in Cell._data.get_spaces():
                 space="prior_predictive"
-        samples = Cell._data.get_samples(self._name,space)
-        samples = replace_inf_with_nan(samples)
-        data = replace_inf_with_nan(data)          
-        if 0 not in samples.shape:                                   
-            if self._func == "min":                
-                samples = np.nanmin(samples.T,axis=1)
-                data = np.nanmin(data)
-            elif self._func == "max":
-                samples = np.nanmax(samples.T,axis=1)
-                data = np.nanmax(data)
-            elif self._func == "mean":
-                samples = np.nanmean(samples.T,axis=1)
-                data = np.nanmean(data)
-            elif self._func == "std":
-                samples = np.nanstd(samples.T,axis=1)
-                data = np.nanstd(data)
-            else:
-                samples = np.empty([1, 2]) 
-                data = np.empty([1, 2]) 
-            samples = replace_inf_with_nan(samples)
-            data = replace_inf_with_nan(data)    
-        else:
-            samples = np.empty([1, 2]) 
-            data = np.empty([1, 2])    
+        samples = Cell._data.get_samples(self._name,space)            
         return (data,samples)     
 
     def initialize_fig(self,space):        
@@ -84,16 +60,25 @@ class PredictiveChecksCell(Cell):
     def initialize_cds(self,space):
         ## ColumnDataSource for full sample set
         data, samples = self._get_data_for_cur_idx_dims_values(space) 
-        if samples.size:    
-            samples = samples[~np.isnan(samples)]  
+        #data func
+        if ~np.isfinite(data).all():
+            data = get_finite_samples(data)
+        data_func = get_samples_for_pred_check(data, self._func)
+        #samples func
+        if ~np.isfinite(samples).all():
+            samples = get_finite_samples(samples)
+        samples_func = get_samples_for_pred_check(samples, self._func)
+        samples = samples.flatten()        
+        if samples.size:
             #pvalue            
-            pv = np.count_nonzero(samples>=data) / len(samples)               
-            #histogram        
-            his, edges= hist(samples, range=(samples.min(),samples.max()), density=False,bins=20)
+            pv = np.count_nonzero(samples_func>=data_func) / len(samples_func)               
+            #histogram     
+            bins, range = get_hist_bins_range(samples, self._type)
+            his, edges = hist(samples_func, bins=bins, range=range, density=True)
             #cds
             self._pvalue[space] = ColumnDataSource(data=dict(pv=[pv]))
             self._source[space] = ColumnDataSource(data=dict(left=edges[:-1],top=his,right=edges[1:], bottom=np.zeros(len(his))))
-            self._seg[space] = ColumnDataSource(data=dict(x0=[data],x1=[data],y0=[0],y1=[his.max()+0.1*his.max()]))
+            self._seg[space] = ColumnDataSource(data=dict(x0=[data_func],x1=[data_func],y0=[0],y1=[his.max()+0.1*his.max()]))
         else:
             self._pvalue[space] = ColumnDataSource(data=dict(pv=[]))
             self._source[space] = ColumnDataSource(data=dict(left=[],top=[],right=[], bottom=[]))
@@ -105,13 +90,12 @@ class PredictiveChecksCell(Cell):
         self._reconstructed[space] = ColumnDataSource(data=dict(left=[],top=[],right=[], bottom=[]))        
 
     def initialize_glyphs(self,space):        
-        q=self._plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._source[space], \
+        q = self._plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._source[space], \
                                 fill_color=Cell._COLORS[0], line_color="white", fill_alpha=1.0,name="full")
-        seg=self._plot[space].segment(x0 = 'x0', y0 ='y0', x1='x1',y1='y1', source=self._seg[space], \
+        seg = self._plot[space].segment(x0 = 'x0', y0 ='y0', x1='x1',y1='y1', source=self._seg[space], \
                                  color="black", line_width=2,name="seg")
-        q_sel=self._plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._reconstructed[space], \
+        q_sel = self._plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._reconstructed[space], \
                                     fill_color=Cell._COLORS[1], line_color="white", fill_alpha=0.7,name="sel")
-
         ## Add Legends
         data = self._seg[space].data['x0']
         pvalue = self._pvalue[space].data["pv"]
@@ -120,9 +104,8 @@ class PredictiveChecksCell(Cell):
                                     ("p-value = "+format(pvalue[0],'.4f'), [q]),
                                     ], location="top_left")
             self._plot[space].add_layout(legend, 'above')
-
         ## Add Tooltips for hist
-        #Correct overlap of tooltips##########################################################
+        #####TODO:Correct overlap of tooltips#####
         TOOLTIPS = [
             ("top", "@top"),
             ("right","@right"),
@@ -149,17 +132,23 @@ class PredictiveChecksCell(Cell):
 
     ## Update plots when indices of selected samples are updated
     def _sample_inds_callback(self, space, attr, old, new):
-        data, samples = self._get_data_for_cur_idx_dims_values(space)
+        _, samples = self._get_data_for_cur_idx_dims_values(space)        
         if samples.size:            
             inds=Cell._sample_inds[space].data['inds']
             if len(inds):
                 sel_sample = samples[inds]
-                sel_sample = sel_sample[~np.isnan(sel_sample)]  
-                samples = samples[~np.isnan(samples)] 
+                #sel_sample func
+                if ~np.isfinite(sel_sample).all():
+                    sel_sample = get_finite_samples(sel_sample)
+                sel_sample_func = get_samples_for_pred_check(sel_sample, self._func)
+                sel_sample = sel_sample.flatten()
+                #data func
+                data_func = self._seg[space].data['x0'][0]
                 #pvalue in restricted space
-                sel_pv = np.count_nonzero(sel_sample>data) / len(sel_sample)                 
+                sel_pv = np.count_nonzero(sel_sample_func >= data_func) / len(sel_sample_func)                 
                 #compute updated histogram
-                his, edges= hist(sel_sample, range=(samples.min(),samples.max()), density=False,bins=20)
+                bins, range = get_hist_bins_range(sel_sample, self._type)
+                his, edges = hist(sel_sample_func, bins=bins, range=range)
                 #update reconstructed cds
                 self._pvalue_rec[space].data = dict(pv=[sel_pv])
                 self._reconstructed[space].data = dict(left=edges[:-1],top=his, right = edges[1:], bottom=np.zeros(len(his)))

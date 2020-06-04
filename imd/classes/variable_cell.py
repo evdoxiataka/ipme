@@ -1,6 +1,6 @@
 from ..interfaces.grid import Cell
 from ..utils.functions import * 
-from ..utils.stats import kde
+from ..utils.stats import kde, pmf
 from ..utils.js_code import HOVER_CODE
 
 from functools import partial
@@ -42,10 +42,11 @@ class VariableCell(Cell):
                 space="posterior_predictive"
             elif space == "prior" and "prior_predictive" in Cell._data.get_spaces():
                 space="prior_predictive"
-        data = Cell._data.get_samples(self._name,space)        
+        data = Cell._data.get_samples(self._name,space) 
+        data = data.T       
         for x, dim_value in self._cur_idx_dims_values.items():
-            data=data[dim_value]
-        return np.squeeze(data)
+            data = data[dim_value]
+        return np.squeeze(data).T
     
     def initialize_fig(self,space):
         self._plot[space]=figure( tools="wheel_zoom,reset", toolbar_location='right', 
@@ -56,9 +57,7 @@ class VariableCell(Cell):
         self._plot[space].toolbar.logo=None
         self._plot[space].y_range.only_visible=True
         self._plot[space].x_range.only_visible=True
-        self._plot[space].xaxis[0].ticker.desired_num_ticks = 3
-        ##Tools
-        self._plot[space].add_tools(BoxSelectTool(dimensions='width'))   
+        self._plot[space].xaxis[0].ticker.desired_num_ticks = 3         
         ##Events
         self._plot[space].on_event(events.Tap, partial(self._clear_selection_callback,space))             
         self._plot[space].on_event(events.SelectionGeometry, partial(self._selectionbox_callback,space))   
@@ -68,31 +67,49 @@ class VariableCell(Cell):
 
     def initialize_cds(self,space):
         samples=self._get_data_for_cur_idx_dims_values(space)  
-        self._source[space] = ColumnDataSource(data=kde(samples))        
-        self._selection[space] = ColumnDataSource(data=dict(x=[],y=[])) 
-        self._reconstructed[space] = ColumnDataSource(data=dict(x=[],y=[]))    
+        if self._type == "Discrete":
+            self._source[space] = ColumnDataSource(data = pmf(samples))
+            self._selection[space] = ColumnDataSource(data=dict(x=[], y=[], y0=[])) 
+            self._reconstructed[space] = ColumnDataSource(data=dict(x=[], y=[], y0=[])) 
+        else:
+            self._source[space] = ColumnDataSource(data = kde(samples))        
+            self._selection[space] = ColumnDataSource(data=dict(x=[],y=[])) 
+            self._reconstructed[space] = ColumnDataSource(data=dict(x=[],y=[]))    
         self._clear_selection[space] = ColumnDataSource(data=dict(x=[],y=[],isIn=[])) 
         Cell._var_x_range[(space,self._name)] = ColumnDataSource(data=dict(xmin=[],xmax=[]))
 
     def initialize_glyphs(self,space):
-        p_source=self._plot[space].patch('x', 'y', color = Cell._COLORS[0], line_color = Cell._COLORS[0], 
-                                source=self._source[space], name='source')#,legend_label='source'
-        p_source.level='underlay'         
-        p_rec=self._plot[space].patch('x', 'y', color = Cell._COLORS[1], line_color = Cell._COLORS[1], 
-                            source=self._reconstructed[space], fill_alpha=0.5, name='reconstructed')
-        sq_x=self._plot[space].scatter('x', 'y', marker="square_x", size=10, fill_color="grey", hover_fill_color="firebrick", fill_alpha=0.5, 
-                                        hover_alpha=1.0, line_color="grey", hover_line_color="white",
+        if self._type == "Discrete":
+            so_seg=self._plot[space].segment(x0 = 'x', y0 ='y0', x1='x', y1='y', source=self._source[space], \
+                                      line_alpha=1.0, color = Cell._COLORS[0], line_width=2, selection_color=Cell._COLORS[0],
+                                      nonselection_color=Cell._COLORS[0], nonselection_line_alpha=1.0)
+            so_scat=self._plot[space].scatter('x', 'y', source=self._source[space], size=8, fill_color=Cell._COLORS[0], \
+                                      fill_alpha=1.0, line_color=Cell._COLORS[0], selection_fill_color=Cell._COLORS[0], \
+                                          nonselection_fill_color=Cell._COLORS[0], nonselection_fill_alpha=1.0, nonselection_line_color=Cell._COLORS[0])   
+            self._plot[space].segment(x0 = 'x', y0 ='y0', x1='x', y1='y', source=self._selection[space], \
+                                      line_alpha=0.7, color = Cell._COLORS[2], line_width=2)
+            self._plot[space].scatter('x', 'y', source=self._selection[space], size=8, fill_color=Cell._COLORS[2], \
+                                      fill_alpha=0.7, line_color=Cell._COLORS[2])
+            self._plot[space].segment(x0 = 'x', y0 ='y0', x1='x', y1='y', source=self._reconstructed[space], \
+                                      line_alpha=0.5, color = Cell._COLORS[1], line_width=2)
+            self._plot[space].scatter('x', 'y', source=self._reconstructed[space], size=8, fill_color=Cell._COLORS[1], \
+                                      fill_alpha=0.5, line_color=Cell._COLORS[1])
+            ##Add BoxSelectTool
+            self._plot[space].add_tools(BoxSelectTool(dimensions='width',renderers=[so_seg,so_scat]))  
+        else:
+            p_source = self._plot[space].patch('x', 'y', color = Cell._COLORS[0], line_color = Cell._COLORS[0], 
+                                                source=self._source[space])       
+            self._plot[space].patch('x', 'y', color = Cell._COLORS[1], line_color = Cell._COLORS[1], 
+                                    source=self._reconstructed[space], fill_alpha=0.5)        
+            self._plot[space].patch('x', 'y', color = Cell._COLORS[2], line_color="white", 
+                                    source=self._selection[space], fill_alpha=0.7)
+            ##Add BoxSelectTool
+            self._plot[space].add_tools(BoxSelectTool(dimensions='width',renderers=[p_source]))  
+        ## x-button to clear selection
+        sq_x=self._plot[space].scatter('x', 'y', marker="square_x", size=10, fill_color="grey", hover_fill_color="firebrick", \
+                                        fill_alpha=0.5, hover_alpha=1.0, line_color="grey", hover_line_color="white", \
                                         source=self._clear_selection[space], name='clear_selection')
-        self._plot[space].patch('x', 'y', color = Cell._COLORS[2], line_color="white", 
-                            source=self._selection[space], fill_alpha=0.7, name='selection')
-
-        ## Add tools
-        # TOOLTIPS = [
-        #     ("x", "@x"),
-        #     ("y","@y"),
-        #     ]
-        # hover = HoverTool( tooltips=TOOLTIPS,renderers=[p_source,p_rec],mode='vline')
-        # self._plot[space].tools.append(hover)
+        ## Add HoverTool for x-button
         self._plot[space].add_tools(HoverTool(tooltips="Clear Selection", renderers=[sq_x], mode='mouse', show_arrow=False, 
                                         callback=CustomJS(args=dict(source=self._clear_selection[space]), code=HOVER_CODE)))
 
@@ -109,7 +126,10 @@ class VariableCell(Cell):
         if len(xmin_list):
             self._update_selection_cds(space, xmin_list[0], xmax_list[0])
         else:
-            self._selection[space].data=dict(x=[],y=[])
+            if self._type == "Discrete":
+                self._selection[space].data=dict(x=[],y=[],y0=[])
+            else:
+                self._selection[space].data=dict(x=[],y=[])
 
     ## Update plots when indexing dimensions widgets are used
     def _widget_callback(self, attr, old, new, w_title, space):  
@@ -145,7 +165,10 @@ class VariableCell(Cell):
                 self._cur_idx_dims_values == Cell._sel_var_idx_dims_values[self._name]):
                 self._update_selection_cds(space, Cell._var_x_range[(space,self._name)].data['xmin'][0],Cell._var_x_range[(space,self._name)].data['xmax'][0])
             else:
-                self._selection[space].data=dict(x=[],y=[])
+                if self._type == "Discrete":
+                    self._selection[space].data=dict(x=[],y=[],y0=[])
+                else:
+                    self._selection[space].data=dict(x=[],y=[])
         self._update_reconstructed_cds(space) 
         self._update_clear_selection_cds(space)
 
@@ -180,7 +203,10 @@ class VariableCell(Cell):
     ## Update source ColumnDataSource
     def _update_source_cds(self,space):
         samples=self._get_data_for_cur_idx_dims_values(space)    
-        self._source[space].data=kde(samples) 
+        if self._type == "Discrete":
+            self._source[space].data = pmf(samples)
+        else:
+            self._source[space].data = kde(samples) 
 
     ## Update selection ColumnDataSource
     def _update_selection_cds(self,space,xmin,xmax):
@@ -188,55 +214,69 @@ class VariableCell(Cell):
         data={}
         data['x'] = []
         data['y'] = []
-        kde_indices=find_indices(self._source[space].data['x'], lambda e: e >= xmin and e<= xmax)  
+        kde_indices = find_indices(self._source[space].data['x'], lambda e: e >= xmin and e<= xmax)  
         if len(kde_indices) == 0:
-            self._selection[space].data=dict(x=[],y=[])
+            if self._type == "Discrete":
+                self._selection[space].data = dict(x=[],y=[],y0=[])
+            else:
+                self._selection[space].data = dict(x=[],y=[])
             return
         data['x'] = [ self._source[space].data['x'][i] for i in kde_indices]      
         data['y'] = [ self._source[space].data['y'][i] for i in kde_indices] 
 
-        # Add interpolated points at xmin, xmax
-        xmin_inds=find_inds_before_after(self._source[space].data['x'], xmin)
-        if -1 not in xmin_inds:       
-            xmin_l=self._source[space].data['x'][xmin_inds[0]]
-            xmin_h=self._source[space].data['x'][xmin_inds[1]]        
-            ymin_l=self._source[space].data['y'][xmin_inds[0]]
-            ymin_h=self._source[space].data['y'][xmin_inds[1]]        
-            ymin= ((ymin_h-ymin_l)/(xmin_h-xmin_l))*(xmin-xmin_l) + ymin_l
-            data['x']=[xmin]+data['x']
-            data['y']= [ymin]+data['y']        
+        if self._type == "Discrete":
+            data['y0'] = len(data['x'])*[0]
+        else:
+            # Add interpolated points at xmin, xmax
+            xmin_inds = find_inds_before_after(self._source[space].data['x'], xmin)
+            if -1 not in xmin_inds:       
+                xmin_l=self._source[space].data['x'][xmin_inds[0]]
+                xmin_h=self._source[space].data['x'][xmin_inds[1]]        
+                ymin_l=self._source[space].data['y'][xmin_inds[0]]
+                ymin_h=self._source[space].data['y'][xmin_inds[1]]        
+                ymin = ((ymin_h-ymin_l)/(xmin_h-xmin_l))*(xmin-xmin_l) + ymin_l
+                data['x'] = [xmin]+data['x']
+                data['y'] = [ymin]+data['y']        
 
-        xmax_inds=find_inds_before_after(self._source[space].data['x'], xmax)
-        if -1 not in xmax_inds: 
-            xmax_l=self._source[space].data['x'][xmax_inds[0]]
-            xmax_h=self._source[space].data['x'][xmax_inds[1]]
-            ymax_l=self._source[space].data['y'][xmax_inds[0]]
-            ymax_h=self._source[space].data['y'][xmax_inds[1]]
-            ymax= ((ymax_h-ymax_l)/(xmax_h-xmax_l))*(xmax-xmax_l) + ymax_l
-            data['x'].append(xmax)
-            data['y'].append(ymax)        
+            xmax_inds = find_inds_before_after(self._source[space].data['x'], xmax)
+            if -1 not in xmax_inds: 
+                xmax_l=self._source[space].data['x'][xmax_inds[0]]
+                xmax_h=self._source[space].data['x'][xmax_inds[1]]
+                ymax_l=self._source[space].data['y'][xmax_inds[0]]
+                ymax_h=self._source[space].data['y'][xmax_inds[1]]
+                ymax= ((ymax_h-ymax_l)/(xmax_h-xmax_l))*(xmax-xmax_l) + ymax_l
+                data['x'].append(xmax)
+                data['y'].append(ymax)        
 
-        # Append and prepend zeros 
-        data['y']= [0]+data['y'] 
-        data['y'].append(0)
-        data['x']=[data['x'][0]]+data['x']
-        data['x'].append(data['x'][-1])
-        self._selection[space].data=data
+            # Append and prepend zeros 
+            data['y']= [0]+data['y'] 
+            data['y'].append(0)
+            data['x']=[data['x'][0]]+data['x']
+            data['x'].append(data['x'][-1])
+        self._selection[space].data = data
 
     ## Update reconstructed ColumnDataSource
     def _update_reconstructed_cds(self,space):
         samples = self._get_data_for_cur_idx_dims_values(space)
-        sel_sample=[]
-        for i in Cell._sample_inds[space].data['inds']:
-            sel_samp=samples.T[i]
-            if isinstance(sel_samp, np.ndarray):
-                sel_sample.extend(list(sel_samp))
-            else:
-                sel_sample.append(sel_samp)
-        if len(sel_sample):       
-            self._reconstructed[space].data=kde(sel_sample)             
+        # sel_sample=[]
+        # for i in Cell._sample_inds[space].data['inds']:
+        #     sel_samp=samples[i]
+        #     if isinstance(sel_samp, np.ndarray):
+        #         sel_sample.extend(list(sel_samp))
+        #     else:
+        #         sel_sample.append(sel_samp)
+        inds = Cell._sample_inds[space].data['inds']
+        if len(inds):
+            sel_sample = samples[inds]   
+            if self._type == "Discrete":
+                self._reconstructed[space].data = pmf(sel_sample)       
+            else:    
+                self._reconstructed[space].data = kde(sel_sample)             
         else:
-            self._reconstructed[space].data=dict(x=[],y=[])             
+            if self._type == "Discrete":
+                self._reconstructed[space].data = dict(x=[],y=[],y0=[])  
+            else:
+                self._reconstructed[space].data = dict(x=[],y=[])             
 
     ## Update clear_selection ColumnDataSource
     def _update_clear_selection_cds(self,space):             

@@ -6,12 +6,12 @@ from .predictive_ckecks import PredictiveChecks
 import panel as pn
 
 class Diagram():
-    def __init__(self, data_path, predictive_ckecks = []):
+    def __init__(self, data_path, predictive_checks = []):
         """
             Parameters:
             --------
                 data_path               A String of the zip file with the inference data.           
-                predictive_ckecks       A List of observed variables to plot predictive checks.
+                predictive_checks       A List of observed variables to plot predictive checks.
             Sets:
             --------
                 _data                   A Data object.
@@ -19,7 +19,7 @@ class Diagram():
                 _plot                   A plot object to visualize grid.
         """
         self._data = Data(data_path) 
-        self._pred_checks = predictive_ckecks
+        self._pred_checks = predictive_checks
         Cell._data = self._data
         self._plot = None
         self._create_plot()

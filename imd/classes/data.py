@@ -113,6 +113,12 @@ class Data(Data_Interface):
         else:
             return self._graph[var_name]["type"]
 
+    def get_var_dist_type(self,var_name):
+        if "type" in self._graph[var_name]["distribution"]:
+            return self._graph[var_name]["distribution"]["type"]
+        else:
+            return ""
+
     def get_var_parents(self,var_name):
         if "parents" in self._graph[var_name]:
             return self._graph[var_name]["parents"]
@@ -133,9 +139,9 @@ class Data(Data_Interface):
                 <space>    A String from {"prior", "posterior"}
                 <samples>  A numpy.ndarray of <space> samples of the <var_name> parameter.
                             e.g. PyMC3 shape=N, sample=M
-                                for i in N 
-                                     for j in M:
-                                        Element (i,j) = (ith prior/posterior distribution, jth sample).
+                                for i in M 
+                                     for j in N:
+                                        Element (i,j) = (ith sample, jth prior/posterior distribution draw).
                 If a String of space is given, it returns the numpy.ndarray.
                                  
         """
@@ -148,7 +154,7 @@ class Data(Data_Interface):
                 if sp in self._spaces and self._is_var_in_space(var_name,sp):            
                     array_name = header_js['inference_data'][sp]['array_names'][var_name]
                     if 'chain' in header_js['inference_data'][sp]['vars'][var_name]['dims']:
-                        data[sp] = np.mean(self._inferencedata[array_name],axis=0).T
+                        data[sp] = np.mean(self._inferencedata[array_name],axis=0)
                     else:
                         data[sp] = self._inferencedata[array_name]
             return data
@@ -157,7 +163,7 @@ class Data(Data_Interface):
             if space in self._spaces and self._is_var_in_space(var_name,space):            
                 array_name = header_js['inference_data'][space]['array_names'][var_name]
                 if 'chain' in header_js['inference_data'][space]['vars'][var_name]['dims']:
-                    data = np.mean(self._inferencedata[array_name],axis=0).T
+                    data = np.mean(self._inferencedata[array_name],axis=0)
                 else:
                     data = self._inferencedata[array_name]
             return data

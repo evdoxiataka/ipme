@@ -133,7 +133,8 @@ class Cell(ABC):
             Sets:
             --------
                 _name
-                _spaces                 A List of Strings in {"prior","posterior"}.                
+                _spaces                 A List of Strings in {"prior","posterior"}.   
+                _type                   A String in {"Discrete","Continuous",""}.             
                 _idx_dims
                 _cur_idx_dims_values    A Dict {<idx_dim_name>: Integer of current value index of <idx_dim_name>}.
                 
@@ -143,7 +144,8 @@ class Cell(ABC):
                 _div                    A Dict {<space>: (bokeh) div parameter-related information}.
         """
         self._name = name
-        self._spaces = self._define_spaces()        
+        self._spaces = self._define_spaces()   
+        self._type = Cell._data.get_var_dist_type(self._name)    
 
         #idx_dims-related variables
         self._idx_dims = Cell._data.get_idx_dimensions(self._name)
