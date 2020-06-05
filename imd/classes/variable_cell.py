@@ -80,31 +80,40 @@ class VariableCell(Cell):
 
     def initialize_glyphs(self,space):
         if self._type == "Discrete":
-            so_seg=self._plot[space].segment(x0 = 'x', y0 ='y0', x1='x', y1='y', source=self._source[space], \
-                                      line_alpha=1.0, color = Cell._COLORS[0], line_width=2, selection_color=Cell._COLORS[0],
-                                      nonselection_color=Cell._COLORS[0], nonselection_line_alpha=1.0)
-            so_scat=self._plot[space].scatter('x', 'y', source=self._source[space], size=8, fill_color=Cell._COLORS[0], \
-                                      fill_alpha=1.0, line_color=Cell._COLORS[0], selection_fill_color=Cell._COLORS[0], \
-                                          nonselection_fill_color=Cell._COLORS[0], nonselection_fill_alpha=1.0, nonselection_line_color=Cell._COLORS[0])   
-            self._plot[space].segment(x0 = 'x', y0 ='y0', x1='x', y1='y', source=self._selection[space], \
-                                      line_alpha=0.7, color = Cell._COLORS[2], line_width=2)
-            self._plot[space].scatter('x', 'y', source=self._selection[space], size=8, fill_color=Cell._COLORS[2], \
-                                      fill_alpha=0.7, line_color=Cell._COLORS[2])
-            self._plot[space].segment(x0 = 'x', y0 ='y0', x1='x', y1='y', source=self._reconstructed[space], \
-                                      line_alpha=0.5, color = Cell._COLORS[1], line_width=2)
-            self._plot[space].scatter('x', 'y', source=self._reconstructed[space], size=8, fill_color=Cell._COLORS[1], \
-                                      fill_alpha=0.5, line_color=Cell._COLORS[1])
-            ##Add BoxSelectTool
-            self._plot[space].add_tools(BoxSelectTool(dimensions='width',renderers=[so_seg,so_scat]))  
+            self.initialize_glyphs_discrete(space)             
         else:
-            p_source = self._plot[space].patch('x', 'y', color = Cell._COLORS[0], line_color = Cell._COLORS[0], 
-                                                source=self._source[space])       
-            self._plot[space].patch('x', 'y', color = Cell._COLORS[1], line_color = Cell._COLORS[1], 
+            self.initialize_glyphs_continuous(space)
+        self.initialize_glyphs_x_button(space)
+
+    def initialize_glyphs_discrete(self,space):
+        so_seg=self._plot[space].segment(x0 = 'x', y0 ='y0', x1='x', y1='y', source=self._source[space], \
+                                        line_alpha=1.0, color = Cell._COLORS[0], line_width=1, selection_color=Cell._COLORS[0],
+                                        nonselection_color=Cell._COLORS[0], nonselection_line_alpha=1.0)
+        so_scat=self._plot[space].scatter('x', 'y', source=self._source[space], size=4, fill_color=Cell._COLORS[0], \
+                                        fill_alpha=1.0, line_color=Cell._COLORS[0], selection_fill_color=Cell._COLORS[0], \
+                                            nonselection_fill_color=Cell._COLORS[0], nonselection_fill_alpha=1.0, nonselection_line_color=Cell._COLORS[0])   
+        self._plot[space].segment(x0 = 'x', y0 ='y0', x1='x', y1='y', source=self._selection[space], \
+                                        line_alpha=0.7, color = Cell._COLORS[2], line_width=1)
+        self._plot[space].scatter('x', 'y', source=self._selection[space], size=4, fill_color=Cell._COLORS[2], \
+                                        fill_alpha=0.7, line_color=Cell._COLORS[2])
+        self._plot[space].segment(x0 = 'x', y0 ='y0', x1='x', y1='y', source=self._reconstructed[space], \
+                                        line_alpha=0.5, color = Cell._COLORS[1], line_width=1)
+        self._plot[space].scatter('x', 'y', source=self._reconstructed[space], size=4, fill_color=Cell._COLORS[1], \
+                                        fill_alpha=0.5, line_color=Cell._COLORS[1])
+        ##Add BoxSelectTool
+        self._plot[space].add_tools(BoxSelectTool(dimensions='width',renderers=[so_seg,so_scat]))
+
+    def initialize_glyphs_continuous(self,space):
+        so=self._plot[space].patch('x', 'y', color = Cell._COLORS[0], line_color = Cell._COLORS[0], 
+                                    source=self._source[space])       
+        self._plot[space].patch('x', 'y', color = Cell._COLORS[1], line_color = Cell._COLORS[1], 
                                     source=self._reconstructed[space], fill_alpha=0.5)        
-            self._plot[space].patch('x', 'y', color = Cell._COLORS[2], line_color="white", 
+        self._plot[space].patch('x', 'y', color = Cell._COLORS[2], line_color="white", 
                                     source=self._selection[space], fill_alpha=0.7)
-            ##Add BoxSelectTool
-            self._plot[space].add_tools(BoxSelectTool(dimensions='width',renderers=[p_source]))  
+        ##Add BoxSelectTool
+        self._plot[space].add_tools(BoxSelectTool(dimensions='width',renderers=[so]))
+
+    def initialize_glyphs_x_button(self,space):
         ## x-button to clear selection
         sq_x=self._plot[space].scatter('x', 'y', marker="square_x", size=10, fill_color="grey", hover_fill_color="firebrick", \
                                         fill_alpha=0.5, hover_alpha=1.0, line_color="grey", hover_line_color="white", \

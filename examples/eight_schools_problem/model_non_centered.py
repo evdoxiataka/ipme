@@ -5,6 +5,7 @@ import arviz as az
 from arviz_json import get_dag, arviz_to_json
 SEED = [20100420, 20134234]
 
+#Reference: https://docs.pymc.io/notebooks/Diagnosing_biased_Inference_with_Divergences.html#A-Non-Centered-Eight-Schools-Implementation
 #data
 J = 8
 obs = np.array([28.,  8., -3.,  7., -1.,  1., 18., 12.])

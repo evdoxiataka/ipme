@@ -4,6 +4,7 @@ import numpy as np
 import arviz as az
 from arviz_json import get_dag, arviz_to_json
 
+## Reference: https://docs.pymc.io/notebooks/getting_started.html#Case-study-2:-Coal-mining-disasters
 #data
 disaster_data = pd.Series([4, 5, 4, 0, 1, 4, 3, 4, 0, 6, 3, 3, 4, 0, 2, 6,
                            3, 3, 5, 4, 5, 3, 1, 4, 4, 1, 5, 5, 3, 4, 2, 5,

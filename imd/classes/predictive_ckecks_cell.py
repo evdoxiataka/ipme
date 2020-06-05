@@ -52,6 +52,7 @@ class PredictiveChecksCell(Cell):
         self._plot[space] = figure(tools="wheel_zoom,reset", toolbar_location='right', plot_width=Cell._PLOT_WIDTH, 
                                     plot_height=Cell._PLOT_HEIGHT, sizing_mode=Cell._SIZING_MODE)        
         self._plot[space].toolbar.logo = None  
+        self._plot[space].yaxis.visible = False    
         self._plot[space].xaxis.axis_label = self._func+"("+self._name+")"
         self._plot[space].border_fill_color = Cell._BORDER_COLORS[0]
         self._plot[space].xaxis[0].ticker.desired_num_ticks = 3
@@ -132,7 +133,8 @@ class PredictiveChecksCell(Cell):
 
     ## Update plots when indices of selected samples are updated
     def _sample_inds_callback(self, space, attr, old, new):
-        _, samples = self._get_data_for_cur_idx_dims_values(space)        
+        _, samples = self._get_data_for_cur_idx_dims_values(space)   
+        max_full_hist = self._source[space].data['top'].max()  
         if samples.size:            
             inds=Cell._sample_inds[space].data['inds']
             if len(inds):
@@ -149,15 +151,20 @@ class PredictiveChecksCell(Cell):
                 #compute updated histogram
                 bins, range = get_hist_bins_range(sel_sample, self._type)
                 his, edges = hist(sel_sample_func, bins=bins, range=range)
+                ##max selected hist
+                max_sel_hist = his.max()
                 #update reconstructed cds
                 self._pvalue_rec[space].data = dict(pv=[sel_pv])
                 self._reconstructed[space].data = dict(left=edges[:-1],top=his, right = edges[1:], bottom=np.zeros(len(his)))
+                self._seg[space].data['y1'] = [max_sel_hist + 0.1*max_sel_hist]
             else:
                 self._pvalue_rec[space].data = dict(pv=[])
                 self._reconstructed[space].data = dict(left=[],top=[],right=[], bottom=[])
+                self._seg[space].data['y1'] = [max_full_hist + 0.1*max_full_hist]
         else:
             self._pvalue_rec[space].data = dict(pv=[])
             self._reconstructed[space].data = dict(left=[],top=[],right=[], bottom=[])  
+            self._seg[space].data['y1'] = [max_full_hist + 0.1*max_full_hist]
 
     def _update_plot(self,space):
         pass

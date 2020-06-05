@@ -93,11 +93,12 @@ def get_hist_bins_range(samples, var_type):
     """
     if var_type == "Discrete":
         values = np.unique(samples)
-        min_v = values.min()
-        max_v = values.max()
-        bins = len(values)       
-        range = ( min_v, max_v + (max_v - min_v) / (bins - 1))     
-    else:
-        bins = 20
-        range = (samples.min(),samples.max())
+        if len(values) < 20:
+            min_v = values.min()
+            max_v = values.max()
+            bins = len(values)       
+            range = ( min_v, max_v + (max_v - min_v) / (bins - 1))     
+            return (bins, range)
+    bins = 20
+    range = (samples.min(),samples.max())
     return (bins, range)

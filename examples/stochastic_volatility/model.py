@@ -3,6 +3,8 @@ import pymc3 as pm
 import arviz as az
 from arviz_json import get_dag, arviz_to_json
 
+#Reference1: https://docs.pymc.io/notebooks/getting_started.html#Case-study-1:-Stochastic-volatility
+#Reference2: https://docs.pymc.io/notebooks/stochastic_volatility.html#Stochastic-Volatility-model
 #data
 returns = pd.read_csv(pm.get_data('SP500.csv'), parse_dates=True, index_col=0)
 dates=returns.index.strftime("%Y/%m/%d").tolist()
