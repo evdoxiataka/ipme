@@ -17,7 +17,7 @@ coords = {"school": ["A","B","C","D","E","F","G","H"]}
 samples=5000
 chains=2
 tune=1000
-fileName="inference_8_schools_non_centered"
+fileName="eight_schools_non_centered"
 with pm.Model() as NonCentered_eight:
     mu = pm.Normal('mu', mu=0, sigma=5)
     tau = pm.HalfCauchy('tau', beta=5)

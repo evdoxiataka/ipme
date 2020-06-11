@@ -13,7 +13,7 @@ sigma = np.array([15., 10., 16., 11.,  9., 11., 10., 18.])
 #model-inference
 dims_c={ "theta": ["school"], "y": ["school"],}
 coords_c = {"school": ["A","B","C","D","E","F","G","H"]}
-fileName_c="inference_8_schools_centered"
+fileName_c="eight_schools_centered"
 samples=4000
 chains=2
 tune=1000

@@ -44,7 +44,7 @@ class VariableCell(Cell):
                 space="prior_predictive"
         data = Cell._data.get_samples(self._name,space) 
         data = data.T       
-        for x, dim_value in self._cur_idx_dims_values.items():
+        for dim_name,dim_value in self._cur_idx_dims_values.items():
             data = data[dim_value]
         return np.squeeze(data).T
     
@@ -90,16 +90,17 @@ class VariableCell(Cell):
                                         line_alpha=1.0, color = Cell._COLORS[0], line_width=1, selection_color=Cell._COLORS[0],
                                         nonselection_color=Cell._COLORS[0], nonselection_line_alpha=1.0)
         so_scat=self._plot[space].scatter('x', 'y', source=self._source[space], size=4, fill_color=Cell._COLORS[0], \
-                                        fill_alpha=1.0, line_color=Cell._COLORS[0], selection_fill_color=Cell._COLORS[0], \
-                                            nonselection_fill_color=Cell._COLORS[0], nonselection_fill_alpha=1.0, nonselection_line_color=Cell._COLORS[0])   
+                                          fill_alpha=1.0, line_color=Cell._COLORS[0], selection_fill_color=Cell._COLORS[0], \
+                                          nonselection_fill_color=Cell._COLORS[0], nonselection_fill_alpha=1.0, \
+                                          nonselection_line_color=Cell._COLORS[0])   
         self._plot[space].segment(x0 = 'x', y0 ='y0', x1='x', y1='y', source=self._selection[space], \
-                                        line_alpha=0.7, color = Cell._COLORS[2], line_width=1)
+                                  line_alpha=0.7, color = Cell._COLORS[2], line_width=1)
         self._plot[space].scatter('x', 'y', source=self._selection[space], size=4, fill_color=Cell._COLORS[2], \
-                                        fill_alpha=0.7, line_color=Cell._COLORS[2])
+                                  fill_alpha=0.7, line_color=Cell._COLORS[2])
         self._plot[space].segment(x0 = 'x', y0 ='y0', x1='x', y1='y', source=self._reconstructed[space], \
-                                        line_alpha=0.5, color = Cell._COLORS[1], line_width=1)
+                                  line_alpha=0.5, color = Cell._COLORS[1], line_width=1)
         self._plot[space].scatter('x', 'y', source=self._reconstructed[space], size=4, fill_color=Cell._COLORS[1], \
-                                        fill_alpha=0.5, line_color=Cell._COLORS[1])
+                                  fill_alpha=0.5, line_color=Cell._COLORS[1])
         ##Add BoxSelectTool
         self._plot[space].add_tools(BoxSelectTool(dimensions='width',renderers=[so_seg,so_scat]))
 
@@ -107,9 +108,9 @@ class VariableCell(Cell):
         so=self._plot[space].patch('x', 'y', color = Cell._COLORS[0], line_color = Cell._COLORS[0], 
                                     source=self._source[space])       
         self._plot[space].patch('x', 'y', color = Cell._COLORS[1], line_color = Cell._COLORS[1], 
-                                    source=self._reconstructed[space], fill_alpha=0.5)        
+                                 source=self._reconstructed[space], fill_alpha=0.5)        
         self._plot[space].patch('x', 'y', color = Cell._COLORS[2], line_color="white", 
-                                    source=self._selection[space], fill_alpha=0.7)
+                                 source=self._selection[space], fill_alpha=0.7)
         ##Add BoxSelectTool
         self._plot[space].add_tools(BoxSelectTool(dimensions='width',renderers=[so]))
 
@@ -142,18 +143,30 @@ class VariableCell(Cell):
 
     ## Update plots when indexing dimensions widgets are used
     def _widget_callback(self, attr, old, new, w_title, space):  
-        inds=-1
-        if w_title in self._idx_dims:
-            values=self._idx_dims[w_title].values            
-        elif w_title+"_idx" in self._idx_dims:
-            values=self._idx_dims[w_title+"_idx"].values
-        inds=[i for i,v in enumerate(values) if v == new]
-        # inds = Cell._data.get_indx_for_idx_dim(self._name, w_title, new)
-        if inds == -1:
+        inds = -1
+        w2_title = ""   
+        values = []                     
+        if space in self._w1_w2_idx_mapping and \
+            w_title in self._w1_w2_idx_mapping[space]:
+            w2_title, _  = self._w1_w2_idx_mapping[space][w_title]
+            name = w_title+"_idx_"+w2_title
+            if name in self._idx_dims:
+                values = self._idx_dims[name].values
+        elif w_title in self._idx_dims:
+            values = self._idx_dims[w_title].values  
+        elif space in self._w2_w1_idx_mapping and \
+            w_title in self._w2_w1_idx_mapping[space]:
+            _, w1_idx = self._w2_w1_idx_mapping[space][w_title]
+            w1_value = self._widgets[space][w1_idx].value
+            values = self._w2_w1_val_mapping[space][w_title][w1_value]
+        inds = [i for i,v in enumerate(values) if v == new]
+        if inds == -1 or len(inds) == 0:
             return
-        self._cur_idx_dims_values[w_title]=inds
+        self._cur_idx_dims_values[w_title] = inds
+        if w2_title and w2_title in self._cur_idx_dims_values:
+            self._cur_idx_dims_values[w2_title] = [0]
         self._update_source_cds(space)
-        Cell._global_update=True
+        Cell._global_update = True
         self._update_cds(space)
 
     ## Callback when clear selection glyph is clicked
@@ -211,7 +224,7 @@ class VariableCell(Cell):
 
     ## Update source ColumnDataSource
     def _update_source_cds(self,space):
-        samples=self._get_data_for_cur_idx_dims_values(space)    
+        samples = self._get_data_for_cur_idx_dims_values(space)    
         if self._type == "Discrete":
             self._source[space].data = pmf(samples)
         else:
@@ -267,13 +280,6 @@ class VariableCell(Cell):
     ## Update reconstructed ColumnDataSource
     def _update_reconstructed_cds(self,space):
         samples = self._get_data_for_cur_idx_dims_values(space)
-        # sel_sample=[]
-        # for i in Cell._sample_inds[space].data['inds']:
-        #     sel_samp=samples[i]
-        #     if isinstance(sel_samp, np.ndarray):
-        #         sel_sample.extend(list(sel_samp))
-        #     else:
-        #         sel_sample.append(sel_samp)
         inds = Cell._sample_inds[space].data['inds']
         if len(inds):
             sel_sample = samples[inds]   

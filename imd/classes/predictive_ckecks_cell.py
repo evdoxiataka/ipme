@@ -139,6 +139,9 @@ class PredictiveChecksCell(Cell):
             inds=Cell._sample_inds[space].data['inds']
             if len(inds):
                 sel_sample = samples[inds]
+                # samples finite
+                if ~np.isfinite(samples).all():
+                    samples = get_finite_samples(samples).flatten()
                 #sel_sample func
                 if ~np.isfinite(sel_sample).all():
                     sel_sample = get_finite_samples(sel_sample)
@@ -149,7 +152,7 @@ class PredictiveChecksCell(Cell):
                 #pvalue in restricted space
                 sel_pv = np.count_nonzero(sel_sample_func >= data_func) / len(sel_sample_func)                 
                 #compute updated histogram
-                bins, range = get_hist_bins_range(sel_sample, self._type)
+                bins, range = get_hist_bins_range(samples, self._type)
                 his, edges = hist(sel_sample_func, bins=bins, range=range)
                 ##max selected hist
                 max_sel_hist = his.max()

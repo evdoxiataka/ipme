@@ -3,6 +3,8 @@ from bokeh.models import ColumnDataSource, Toggle, Div
 from bokeh.layouts import layout
 from functools import partial
 from bokeh.models.widgets import Select, Slider, Button
+
+from ..utils.functions import get_dim_names_options, get_w2_w1_val_mapping
 #import pyautogui
 
 class Grid(ABC):
@@ -140,6 +142,9 @@ class Cell(ABC):
                 
                 _plot                   A Dict {<space>: (bokeh) plot object}.
                 _widgets                A Dict {<space>: List of (bokeh) widget objects}.
+                _w1_w2_idx_mapping      A Dict {<space>: Dict {<w_name1>:(w_name2,widgets_idx)}}.
+                _w2_w1_idx_mapping      A Dict {<space>: Dict {<w_name2>:(w_name1,widgets_idx)}}.
+                _w2_w1_val_mapping      A Dict {<space>: Dict {<w_name2>:{<w1_value>: A List of <w_name2> values for <w1_value>}}.
                 _toggle                 A Dict {<space>: (bokeh) toggle button for visibility of figure}.
                 _div                    A Dict {<space>: (bokeh) div parameter-related information}.
         """
@@ -153,6 +158,9 @@ class Cell(ABC):
 
         self._plot = {}
         self._widgets = {}
+        self._w1_w2_idx_mapping = {}
+        self._w2_w1_idx_mapping = {}
+        self._w2_w1_val_mapping = {}
 
         self._initialize_widgets()
         self._initialize_plot()
@@ -174,24 +182,32 @@ class Cell(ABC):
         for space in self._spaces:
             self._widgets[space]=[]
             for _, d_dim in self._idx_dims.items():
-                name=d_dim.name
-                if d_dim.name.endswith("_idx"):
-                    name=d_dim.name[0:len(d_dim.name)-4]
-                if None not in d_dim.range:
-                    self._widgets[space].append(Slider(title=name, start=d_dim.range[0], end=d_dim.range[1], value=d_dim.range[0], step=d_dim.step)) 
-                    if name not in self._cur_idx_dims_values:
-                        idx=[i for i,v in enumerate(d_dim.values) if v == d_dim.range[0]]
-                        self._cur_idx_dims_values[name] = idx
-                elif d_dim.values:       
-                    options=[]    
-                    for v in d_dim.values:
-                        if v not in options:
-                            options.append(v)    
-                    self._widgets[space].append(Select(title=name, value=options[0], options=options))
-                    if name not in self._cur_idx_dims_values:
-                        idx=[i for i,v in enumerate(d_dim.values) if v == options[0]]
-                        self._cur_idx_dims_values[name] = idx
-                self._widgets[space][-1].on_change("value", partial(self._widget_callback, w_title=name, space=space)) 
+                n1, n2, opt1, opt2 = get_dim_names_options(d_dim)               
+                self._widgets[space].append(Select(title=n1, value=opt1[0], options=opt1))
+                self._widgets[space][-1].on_change("value", partial(self._widget_callback, w_title=n1, space=space))
+                self._widgets[space][-1].on_change("value", partial(self._idx_widget_callback, w_title=n1, space=space))
+                if n1 not in self._cur_idx_dims_values:
+                    inds=[i for i,v in enumerate(d_dim.values) if v == opt1[0]]
+                    self._cur_idx_dims_values[n1] = inds
+                if n2:                  
+                    self._widgets[space].append(Select(title=n2, value=opt2[0], options=opt2))
+                    self._widgets[space][-1].on_change("value", partial(self._widget_callback, w_title=n2, space=space)) 
+                    self._w1_w2_idx_mapping[space] = {}
+                    self._w1_w2_idx_mapping[space][n1] = (n2,len(self._widgets[space])-1)
+                    self._w2_w1_idx_mapping[space] = {}
+                    self._w2_w1_idx_mapping[space][n2] = (n1,len(self._widgets[space])-2)
+                    self._w2_w1_val_mapping[space] = {}
+                    self._w2_w1_val_mapping[space][n2] = get_w2_w1_val_mapping(d_dim)
+                    if n2 not in self._cur_idx_dims_values:
+                        self._cur_idx_dims_values[n2] = [0]  
+
+    def _idx_widget_callback(self, attr, old, new, w_title, space):
+        if space in self._w1_w2_idx_mapping and \
+            w_title in self._w1_w2_idx_mapping[space]:
+            w2_n, w2_idx = self._w1_w2_idx_mapping[space][w_title]
+            opt2 = self._w2_w1_val_mapping[space][w2_n][new]
+            self._widgets[space][w2_idx].value = opt2[0]
+            self._widgets[space][w2_idx].options = opt2
 
     def _initialize_toggle_div(self):
         for space in self._spaces:            

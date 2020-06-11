@@ -102,3 +102,42 @@ def get_hist_bins_range(samples, var_type):
     bins = 20
     range = (samples.min(),samples.max())
     return (bins, range)
+
+def get_dim_names_options(dim):
+    """
+        dim: imd.Dimension object
+    """
+    name1 = dim.name
+    name2 = ""
+    options1 = dim.values 
+    options2 = []
+    if "_idx_" in name1:
+        idx = name1.find("_idx_")
+        st_n1 = idx + 5
+        end_n1 = len(name1)
+        name2 = name1[st_n1:end_n1] 
+        name1 = name1[0:idx]
+        values = np.array(dim.values)
+        options1 = np.unique(values).tolist()                    
+        if len(options1):
+            tmp = np.arange(np.count_nonzero(values == options1[0]))
+            options2 = list(map(str,tmp))  
+    return (name1, name2, options1, options2)  
+
+def get_w2_w1_val_mapping(dim):
+    """
+        dim: imd.Dimension object
+        Returns:
+        -------
+        A Dict {<opt1_val>: A List of <opt2_val> for this <opt1_val>}
+    """
+    options1 = dim.values 
+    options2 = []
+    values = np.array(dim.values)
+    options1 = np.unique(values)    
+    val_dict = {}                
+    if len(options1):
+        for v1 in options1:
+            tmp = np.arange(np.count_nonzero(values == v1))
+            val_dict[v1] = list(map(str,tmp))
+    return val_dict                         
