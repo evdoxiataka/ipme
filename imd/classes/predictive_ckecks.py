@@ -1,6 +1,6 @@
 from ..interfaces.grid import Grid
 from .predictive_ckecks_cell import PredictiveChecksCell
-
+from ..utils.constants import MAX_NUM_OF_COLS_PER_ROW, MAX_NUM_OF_VARS_PER_ROW, COLS_PER_VAR
 import panel as pn
 
 class PredictiveChecks(Grid):
@@ -53,9 +53,9 @@ class PredictiveChecks(Grid):
                         self._grids[var][space] = pn.GridSpec(sizing_mode='stretch_both')
                     for row in [0,1]:
                         for i in [0,1]:
-                            col = int((Grid._MAX_NUM_OF_COLS_PER_ROW - 2.*Grid._COLS_PER_VAR) / 2.)
-                            start_point = ( row, int(col + i*Grid._COLS_PER_VAR) )  
-                            end_point = ( row+1, int(col + (i+1)*Grid._COLS_PER_VAR) )
+                            col = int((MAX_NUM_OF_COLS_PER_ROW - 2.*COLS_PER_VAR) / 2.)
+                            start_point = ( row, int(col + i*COLS_PER_VAR) )  
+                            end_point = ( row+1, int(col + (i+1)*COLS_PER_VAR) )
                             if row == 0 and i == 0:
                                 self._grids[var][space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = \
                                                 pn.Column(c_min.get_plot(space,add_info=False), width=220, height=220)

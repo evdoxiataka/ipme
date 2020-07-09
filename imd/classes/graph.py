@@ -1,6 +1,6 @@
 from ..interfaces.grid import Grid
 from .variable_cell import VariableCell
-
+from ..utils.constants import MAX_NUM_OF_COLS_PER_ROW, MAX_NUM_OF_VARS_PER_ROW, COLS_PER_VAR
 import panel as pn
 
 class Graph(Grid):
@@ -24,13 +24,13 @@ class Graph(Grid):
             if (row-1) in graph_grid_map:
                 level_previous = graph_grid_map[row-1][0]
             if level != level_previous:
-                col = int((Grid._MAX_NUM_OF_COLS_PER_ROW - len(vars_list)*Grid._COLS_PER_VAR) / 2.)
+                col = int((MAX_NUM_OF_COLS_PER_ROW - len(vars_list)*COLS_PER_VAR) / 2.)
             else: 
-                col = int((Grid._MAX_NUM_OF_COLS_PER_ROW - Grid._MAX_NUM_OF_VARS_PER_ROW*Grid._COLS_PER_VAR) / 2.)
+                col = int((MAX_NUM_OF_COLS_PER_ROW - MAX_NUM_OF_VARS_PER_ROW*COLS_PER_VAR) / 2.)
             for i,var_name in enumerate(vars_list):
-                start_point = ( row, int(col + i*Grid._COLS_PER_VAR) )  
-                end_point = ( row+1, int(col + (i+1)*Grid._COLS_PER_VAR) )
-                #col_l = int(col_f + (i+1)*Grid._COLS_PER_VAR)
+                start_point = ( row, int(col + i*COLS_PER_VAR) )  
+                end_point = ( row+1, int(col + (i+1)*COLS_PER_VAR) )
+                #col_l = int(col_f + (i+1)*COLS_PER_VAR)
                 grid_bgrd_col = level    
                 c = VariableCell(var_name)                         
                 self._cells[var_name] = c
@@ -59,13 +59,13 @@ class Graph(Grid):
         for level, num_vars in enumerate(num_of_vars_per_graph_level):
             row = level
             indx = 0
-            while num_vars > Grid._MAX_NUM_OF_VARS_PER_ROW:
+            while num_vars > MAX_NUM_OF_VARS_PER_ROW:
                 while row in graph_grid_map:
                     row+=1
-                graph_grid_map[row] = (level,_varnames_per_graph_level[level][indx:indx+Grid._MAX_NUM_OF_VARS_PER_ROW])
+                graph_grid_map[row] = (level,_varnames_per_graph_level[level][indx:indx+MAX_NUM_OF_VARS_PER_ROW])
                 row += 1
-                indx += Grid._MAX_NUM_OF_VARS_PER_ROW
-                num_vars -= Grid._MAX_NUM_OF_VARS_PER_ROW
+                indx += MAX_NUM_OF_VARS_PER_ROW
+                num_vars -= MAX_NUM_OF_VARS_PER_ROW
             while row in graph_grid_map:
                 row+=1
             graph_grid_map[row] = (level,_varnames_per_graph_level[level][indx:indx+num_vars])

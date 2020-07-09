@@ -18,7 +18,7 @@ def kde_support(bw, bin_range=(0,1), n_samples=100, cut=3, clip=(None,None)):
         kmax = max(kmax, clip[1])
     return np.linspace(kmin, kmax, n_samples)
 
-def kde(samples):
+def kde(samples, filled = False):
     try:
         # samples = np.asarray(samples, dtype=np.float64).flatten()
         samples = samples.flatten()
@@ -29,14 +29,15 @@ def kde(samples):
         #x = _kde_support(bw, bin_range=(samples.min(),samples.max()), clip=(samples.min(),samples.max()))
         x = kde_support(bw, bin_range=(samples.min(),samples.max()))      
         y = kde(x)
-        x=np.append(x,x[-1])
-        x=np.insert(x, 0, x[0], axis=0)
-        y=np.append(y,0.0)
-        y=np.insert(y, 0, 0.0, axis=0)
+        if filled:
+            x=np.append(x,x[-1])
+            x=np.insert(x, 0, x[0], axis=0)
+            y=np.append(y,0.0)
+            y=np.insert(y, 0, 0.0, axis=0)
         return dict(x=x,y=y)
     except ValueError:
         print("KDE cannot be estimated because %s samples were provided to kde" % str(len(samples)))
-        return dict(x=[],y=[]) 
+        return dict(x=np.array([]),y=np.array([])) 
 
 def pmf(samples):
     """
@@ -47,7 +48,7 @@ def pmf(samples):
     if ~np.isfinite(samples).all():
         samples = get_finite_samples(samples)
     x = np.sort( np.unique(samples))
-    y = [ np.count_nonzero(samples == xi) / len(samples) for xi in x]
+    y = np.asarray([ np.count_nonzero(samples == xi) / len(samples) for xi in x])
     return dict(x=x,y=y,y0=np.zeros(len(x)))
 
 def hist(x, density=True, bins=20, range=()):    
@@ -74,7 +75,7 @@ def hpd_area(x, y, credible_interval=0.94, smooth = True):
         y_shape = y.shape
 
         if 0 in x_shape or 0 in y_shape:
-            return ([],[])
+            return (np.array([]),np.array([]))
 
         if y_shape[-len(x_shape) :] != x_shape:
             msg = "Dimension mismatch for x: {} and y: {}."
@@ -101,7 +102,7 @@ def hpd(y, credible_interval=0.94):
     y = np.asarray(y)
     y_shape = y.shape
     if 0 in y_shape:
-        return ([],[])    
+        return (np.array([]),np.array([]))    
     hpd_ = az.hpd(y, credible_interval=credible_interval, circular=False, multimodal=False)
     if hpd_.ndim == 1:
         hpd_ = np.expand_dims(hpd_, axis=0)

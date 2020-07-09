@@ -1,6 +1,7 @@
-from ..interfaces.grid import Cell
+from ..interfaces.cell import Cell
 from ..utils.stats import hist
 from ..utils.functions import get_finite_samples, get_samples_for_pred_check, get_hist_bins_range
+from ..utils.constants import COLORS, BORDER_COLORS, PLOT_HEIGHT, PLOT_WIDTH, SIZING_MODE
 
 import numpy as np
 from functools import partial
@@ -23,10 +24,10 @@ class PredictiveChecksCell(Cell):
                 _seg
 
         """   
-        self._func=function       
-        self._source={} 
-        self._reconstructed={} 
-        self._seg={}
+        self._func = function       
+        self._source = {} 
+        self._reconstructed = {} 
+        self._seg = {}
         self._pvalue = {} 
         self._pvalue_rec = {}        
         Cell.__init__(self, name) 
@@ -49,12 +50,12 @@ class PredictiveChecksCell(Cell):
         return (data,samples)     
 
     def initialize_fig(self,space):        
-        self._plot[space] = figure(tools="wheel_zoom,reset", toolbar_location='right', plot_width=Cell._PLOT_WIDTH, 
-                                    plot_height=Cell._PLOT_HEIGHT, sizing_mode=Cell._SIZING_MODE)        
+        self._plot[space] = figure(tools="wheel_zoom,reset", toolbar_location='right', plot_width=PLOT_WIDTH, 
+                                    plot_height=PLOT_HEIGHT, sizing_mode=SIZING_MODE)        
         self._plot[space].toolbar.logo = None  
         self._plot[space].yaxis.visible = False    
         self._plot[space].xaxis.axis_label = self._func+"("+self._name+")"
-        self._plot[space].border_fill_color = Cell._BORDER_COLORS[0]
+        self._plot[space].border_fill_color = BORDER_COLORS[0]
         self._plot[space].xaxis[0].ticker.desired_num_ticks = 3
         Cell._sample_inds[space].on_change('data',partial(self._sample_inds_callback, space))
     
@@ -94,11 +95,11 @@ class PredictiveChecksCell(Cell):
 
     def initialize_glyphs(self,space):        
         q = self._plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._source[space], \
-                                fill_color=Cell._COLORS[0], line_color="white", fill_alpha=1.0,name="full")
+                                fill_color=COLORS[0], line_color="white", fill_alpha=1.0,name="full")
         seg = self._plot[space].segment(x0 = 'x0', y0 ='y0', x1='x1',y1='y1', source=self._seg[space], \
                                  color="black", line_width=2,name="seg")
         q_sel = self._plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._reconstructed[space], \
-                                    fill_color=Cell._COLORS[1], line_color="white", fill_alpha=0.7,name="sel")
+                                    fill_color=COLORS[1], line_color="white", fill_alpha=0.7,name="sel")
         ## Add Legends
         data = self._seg[space].data['x0']
         pvalue = self._pvalue[space].data["pv"]

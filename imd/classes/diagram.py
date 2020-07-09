@@ -1,5 +1,5 @@
 from .data import Data
-from ..interfaces.grid import Cell
+from ..interfaces.cell import Cell
 from .graph import Graph
 from .predictive_ckecks import PredictiveChecks
 
