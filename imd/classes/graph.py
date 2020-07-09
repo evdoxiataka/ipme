@@ -12,8 +12,9 @@ class Graph(Grid):
 
             Sets:
             --------
-                - "self._cells" List
-                - "self._grids" Dict
+                _cells      A Dict {<var_name>:Cell object}.
+                _grids      A Dict of pn.GridSpec objects: 
+                            {<space>:pn.GridSpec}
         """ 
         graph_grid_map = self._create_graph_grid_mapping() 
         for row, map_data in graph_grid_map.items():
@@ -32,10 +33,12 @@ class Graph(Grid):
                 #col_l = int(col_f + (i+1)*Grid._COLS_PER_VAR)
                 grid_bgrd_col = level    
                 c = VariableCell(var_name)                         
-                self._cells.append(c)
+                self._cells[var_name] = c
                 ##Add to grid
                 cell_spaces = c.get_spaces()
                 for space in cell_spaces:
+                    if space not in self._spaces:
+                        self._spaces.append(space)
                     if space not in self._grids:
                         self._grids[space] = pn.GridSpec(sizing_mode='stretch_both')
                     self._grids[space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = pn.Column(c.get_plot(space), \

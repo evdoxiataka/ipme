@@ -12,6 +12,7 @@ def Phi(x):
     """Calculates the standard normal cumulative distribution function."""
     return 0.5 + 0.5 * tt.erf(x / tt.sqrt(2.))
 
+#Binomial Model
 #Reference: https://docs.pymc.io/notebooks/putting_workflow.html#Geometry-based-model
 #data
 golf_data = """distance tries successes

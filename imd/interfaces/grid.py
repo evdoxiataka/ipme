@@ -25,15 +25,18 @@ class Grid(ABC):
                 _grids                  A Dict of pn.GridSpec objects 
                                         Either {<var_name>:{<space>:pn.GridSpec}}
                                         Or {<space>:pn.GridSpec}
-                _cells                  A List of Cell objects.
+                _cells                  A Dict either {<var_name>:Cell object} or {<pred_check>:Cell object},
+                                        where pred_check in {'min','max','mean','std'}.
+                _spaces                 A List of available spaces in this grid. Elements in {'prior','posterior'}
                 _cells_widgets          A Dict dict1 of the form (key1,value1) = (<widget_name>, dict2)
                                         dict2 of the form (key1,value1) = (<space>, List of tuples (<cell_id>,<widget_id>)
                                         of the widgets with same name).
-                _plotted_widgets        A List of widget objects to be plotted.
+                _plotted_widgets        A Dict of the form {<space>: List of widget objects to be plotted} .
         """
         self._data = data_obj  
         self._grids = {}
-        self._cells=[]
+        self._cells = {}
+        self._spaces = []
         self._create_grids()          
 
         self._cells_widgets = {}        
@@ -45,7 +48,7 @@ class Grid(ABC):
         self._set_plotted_widgets()
 
     def _link_cells_widgets(self):
-        for c_id, cell in enumerate(self._cells):
+        for c_id, cell in self._cells.items():
             cell_spaces = cell.get_spaces()
             for space in cell_spaces:
                 for w_id, w in enumerate(cell.get_widgets_in_space(space)):
@@ -84,11 +87,13 @@ class Grid(ABC):
                     c_id,w_id = f_w_list[0]
                     for space in w_spaces:
                         if space not in self._plotted_widgets:
-                            self._plotted_widgets[space] = []
+                            self._plotted_widgets[space] = []                    
                         self._plotted_widgets[space].append(self._cells[c_id].get_widget(f_space,w_id))
         b = Button(label='Reset Diagram', button_type="primary")
         b.on_click(self._global_reset)
-        for space in self._plotted_widgets:    
+        for space in self._spaces:  
+            if space not in self._plotted_widgets:
+                self._plotted_widgets[space] = []  
             self._plotted_widgets[space].append(b)
 
     def _global_reset(self, event):
@@ -109,6 +114,9 @@ class Grid(ABC):
 
     def get_plotted_widgets(self):
         return self._plotted_widgets
+    
+    def get_cells(self):
+        return self._cells
 
 class Cell(ABC):
     _data = None
@@ -260,12 +268,6 @@ class Cell(ABC):
         except IndexError:
             return None
 
-    def get_start_point(self):
-        return self._start_point
-
-    def get_end_point(self):
-        return self._end_point
-
     def get_plot(self,space, add_info=True):
         if space in self._plot:
             if add_info and space in self._toggle and space in self._div:
@@ -275,15 +277,6 @@ class Cell(ABC):
         else:
             return None
 
-    def has_dim(self,dim_name):
-        if dim_name in [dim.name for dim in self._idx_dims]:
-            return True
-        else:
-            return False
-
     def get_spaces(self):
         return self._spaces
-
-    def get_grid_bgrd_col(self):
-        return self._grid_bgrd_col
             

@@ -68,13 +68,15 @@ class PredictiveChecksCell(Cell):
         #samples func
         if ~np.isfinite(samples).all():
             samples = get_finite_samples(samples)
-        samples_func = get_samples_for_pred_check(samples, self._func)
-        samples = samples.flatten()        
-        if samples.size:
+        samples_func = get_samples_for_pred_check(samples, self._func)     
+        if samples_func.size:
             #pvalue            
             pv = np.count_nonzero(samples_func>=data_func) / len(samples_func)               
             #histogram     
-            bins, range = get_hist_bins_range(samples, self._type)
+            if self._type == 'Discrete':
+                bins, range = get_hist_bins_range(samples_func, self._func, self._type, ref_length = None, ref_values=np.unique(samples.flatten()))
+            else:                
+                bins, range = get_hist_bins_range(samples_func, self._func, self._type)
             his, edges = hist(samples_func, bins=bins, range=range, density=True)
             #cds
             self._pvalue[space] = ColumnDataSource(data=dict(pv=[pv]))
@@ -139,20 +141,24 @@ class PredictiveChecksCell(Cell):
             inds=Cell._sample_inds[space].data['inds']
             if len(inds):
                 sel_sample = samples[inds]
-                # samples finite
-                if ~np.isfinite(samples).all():
-                    samples = get_finite_samples(samples).flatten()
-                #sel_sample func
                 if ~np.isfinite(sel_sample).all():
                     sel_sample = get_finite_samples(sel_sample)
                 sel_sample_func = get_samples_for_pred_check(sel_sample, self._func)
-                sel_sample = sel_sample.flatten()
                 #data func
                 data_func = self._seg[space].data['x0'][0]
                 #pvalue in restricted space
                 sel_pv = np.count_nonzero(sel_sample_func >= data_func) / len(sel_sample_func)                 
                 #compute updated histogram
-                bins, range = get_hist_bins_range(samples, self._type)
+                min_p = self._source[space].data['left'][0]
+                max_p = self._source[space].data['right'][-1]
+                min_c = sel_sample_func.min()
+                max_c = sel_sample_func.max()
+                if  min_c < min_p or max_c > max_p:
+                    ref_len = self._source[space].data['right'][0] - min_p
+                    bins, range = get_hist_bins_range(sel_sample_func, self._func, self._type, ref_length=ref_len)
+                else:
+                    range = (min_p,max_p)
+                    bins = len(self._source[space].data['right'])
                 his, edges = hist(sel_sample_func, bins=bins, range=range)
                 ##max selected hist
                 max_sel_hist = his.max()

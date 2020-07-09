@@ -4,6 +4,7 @@ import arviz as az
 from arviz_json import get_dag, arviz_to_json
 SEED = [20100420, 20134234]
 
+#Hierarchical Model
 #Reference: https://docs.pymc.io/notebooks/Diagnosing_biased_Inference_with_Divergences.html#The-Eight-Schools-Model
 #data
 J = 8

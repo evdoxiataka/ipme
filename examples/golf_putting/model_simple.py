@@ -4,6 +4,7 @@ import pymc3 as pm
 import arviz as az
 from arviz_json import get_dag, arviz_to_json
 
+#Binomial Logistic Regression Model
 #Reference: https://docs.pymc.io/notebooks/putting_workflow.html#Logit-model
 #data
 golf_data = """distance tries successes

@@ -5,6 +5,7 @@ import theano
 import arviz as az
 from arviz_json import get_dag, arviz_to_json
 
+#Hierarchical Linear Regression Model
 #Reference1: https://docs.pymc.io/notebooks/multilevel_modeling.html
 #Reference2: https://docs.pymc.io/notebooks/GLM-hierarchical.html#The-data-set
 #data

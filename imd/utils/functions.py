@@ -1,5 +1,5 @@
 import numpy as np
-from math import gcd
+from math import gcd, ceil
 
 def lcm(list_of_int):
     """
@@ -87,20 +87,44 @@ def get_finite_samples(np_array):
             np_array = np_array[samples_idx]
     return np_array
 
-def get_hist_bins_range(samples, var_type):
+def get_hist_bins_range(samples, func, var_type, ref_length = None, ref_values=None):
     """
-        samples: flatten finite samples
+        Parameters:
+        --------
+            samples         Flatten finite samples
+            func            Predictive check criterion {'min','max','mean','std'}
+            var_type        Variable type in {'Discrete','Continuous'}   
+            ref_length      A reference length for bin to estimate the number of bins
+            ref_values      A numpy.ndarray with the unique values of a Discrete variable
     """
-    if var_type == "Discrete":
-        values = np.unique(samples)
-        if len(values) < 20:
-            min_v = values.min()
-            max_v = values.max()
-            bins = len(values)       
-            range = ( min_v, max_v + (max_v - min_v) / (bins - 1))     
-            return (bins, range)
-    bins = 20
+    if func == 'min' or func == 'max' and var_type == "Discrete":        
+        if ref_values is not None:
+            if len(ref_values)<20:
+                min_v = ref_values.min()
+                max_v = ref_values.max()
+                bins = len(ref_values)
+                if bins > 1:     
+                    range = ( min_v, max_v + (max_v - min_v) / (bins - 1))
+                else:
+                    range = ( min_v, min_v+1)
+                return (bins, range)
+        else:
+            values = np.unique(samples)
+            if len(values) < 20:
+                min_v = values.min()
+                max_v = values.max()
+                bins = len(values)  
+                if bins > 1:     
+                    range = ( min_v, max_v + (max_v - min_v) / (bins - 1))   
+                else:
+                    range = ( min_v, min_v+1)
+                return (bins, range)
     range = (samples.min(),samples.max())
+    if ref_length:
+        bins = ceil((range[1] - range[0]) / ref_length)
+        range = (range[0], range[0] + bins*ref_length)
+    else:
+        bins = 20
     return (bins, range)
 
 def get_dim_names_options(dim):
