@@ -1,5 +1,6 @@
 import numpy as np
 from math import gcd, ceil
+# import itertools
 
 def lcm(list_of_int):
     """
@@ -20,8 +21,10 @@ def lcm(list_of_int):
     except IndexError:
         return None
 
-def find_indices(lst, condition):
-    return [i for i, elem in enumerate(lst) if condition(elem)]
+def find_indices(lst, condition, xmin=0, xmax=0):
+    # return [i for i, elem in enumerate(lst) if condition(elem)]
+    # return [ _ for _ in itertools.compress(list(range(0,len(lst))), map(condition,lst)) ]
+    return list(np.where((lst>=xmin) & (lst<=xmax))[0])
 
 def find_inds_before_after(lst, el):
     inds_sm=find_indices(lst, lambda e: e<= el)

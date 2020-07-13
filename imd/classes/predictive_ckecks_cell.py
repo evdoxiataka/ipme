@@ -21,12 +21,14 @@ class PredictiveChecksCell(Cell):
                 _func
                 _source
                 _reconstructed
+                _samples
                 _seg
 
         """   
         self._func = function       
         self._source = {} 
         self._reconstructed = {} 
+        self._samples = {}
         self._seg = {}
         self._pvalue = {} 
         self._pvalue_rec = {}        
@@ -34,11 +36,12 @@ class PredictiveChecksCell(Cell):
 
     def _get_data_for_cur_idx_dims_values(self,space):
         """
-            Returns the x-,y-coordinates of the data for current index dimensions values.
+            Returns the observed data and predictive samples of the observed variable 
+            <self._name> in space <space>.
 
             Returns:
             --------
-                A Tuple (x,y) of the x-,y-coordinates of the data.
+                A Tuple (data,samples): data-> observed data and samples-> predictive samples.
         """ 
         data = Cell._data.get_samples(self._name,'observed_data')
         if Cell._data.get_var_type(self._name) == "observed":
@@ -62,6 +65,7 @@ class PredictiveChecksCell(Cell):
     def initialize_cds(self,space):
         ## ColumnDataSource for full sample set
         data, samples = self._get_data_for_cur_idx_dims_values(space) 
+        self._samples[space] = ColumnDataSource(data=dict(x=samples))
         #data func
         if ~np.isfinite(data).all():
             data = get_finite_samples(data)
@@ -136,7 +140,8 @@ class PredictiveChecksCell(Cell):
 
     ## Update plots when indices of selected samples are updated
     def _sample_inds_callback(self, space, attr, old, new):
-        _, samples = self._get_data_for_cur_idx_dims_values(space)   
+        # _, samples = self._get_data_for_cur_idx_dims_values(space)   
+        samples = self._samples[space].data['x']
         max_full_hist = self._source[space].data['top'].max()  
         if samples.size:            
             inds=Cell._sample_inds[space].data['inds']

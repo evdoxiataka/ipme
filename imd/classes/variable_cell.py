@@ -216,21 +216,23 @@ class VariableCell(Cell):
         Cell._var_x_range[(space,self._name)].data=dict(xmin=np.asarray([xmin]),xmax=np.asarray([xmax]))             
         Cell._sel_var_idx_dims_values[self._name]=dict(self._cur_idx_dims_values)
         for sp in self._spaces:
-            samples = self._get_data_for_cur_idx_dims_values(sp)
-            Cell._sel_var_inds[(sp,self._name)] = find_indices(samples, lambda e: e >= xmin and e<= xmax)    
+            samples = self._samples[sp].data['x']
+            Cell._sel_var_inds[(sp,self._name)] = find_indices(samples, lambda e: e >= xmin and e<= xmax,xmin,xmax)    
             self._compute_intersection_of_samples(sp)
 
     ## Compute intersection of sample points based on user's restrictions per parameter
-    def _compute_intersection_of_samples(self,space): 
+    def _compute_intersection_of_samples(self,space):  
         sp_keys=[k for k in Cell._sel_var_inds.keys() if k[0]==space]
-        if len(sp_keys):
-            set1=set(Cell._sel_var_inds[sp_keys[0]])
-            for i in range(1, len(sp_keys)):
-                set2=set(Cell._sel_var_inds[sp_keys[i]])
-                set1=set1.intersection(set2) 
-            Cell._sample_inds[space].data['inds'] = list(set1)
+        if len(sp_keys)>1:
+            sets=[]
+            for i in range(0, len(sp_keys)):
+                sets.append(set(Cell._sel_var_inds[sp_keys[i]]))
+            union=set.intersection(*sorted(sets, key=len))
+            Cell._sample_inds[space].data=dict(inds=list(union)) 
+        elif len(sp_keys)==1:
+            Cell._sample_inds[space].data=dict(inds=Cell._sel_var_inds[sp_keys[0]])
         else:
-            Cell._sample_inds[space].data['inds'] = [] 
+            Cell._sample_inds[space].data=dict(inds=[]) 
 
     ## Update source ColumnDataSource
     def _update_source_cds(self,space):
@@ -249,7 +251,7 @@ class VariableCell(Cell):
         data={}
         data['x'] = np.array([])
         data['y'] = np.array([])
-        kde_indices = find_indices(self._source[space].data['x'], lambda e: e >= xmin and e<= xmax)  
+        kde_indices = find_indices(self._source[space].data['x'], lambda e: e >= xmin and e<= xmax,xmin,xmax)  
         if len(kde_indices) == 0:
             if self._type == "Discrete":
                 self._selection[space].data = dict(x=np.array([]),y=np.array([]),y0=np.array([]))
@@ -292,7 +294,7 @@ class VariableCell(Cell):
 
     ## Update reconstructed ColumnDataSource
     def _update_reconstructed_cds(self,space):
-        samples = self._get_data_for_cur_idx_dims_values(space)
+        samples = self._samples[space].data['x']
         inds = Cell._sample_inds[space].data['inds']
         if len(inds):
             sel_sample = samples[inds]   
