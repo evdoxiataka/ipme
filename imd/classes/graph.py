@@ -1,4 +1,5 @@
 from ..interfaces.grid import Grid
+from ..interfaces.cell import Cell
 from .variable_cell import VariableCell
 from ..utils.constants import MAX_NUM_OF_COLS_PER_ROW, MAX_NUM_OF_VARS_PER_ROW, COLS_PER_VAR
 import panel as pn
@@ -32,7 +33,7 @@ class Graph(Grid):
                 end_point = ( row+1, int(col + (i+1)*COLS_PER_VAR) )
                 #col_l = int(col_f + (i+1)*COLS_PER_VAR)
                 grid_bgrd_col = level    
-                c = VariableCell(var_name)                         
+                c = VariableCell(var_name, self._mode)                         
                 self._cells[var_name] = c
                 ##Add to grid
                 cell_spaces = c.get_spaces()
@@ -43,6 +44,7 @@ class Graph(Grid):
                         self._grids[space] = pn.GridSpec(sizing_mode='stretch_both')
                     self._grids[space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = pn.Column(c.get_plot(space), \
                     width=220, height=220)
+        Cell._num_cells = len(self._cells)
 
     def _create_graph_grid_mapping(self):
         """

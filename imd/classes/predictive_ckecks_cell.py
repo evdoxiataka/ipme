@@ -10,11 +10,12 @@ from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool, Legend, LegendItem
 
 class PredictiveChecksCell(Cell):
-    def __init__(self, name, function='min'):
+    def __init__(self, name, mode, function='min'):
         """
             Parameters:
             --------
                 name            A String within the set {"<variableName>"}.
+                mode            A String in {"i","s"}, "i":interactive, "s":static.
                 function        A String in {"min","max","mean","std"}.
             Sets:
             --------
@@ -32,7 +33,7 @@ class PredictiveChecksCell(Cell):
         self._seg = {}
         self._pvalue = {} 
         self._pvalue_rec = {}        
-        Cell.__init__(self, name) 
+        Cell.__init__(self, name, mode) 
 
     def _get_data_for_cur_idx_dims_values(self,space):
         """
@@ -60,7 +61,8 @@ class PredictiveChecksCell(Cell):
         self._plot[space].xaxis.axis_label = self._func+"("+self._name+")"
         self._plot[space].border_fill_color = BORDER_COLORS[0]
         self._plot[space].xaxis[0].ticker.desired_num_ticks = 3
-        Cell._sample_inds[space].on_change('data',partial(self._sample_inds_callback, space))
+        if self._mode == "i":
+            Cell._sample_inds[space].on_change('data',partial(self._sample_inds_callback, space))
     
     def initialize_cds(self,space):
         ## ColumnDataSource for full sample set

@@ -167,4 +167,29 @@ def get_w2_w1_val_mapping(dim):
         for v1 in options1:
             tmp = np.arange(np.count_nonzero(values == v1))
             val_dict[v1] = list(map(str,tmp))
-    return val_dict                         
+    return val_dict  
+
+def get_stratum_range(samples, stratum):
+    median = np.median(samples)  
+    if stratum == 0 or stratum == 1:
+        inds_l = np.where(samples<median)[0]
+        median_l = np.median(samples[inds_l])
+        if stratum == 0:
+            xmin = np.min(samples).item()
+            xmax = median_l
+        elif stratum == 1:
+            xmin = median_l
+            xmax = median
+    elif stratum == 2 or stratum == 3:
+        inds_h = np.where(samples>=median)[0]        
+        median_h = np.median(samples[inds_h])
+        if stratum == 2:
+            xmin = median
+            xmax = median_h
+        elif stratum == 3:
+            xmin = median_h
+            xmax = np.max(samples).item()
+    else:
+        xmin = np.min(samples).item()
+        xmax = np.max(samples).item()  
+    return (xmin,xmax)                 

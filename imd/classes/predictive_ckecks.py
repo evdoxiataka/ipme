@@ -4,15 +4,17 @@ from ..utils.constants import MAX_NUM_OF_COLS_PER_ROW, MAX_NUM_OF_VARS_PER_ROW, 
 import panel as pn
 
 class PredictiveChecks(Grid):
-    def __init__(self, data_obj, predictive_ckecks = []):
+    def __init__(self, data_obj, mode, predictive_ckecks = []):
         """
             Parameters:
             --------
                 data_obj                A Data object.       
+                mode                    A String in {"i","s"}, "i":interactive, "s":static. 
                 predictive_ckecks       A List of observed variables to plot predictive checks.    
             Sets:
             --------
-                _data                   A Data object.                
+                _data                   A Data object.    
+                _mode                   A String in {"i","s"}, "i":interactive, "s":static.              
                 _grids                  A Dict of pn.GridSpec objects: 
                                         {<var_name>:{<space>:pn.GridSpec}}
                 _cells                  A Dict {<pred_check>:Cell object},
@@ -23,7 +25,7 @@ class PredictiveChecks(Grid):
                 _plotted_widgets        A List of widget objects to be plotted.
         """
         self._pred_checks = predictive_ckecks
-        Grid.__init__(self, data_obj)
+        Grid.__init__(self, data_obj, mode)
 
     def _create_grids(self): 
         """
@@ -37,10 +39,10 @@ class PredictiveChecks(Grid):
         """ 
         for var in self._pred_checks:
             if self._data.is_observed_variable(var):
-                c_min = PredictiveChecksCell(var,"min")
-                c_max = PredictiveChecksCell(var,"max")
-                c_mean = PredictiveChecksCell(var,"mean")
-                c_std = PredictiveChecksCell(var,"std")
+                c_min = PredictiveChecksCell(var, self._mode, "min")
+                c_max = PredictiveChecksCell(var, self._mode, "max")
+                c_mean = PredictiveChecksCell(var, self._mode, "mean")
+                c_std = PredictiveChecksCell(var, self._mode, "std")
                 self._cells['min'] = c_min 
                 self._cells['max'] = c_max
                 self._cells['mean'] = c_mean
