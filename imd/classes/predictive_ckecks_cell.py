@@ -186,6 +186,13 @@ class PredictiveChecksCell(Cell):
     def _update_plot(self,space):
         pass
 
+    def set_stratum(self, space, stratum = 0):
+        """
+            Sets selection by spliting the ordered sample set 
+            in 4 equal-sized subsets.
+        """
+        pass
+
     def _widget_callback(self, attr, old, new, w_title, space):
         inds = Cell._data.get_indx_for_idx_dim(self._name, w_title, new)
         if inds==-1:
