@@ -1,6 +1,7 @@
 from scipy.stats.kde import gaussian_kde
 from scipy.interpolate import griddata
-from scipy.signal import savgol_filter
+from scipy.signal import savgol_filter, unit_impulse
+from numpy.linalg import LinAlgError
 
 from .functions import get_finite_samples
 
@@ -17,6 +18,17 @@ def kde_support(bw, bin_range=(0,1), n_samples=100, cut=3, clip=(None,None)):
     if clip[1] is not None and np.isfinite(clip[1]):
         kmax = max(kmax, clip[1])
     return np.linspace(kmin, kmax, n_samples)
+
+def find_x_range(data):
+    samples = data.flatten()
+    if ~np.isfinite(samples).all():
+        samples = get_finite_samples(samples)
+    min=0
+    max=0
+    if samples.size:
+        min = np.amin(samples)
+        max = np.amax(samples)
+    return (min - 0.1*(max-min),max + 0.1*(max-min))
 
 def kde(samples, filled = False):
     try:
@@ -38,6 +50,19 @@ def kde(samples, filled = False):
     except ValueError:
         print("KDE cannot be estimated because %s samples were provided to kde" % str(len(samples)))
         return dict(x=np.array([]),y=np.array([])) 
+    except LinAlgError as err:
+        if 'singular matrix' in str(err):
+            print("KDE: singular matrix")
+            y = unit_impulse(100,'mid')
+            x = np.arange(-50, 50) 
+            if filled:
+                x=np.append(x,x[-1])
+                x=np.insert(x, 0, x[0], axis=0)
+                y=np.append(y,0.0)
+                y=np.insert(y, 0, 0.0, axis=0)
+            return dict(x=x,y=y)
+        else:
+            raise
 
 def pmf(samples):
     """

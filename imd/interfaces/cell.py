@@ -76,6 +76,7 @@ class Cell(ABC):
         self._w1_w2_idx_mapping = {}
         self._w2_w1_idx_mapping = {}
         self._w2_w1_val_mapping = {}
+        # self._widgets_lock = threading.Lock()
 
         self._initialize_widgets()
         self._initialize_plot()
@@ -117,12 +118,20 @@ class Cell(ABC):
                         self._cur_idx_dims_values[n2] = [0]  
 
     def _idx_widget_callback(self, attr, old, new, w_title, space):
-        if space in self._w1_w2_idx_mapping and \
-            w_title in self._w1_w2_idx_mapping[space]:
-            w2_n = self._w1_w2_idx_mapping[space][w_title]
-            opt2 = self._w2_w1_val_mapping[space][w2_n][new]
+        # self._widgets_lock.acquire()
+        w1_w2_idx_mapping = self._w1_w2_idx_mapping
+        w2_w1_val_mapping = self._w2_w1_val_mapping
+        widgets = self._widgets[space]
+        # self._widgets_lock.release() 
+        if space in w1_w2_idx_mapping and \
+            w_title in w1_w2_idx_mapping[space]:
+            w2_n = w1_w2_idx_mapping[space][w_title]
+            opt2 = w2_w1_val_mapping[space][w2_n][new]
+            # self._widgets_lock.acquire()
             self._widgets[space][w2_n].value = opt2[0]
             self._widgets[space][w2_n].options = opt2
+            print("idx_widg", self._widgets[space][w2_n].value)
+            # self._widgets_lock.release()
 
     def _initialize_toggle_div(self):
         for space in self._spaces:            

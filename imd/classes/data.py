@@ -52,9 +52,9 @@ class Data(Data_Interface):
         """
         graph=""
         try:
-            header=self._inferencedata['header.json']            
-            header_js=json.loads(header)
-            graph=header_js["inference_data"]["sample_stats"]["attrs"]["graph"]
+            header = self._inferencedata['header.json']            
+            header_js = json.loads(header)
+            graph = header_js["inference_data"]["sample_stats"]["attrs"]["graph"]
         except KeyError:
             print("Inference_data has no key 'header.json'")
             return None
@@ -125,7 +125,7 @@ class Data(Data_Interface):
         else:
             return []
 
-    def get_samples(self,var_name,space=['prior','posterior']):
+    def get_samples(self, var_name, space=['prior','posterior']):
         """
             Returns the samples of <var_name> variable of the given space(s).
 
@@ -169,6 +169,32 @@ class Data(Data_Interface):
             return data
         else:
             raise ValueError("space argument of get_sample should be either a List of Strings or a String")
+
+    def get_range(self, var_name, space=['prior','posterior']):
+        """
+            Returns the range of samples of <var_name> variable of the given space(s).
+
+            Parameters:
+            --------
+                var_name      A String of the model's variables name
+                space         Either a List of Strings or a String with String in {'prior','posterior'}
+            Returns:
+            --------
+                Tuple (min,max)
+                                 
+        """
+        if self.get_var_type(var_name) == "observed":
+            if space == "posterior" and "posterior_predictive" in self.get_spaces():
+                space="posterior_predictive"
+            elif space == "prior" and "prior_predictive" in self.get_spaces():
+                space="prior_predictive"
+        data = self.get_samples(var_name, space) 
+        min=0
+        max=0
+        if data.size:
+            min = np.amin(data)
+            max = np.amax(data)
+        return (min - 0.1*(max-min),max + 0.1*(max-min))
 
     def get_varnames_per_graph_level(self):
         """

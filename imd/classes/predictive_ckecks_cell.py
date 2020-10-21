@@ -103,9 +103,9 @@ class PredictiveChecksCell(Cell):
         q = self._plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._source[space], \
                                 fill_color=COLORS[0], line_color="white", fill_alpha=1.0,name="full")
         seg = self._plot[space].segment(x0 = 'x0', y0 ='y0', x1='x1',y1='y1', source=self._seg[space], \
-                                 color="black", line_width=2,name="seg")
+                                 color="black", line_width=2, name="seg")
         q_sel = self._plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._reconstructed[space], \
-                                    fill_color=COLORS[1], line_color="white", fill_alpha=0.7,name="sel")
+                                    fill_color=COLORS[1], line_color="white", fill_alpha=0.7, name="sel")
         ## Add Legends
         data = self._seg[space].data['x0']
         pvalue = self._pvalue[space].data["pv"]

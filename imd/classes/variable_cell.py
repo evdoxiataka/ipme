@@ -1,6 +1,6 @@
 from ..interfaces.cell import Cell
 from ..utils.functions import * 
-from ..utils.stats import kde, pmf
+from ..utils.stats import kde, pmf, find_x_range
 from ..utils.js_code import HOVER_CODE
 from ..utils.constants import COLORS, BORDER_COLORS, PLOT_HEIGHT, PLOT_WIDTH, SIZING_MODE, RUG_DIST_RATIO, RUG_SIZE
 
@@ -31,7 +31,24 @@ class VariableCell(Cell):
         self._samples = {}
         self._sel_samples = {}
         self._clear_selection = {}  
-        Cell.__init__(self, name, mode)  
+        self._all_samples = {}
+        self._x_range = {}
+        Cell.__init__(self, name, mode) 
+
+    def _get_samples(self, space): 
+        """
+            Retrieves MCMC samples of <space> into a numpy.ndarray and 
+            sets an entry into self._all_samples Dict.
+        """
+        space_gsam = space
+        if Cell._data.get_var_type(self._name) == "observed":
+            if space == "posterior" and "posterior_predictive" in Cell._data.get_spaces():
+                space_gsam="posterior_predictive"
+            elif space == "prior" and "prior_predictive" in Cell._data.get_spaces():
+                space_gsam="prior_predictive"
+        self._all_samples[space] = Cell._data.get_samples(self._name, space_gsam).T
+        # compute x_range
+        self._x_range[space] = find_x_range(self._all_samples[space])
                 
     def _get_data_for_cur_idx_dims_values(self, space):
         """
@@ -42,26 +59,23 @@ class VariableCell(Cell):
             --------
                 A numpy.ndarray.
         """ 
-        if Cell._data.get_var_type(self._name) == "observed":
-            if space == "posterior" and "posterior_predictive" in Cell._data.get_spaces():
-                space="posterior_predictive"
-            elif space == "prior" and "prior_predictive" in Cell._data.get_spaces():
-                space="prior_predictive"
-        data = Cell._data.get_samples(self._name,space) 
-        data = data.T       
+        if space in self._all_samples:
+            data =  self._all_samples[space] 
+        else:
+            raise ValueError   
         for dim_name,dim_value in self._cur_idx_dims_values.items():
             data = data[dim_value]
         return np.squeeze(data).T
     
     def initialize_fig(self,space):
-        self._plot[space]=figure( tools="wheel_zoom,reset", toolbar_location='right', 
+        self._plot[space]=figure( x_range = self._x_range[space], tools="wheel_zoom,reset,box_zoom", toolbar_location='right', 
                             plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT,  sizing_mode=SIZING_MODE)            
         self._plot[space].border_fill_color = BORDER_COLORS[0]    
         self._plot[space].xaxis.axis_label = ""
         self._plot[space].yaxis.visible = False            
         self._plot[space].toolbar.logo = None
-        self._plot[space].y_range.only_visible = True
-        self._plot[space].x_range.only_visible = True
+        # self._plot[space].y_range.only_visible = True
+        # self._plot[space].x_range.only_visible = True
         self._plot[space].xaxis[0].ticker.desired_num_ticks = 3    
         if self._mode == "i":    
             ##Events
@@ -73,9 +87,10 @@ class VariableCell(Cell):
         Cell._sample_inds_update[space].on_change('data',partial(self._sample_inds_callback, space))
         
     def initialize_cds(self,space):
-        samples=self._get_data_for_cur_idx_dims_values(space)  
+        samples = self._get_data_for_cur_idx_dims_values(space)  
         if self._type == "Discrete":
             self._source[space] = ColumnDataSource(data = pmf(samples))
+            self._samples[space] = ColumnDataSource(data = dict(x=samples))
             self._selection[space] = ColumnDataSource(data=dict(x=np.array([]), y=np.array([]), y0=np.array([]))) 
             self._reconstructed[space] = ColumnDataSource(data=dict(x=np.array([]), y=np.array([]), y0=np.array([]))) 
         else:            
@@ -120,7 +135,7 @@ class VariableCell(Cell):
 
     def initialize_glyphs_continuous(self,space):
         so=self._plot[space].line('x', 'y', line_color = COLORS[0], line_width = 2, source=self._source[space])       
-        self._plot[space].line('x', 'y', line_color = COLORS[1], line_width = 2, source=self._reconstructed[space])        
+        re=self._plot[space].line('x', 'y', line_color = COLORS[1], line_width = 2, source=self._reconstructed[space])        
         self._plot[space].line('x', 'y', line_color = COLORS[2], line_width = 2, source=self._selection[space])
         self._plot[space].dash('x','y', size='size',angle=90.0, angle_units='deg', line_color = COLORS[0], \
                                         source=self._samples[space])
@@ -129,6 +144,12 @@ class VariableCell(Cell):
         if self._mode == "i":
             ##Add BoxSelectTool
             self._plot[space].add_tools(BoxSelectTool(dimensions='width',renderers=[so]))
+            TOOLTIPS = [
+            ("x", "@x"),
+            ("y","@y"),
+            ]
+            hover = HoverTool( tooltips=TOOLTIPS,renderers=[so,re], mode='mouse')
+            self._plot[space].tools.append(hover)
 
     def initialize_glyphs_x_button(self,space):
         ## x-button to clear selection
@@ -141,6 +162,7 @@ class VariableCell(Cell):
 
     def _initialize_plot(self):         
         for space in self._spaces: 
+            self._get_samples(space)
             self.initialize_cds(space)
             self.initialize_fig(space)
             self.initialize_glyphs(space)   
@@ -150,28 +172,37 @@ class VariableCell(Cell):
             Callback called when an indexing dimension is set to 
             a new coordinate (e.g through indexing dimensions widgets).
         """         
+        print("ald",old,"new",new)
         if old == new:
             return        
         Cell._add_widget_threads(threading.Thread(target=partial(self._widget_callback_thread,new,w_title,space), daemon=True))
         Cell._widget_lock_event.set()
+        # self._widget_callback_thread(new,w_title,space)
         
     def _widget_callback_thread(self, new, w_title, space):
+        print("_widg_call")
         inds = -1
         w2_title = ""   
-        values = []                     
-        if space in self._w1_w2_idx_mapping and \
-            w_title in self._w1_w2_idx_mapping[space]:
-            w2_title  = self._w1_w2_idx_mapping[space][w_title]
+        values = []          
+        # self._widgets_lock.acquire()
+        w1_w2_idx_mapping = self._w1_w2_idx_mapping
+        w2_w1_idx_mapping = self._w2_w1_idx_mapping
+        w2_w1_val_mapping = self._w2_w1_val_mapping
+        widgets = self._widgets[space]
+        # self._widgets_lock.release()           
+        if space in w1_w2_idx_mapping and \
+            w_title in w1_w2_idx_mapping[space]:
+            w2_title  = w1_w2_idx_mapping[space][w_title]
             name = w_title+"_idx_"+w2_title
             if name in self._idx_dims:
                 values = self._idx_dims[name].values
         elif w_title in self._idx_dims:
             values = self._idx_dims[w_title].values  
-        elif space in self._w2_w1_idx_mapping and \
-            w_title in self._w2_w1_idx_mapping[space]:
-            w1_idx = self._w2_w1_idx_mapping[space][w_title]
-            w1_value = self._widgets[space][w1_idx].value
-            values = self._w2_w1_val_mapping[space][w_title][w1_value]
+        elif space in w2_w1_idx_mapping and \
+            w_title in w2_w1_idx_mapping[space]:
+            w1_idx = w2_w1_idx_mapping[space][w_title]
+            w1_value = widgets[w1_idx].value
+            values = w2_w1_val_mapping[space][w_title][w1_value]
         inds = [i for i,v in enumerate(values) if v == new]
         if inds == -1 or len(inds) == 0:
             return

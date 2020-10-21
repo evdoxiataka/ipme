@@ -64,7 +64,11 @@ class Data_Interface(ABC):
         pass
 
     @abstractmethod
-    def get_samples(self,var_name,space='all'):
+    def get_samples(self,var_name,space=['prior','posterior']):
+        pass
+
+    @abstractmethod
+    def get_range(self, var_name, space=['prior','posterior']):
         pass
 
     @abstractmethod
