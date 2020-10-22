@@ -34,7 +34,7 @@ setup(
     description="Interactive multiverse diagram is an interactive tool for visualizating and exploring Bayesian probabilistic programming models and inference data.",
     entry_points={
         'console_scripts': [
-            'imd=imd.cli:main',
+            'ipme=ipme.cli:main',
         ],
     },
     install_requires=requirements,
@@ -42,12 +42,12 @@ setup(
     long_description=readme + '\n\n' + history,
     include_package_data=True,
     keywords='Bayesian probabilistic modeling, Bayesian inference, Markov Chain Monte Carlo, interactive visualization, uncertainty visualization, interpetability',
-    name='imd',
-    packages=find_packages(include=['imd','imd*']),
+    name='ipme',
+    packages=find_packages(include=['ipme','ipme*']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/evdoxiataka/imd',
+    url='https://github.com/evdoxiataka/ipme',
     version='0.1.0',
     zip_safe=False,
 )

@@ -21,9 +21,8 @@ fileName='radon_basement_PyMC3'
 samples=3000
 tune=10000
 chains=2
-dims={"a":["county"],"b":["county"],"radon":["county_idx_household"]}
 coords = {"county":county_names, "county_idx_household":data_r["county"].tolist()}
-with pm.Model() as model:
+with pm.Model(coords=coords) as model:
     # Hyperpriors for group nodes
     mu_a = pm.Normal('mu_a', mu=0., sigma=100)
     sigma_a = pm.HalfNormal('sigma_a', 5.)
@@ -34,9 +33,9 @@ with pm.Model() as model:
     # Above we just set mu and sd to a fixed value while here we
     # plug in a common group distribution for all a and b (which are
     # vectors of length n_counties).
-    a = pm.Normal('a', mu=mu_a, sigma=sigma_a, shape=n_counties)
+    a = pm.Normal('a', mu=mu_a, sigma=sigma_a, dims='county')
     # Intercept for each county, distributed around group mean mu_a
-    b = pm.Normal('b', mu=mu_b, sigma=sigma_b, shape=n_counties)
+    b = pm.Normal('b', mu=mu_b, sigma=sigma_b, dims='county')
 
     # Model error
     eps = pm.HalfCauchy('eps', 5.)
@@ -45,19 +44,23 @@ with pm.Model() as model:
 
     # Data likelihood
     radon = pm.Normal('radon', mu=radon_est,
-                           sigma=eps, observed=data_r.log_radon)
+                           sigma=eps, observed=data_r.log_radon, dims='county_idx_household')
 
     #Inference
     trace = pm.sample(samples, chains=chains, tune=tune, target_accept=1.0)
     prior = pm.sample_prior_predictive(samples=samples)
-    posterior_predictive = pm.sample_posterior_predictive(trace,samples=samples)    
-    dag = get_dag(model,dims,coords)
-
+    posterior_predictive = pm.sample_posterior_predictive(trace, samples=samples)    
+    
+## STEP 1
 # will also capture all the sampler statistics
-data = az.from_pymc3(trace=trace, prior=prior, posterior_predictive=posterior_predictive,coords=coords, dims=dims)
+data = az.from_pymc3(trace=trace, prior=prior, posterior_predictive=posterior_predictive)
 
+## STEP 2
+#dag
+dag = get_dag(model)
 # insert dag into sampler stat attributes
 data.sample_stats.attrs["graph"] = str(dag)
-    
+
+## STEP 3    
 # save data      
 arviz_to_json(data, fileName+'.npz')
