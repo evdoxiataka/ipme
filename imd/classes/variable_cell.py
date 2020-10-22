@@ -177,19 +177,16 @@ class VariableCell(Cell):
             return        
         Cell._add_widget_threads(threading.Thread(target=partial(self._widget_callback_thread,new,w_title,space), daemon=True))
         Cell._widget_lock_event.set()
-        # self._widget_callback_thread(new,w_title,space)
         
     def _widget_callback_thread(self, new, w_title, space):
         print("_widg_call")
         inds = -1
         w2_title = ""   
         values = []          
-        # self._widgets_lock.acquire()
         w1_w2_idx_mapping = self._w1_w2_idx_mapping
         w2_w1_idx_mapping = self._w2_w1_idx_mapping
         w2_w1_val_mapping = self._w2_w1_val_mapping
-        widgets = self._widgets[space]
-        # self._widgets_lock.release()           
+        widgets = self._widgets[space]       
         if space in w1_w2_idx_mapping and \
             w_title in w1_w2_idx_mapping[space]:
             w2_title  = w1_w2_idx_mapping[space][w_title]

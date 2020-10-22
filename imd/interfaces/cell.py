@@ -101,7 +101,7 @@ class Cell(ABC):
                 n1, n2, opt1, opt2 = get_dim_names_options(d_dim)               
                 self._widgets[space][n1] = Select(title=n1, value=opt1[0], options=opt1)                
                 self._widgets[space][n1].on_change("value", partial(self._widget_callback, w_title=n1, space=space))
-                self._widgets[space][n1].on_change("value", partial(self._idx_widget_callback, w_title=n1, space=space))
+                # self._widgets[space][n1].on_change("value", partial(self._idx_widget_callback, w_title=n1, space=space))
                 if n1 not in self._cur_idx_dims_values:
                     inds=[i for i,v in enumerate(d_dim.values) if v == opt1[0]]
                     self._cur_idx_dims_values[n1] = inds
