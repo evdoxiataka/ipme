@@ -1,6 +1,9 @@
 from scipy.stats.kde import gaussian_kde
 from scipy.interpolate import griddata
-from scipy.signal import savgol_filter
+from scipy.signal import savgol_filter, unit_impulse
+from numpy.linalg import LinAlgError
+
+from .functions import get_finite_samples
 
 import numpy as np
 import arviz as az
@@ -16,26 +19,65 @@ def kde_support(bw, bin_range=(0,1), n_samples=100, cut=3, clip=(None,None)):
         kmax = max(kmax, clip[1])
     return np.linspace(kmin, kmax, n_samples)
 
-def kde(samples):
+def find_x_range(data):
+    samples = data.flatten()
+    if ~np.isfinite(samples).all():
+        samples = get_finite_samples(samples)
+    min=0
+    max=0
+    if samples.size:
+        min = np.amin(samples)
+        max = np.amax(samples)
+    return (min - 0.1*(max-min),max + 0.1*(max-min))
+
+def kde(samples, filled = False):
     try:
-        samples=np.asarray(samples, dtype=np.float64).flatten()
-        samples= samples[np.isfinite(samples)]
+        # samples = np.asarray(samples, dtype=np.float64).flatten()
+        samples = samples.flatten()
+        if ~np.isfinite(samples).all():
+            samples = get_finite_samples(samples)
         kde = gaussian_kde(samples)
         bw = kde.scotts_factor() * samples.std(ddof=1)
         #x = _kde_support(bw, bin_range=(samples.min(),samples.max()), clip=(samples.min(),samples.max()))
         x = kde_support(bw, bin_range=(samples.min(),samples.max()))      
         y = kde(x)
-        x=np.append(x,x[-1])
-        x=np.insert(x, 0, x[0], axis=0)
-        y=np.append(y,0.0)
-        y=np.insert(y, 0, 0.0, axis=0)
+        if filled:
+            x=np.append(x,x[-1])
+            x=np.insert(x, 0, x[0], axis=0)
+            y=np.append(y,0.0)
+            y=np.insert(y, 0, 0.0, axis=0)
         return dict(x=x,y=y)
     except ValueError:
         print("KDE cannot be estimated because %s samples were provided to kde" % str(len(samples)))
-        return dict(x=[],y=[]) 
+        return dict(x=np.array([]),y=np.array([])) 
+    except LinAlgError as err:
+        if 'singular matrix' in str(err):
+            print("KDE: singular matrix")
+            y = unit_impulse(100,'mid')
+            x = np.arange(-50, 50) 
+            if filled:
+                x=np.append(x,x[-1])
+                x=np.insert(x, 0, x[0], axis=0)
+                y=np.append(y,0.0)
+                y=np.insert(y, 0, 0.0, axis=0)
+            return dict(x=x,y=y)
+        else:
+            raise
 
-def hist(x,density=True,bins=20):
-    return np.histogram(x, density=density, bins=bins)
+def pmf(samples):
+    """
+        Estimate probability mass function.
+    """
+    # samples = np.asarray(samples, dtype=np.float64).flatten()
+    samples = samples.flatten()
+    if ~np.isfinite(samples).all():
+        samples = get_finite_samples(samples)
+    x = np.sort( np.unique(samples))
+    y = np.asarray([ np.count_nonzero(samples == xi) / len(samples) for xi in x])
+    return dict(x=x,y=y,y0=np.zeros(len(x)))
+
+def hist(x, density=True, bins=20, range=()):    
+    return np.histogram(x, range=range, density=density, bins=bins)
 
 def hpd_area(x, y, credible_interval=0.94, smooth = True):
         """
@@ -58,7 +100,7 @@ def hpd_area(x, y, credible_interval=0.94, smooth = True):
         y_shape = y.shape
 
         if 0 in x_shape or 0 in y_shape:
-            return ([],[])
+            return (np.array([]),np.array([]))
 
         if y_shape[-len(x_shape) :] != x_shape:
             msg = "Dimension mismatch for x: {} and y: {}."
@@ -85,7 +127,7 @@ def hpd(y, credible_interval=0.94):
     y = np.asarray(y)
     y_shape = y.shape
     if 0 in y_shape:
-        return ([],[])    
+        return (np.array([]),np.array([]))    
     hpd_ = az.hpd(y, credible_interval=credible_interval, circular=False, multimodal=False)
     if hpd_.ndim == 1:
         hpd_ = np.expand_dims(hpd_, axis=0)

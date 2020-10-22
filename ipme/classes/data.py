@@ -52,9 +52,9 @@ class Data(Data_Interface):
         """
         graph=""
         try:
-            header=self._inferencedata['header.json']            
-            header_js=json.loads(header)
-            graph=header_js["inference_data"]["sample_stats"]["attrs"]["graph"]
+            header = self._inferencedata['header.json']            
+            header_js = json.loads(header)
+            graph = header_js["inference_data"]["sample_stats"]["attrs"]["graph"]
         except KeyError:
             print("Inference_data has no key 'header.json'")
             return None
@@ -113,13 +113,19 @@ class Data(Data_Interface):
         else:
             return self._graph[var_name]["type"]
 
+    def get_var_dist_type(self,var_name):
+        if "type" in self._graph[var_name]["distribution"]:
+            return self._graph[var_name]["distribution"]["type"]
+        else:
+            return ""
+
     def get_var_parents(self,var_name):
         if "parents" in self._graph[var_name]:
             return self._graph[var_name]["parents"]
         else:
             return []
 
-    def get_samples(self,var_name,space=['prior','posterior']):
+    def get_samples(self, var_name, space=['prior','posterior']):
         """
             Returns the samples of <var_name> variable of the given space(s).
 
@@ -133,9 +139,9 @@ class Data(Data_Interface):
                 <space>    A String from {"prior", "posterior"}
                 <samples>  A numpy.ndarray of <space> samples of the <var_name> parameter.
                             e.g. PyMC3 shape=N, sample=M
-                                for i in N 
-                                     for j in M:
-                                        Element (i,j) = (ith prior/posterior distribution, jth sample).
+                                for i in M 
+                                     for j in N:
+                                        Element (i,j) = (ith sample, jth prior/posterior distribution draw).
                 If a String of space is given, it returns the numpy.ndarray.
                                  
         """
@@ -148,7 +154,7 @@ class Data(Data_Interface):
                 if sp in self._spaces and self._is_var_in_space(var_name,sp):            
                     array_name = header_js['inference_data'][sp]['array_names'][var_name]
                     if 'chain' in header_js['inference_data'][sp]['vars'][var_name]['dims']:
-                        data[sp] = np.mean(self._inferencedata[array_name],axis=0).T
+                        data[sp] = np.mean(self._inferencedata[array_name],axis=0)
                     else:
                         data[sp] = self._inferencedata[array_name]
             return data
@@ -157,12 +163,38 @@ class Data(Data_Interface):
             if space in self._spaces and self._is_var_in_space(var_name,space):            
                 array_name = header_js['inference_data'][space]['array_names'][var_name]
                 if 'chain' in header_js['inference_data'][space]['vars'][var_name]['dims']:
-                    data = np.mean(self._inferencedata[array_name],axis=0).T
+                    data = np.mean(self._inferencedata[array_name],axis=0)
                 else:
                     data = self._inferencedata[array_name]
             return data
         else:
             raise ValueError("space argument of get_sample should be either a List of Strings or a String")
+
+    def get_range(self, var_name, space=['prior','posterior']):
+        """
+            Returns the range of samples of <var_name> variable of the given space(s).
+
+            Parameters:
+            --------
+                var_name      A String of the model's variables name
+                space         Either a List of Strings or a String with String in {'prior','posterior'}
+            Returns:
+            --------
+                Tuple (min,max)
+                                 
+        """
+        if self.get_var_type(var_name) == "observed":
+            if space == "posterior" and "posterior_predictive" in self.get_spaces():
+                space="posterior_predictive"
+            elif space == "prior" and "prior_predictive" in self.get_spaces():
+                space="prior_predictive"
+        data = self.get_samples(var_name, space) 
+        min=0
+        max=0
+        if data.size:
+            min = np.amin(data)
+            max = np.amax(data)
+        return (min - 0.1*(max-min),max + 0.1*(max-min))
 
     def get_varnames_per_graph_level(self):
         """
