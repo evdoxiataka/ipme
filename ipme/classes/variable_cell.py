@@ -74,16 +74,12 @@ class VariableCell(Cell):
         self._plot[space].xaxis.axis_label = ""
         self._plot[space].yaxis.visible = False            
         self._plot[space].toolbar.logo = None
-        # self._plot[space].y_range.only_visible = True
-        # self._plot[space].x_range.only_visible = True
         self._plot[space].xaxis[0].ticker.desired_num_ticks = 3    
         if self._mode == "i":    
             ##Events
             self._plot[space].on_event(events.Tap, partial(self._clear_selection_callback,space))             
             self._plot[space].on_event(events.SelectionGeometry, partial(self._selectionbox_callback,space))   
-            ##on_change  
-            # Cell._var_x_range[(space,self._name)].on_change('data',partial(self._var_x_range_callback, space))       
-        # Cell._sample_inds[space].on_change('data',partial(self._sample_inds_callback, space))
+        ##on_change  
         Cell._sample_inds_update[space].on_change('data',partial(self._sample_inds_callback, space))
         
     def initialize_cds(self,space):
@@ -172,34 +168,32 @@ class VariableCell(Cell):
             Callback called when an indexing dimension is set to 
             a new coordinate (e.g through indexing dimensions widgets).
         """         
-        print("ald",old,"new",new)
         if old == new:
-            return        
-        Cell._add_widget_threads(threading.Thread(target=partial(self._widget_callback_thread,new,w_title,space), daemon=True))
+            return  
+        Cell._add_widget_threads(threading.Thread(target=partial(self._widget_callback_thread, new, w_title, space), daemon=True))
         Cell._widget_lock_event.set()
         
     def _widget_callback_thread(self, new, w_title, space):
-        print("_widg_call")
         inds = -1
         w2_title = ""   
-        values = []          
-        w1_w2_idx_mapping = self._w1_w2_idx_mapping
-        w2_w1_idx_mapping = self._w2_w1_idx_mapping
-        w2_w1_val_mapping = self._w2_w1_val_mapping
+        values = []   
+        w1_w2_idx_mapping = Cell._get_w1_w2_idx_mapping()
+        w2_w1_val_mapping = Cell._get_w2_w1_val_mapping()  
+        w2_w1_idx_mapping = Cell._get_w2_w1_idx_mapping()
         widgets = self._widgets[space]       
         if space in w1_w2_idx_mapping and \
             w_title in w1_w2_idx_mapping[space]:
-            w2_title  = w1_w2_idx_mapping[space][w_title]
-            name = w_title+"_idx_"+w2_title
-            if name in self._idx_dims:
-                values = self._idx_dims[name].values
+            for w2_title in w1_w2_idx_mapping[space][w_title]:
+                name = w_title+"_idx_"+w2_title
+                if name in self._idx_dims:
+                    values = self._idx_dims[name].values
         elif w_title in self._idx_dims:
             values = self._idx_dims[w_title].values  
         elif space in w2_w1_idx_mapping and \
             w_title in w2_w1_idx_mapping[space]:
-            w1_idx = w2_w1_idx_mapping[space][w_title]
-            w1_value = widgets[w1_idx].value
-            values = w2_w1_val_mapping[space][w_title][w1_value]
+            for w1_idx in w2_w1_idx_mapping[space][w_title]:
+                w1_value = widgets[w1_idx].value
+                values = w2_w1_val_mapping[space][w_title][w1_value]
         inds = [i for i,v in enumerate(values) if v == new]
         if inds == -1 or len(inds) == 0:
             return

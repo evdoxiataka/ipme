@@ -12,15 +12,15 @@ from ..utils.constants import BORDER_COLORS
 
 class Cell(ABC):
     _data = None   
-    ##Threads 
     _num_cells = 0
+    _idx_widget_flag = False
+    ##threads lists    
     _selection_threads = {}
-    _sel_lock = threading.Lock()
-    _sel_lock_event = threading.Event()
     _space_threads = []
     _widget_threads = []
+    ##locks
+    _sel_lock = threading.Lock()
     _widget_lock = threading.Lock()
-    _widget_lock_event = threading.Event()
     _sample_inds_lock = threading.Lock()
     _sample_inds_update_lock = threading.Lock()
     _sel_var_inds_lock = threading.Lock()
@@ -29,7 +29,17 @@ class Cell(ABC):
     _var_x_range_lock = threading.Lock()
     _global_update_lock = threading.Lock()
     _space_lock = threading.Lock()
-    ##Interaction-related variables
+    _w1_w2_idx_mapping_lock = threading.Lock()
+    _w2_w1_idx_mapping_lock = threading.Lock()
+    _w2_w1_val_mapping_lock = threading.Lock()
+    ##events
+    _sel_lock_event = threading.Event()    
+    _widget_lock_event = threading.Event()
+    ##idx_widgets
+    _w1_w2_idx_mapping = {}
+    _w2_w1_idx_mapping = {}
+    _w2_w1_val_mapping = {}  
+    ##Interaction-related variables 
     _sample_inds = dict(prior=ColumnDataSource(data=dict(inds=[])), posterior=ColumnDataSource(data=dict(inds=[])))
     _sample_inds_update = dict(prior=ColumnDataSource(data=dict(updated=[False])), posterior=ColumnDataSource(data=dict(updated=[False])))
     _sel_var_inds = {}
@@ -73,10 +83,6 @@ class Cell(ABC):
 
         self._plot = {}
         self._widgets = {}
-        self._w1_w2_idx_mapping = {}
-        self._w2_w1_idx_mapping = {}
-        self._w2_w1_val_mapping = {}
-        # self._widgets_lock = threading.Lock()
 
         self._initialize_widgets()
         self._initialize_plot()
@@ -101,37 +107,89 @@ class Cell(ABC):
                 n1, n2, opt1, opt2 = get_dim_names_options(d_dim)               
                 self._widgets[space][n1] = Select(title=n1, value=opt1[0], options=opt1)                
                 self._widgets[space][n1].on_change("value", partial(self._widget_callback, w_title=n1, space=space))
-                # self._widgets[space][n1].on_change("value", partial(self._idx_widget_callback, w_title=n1, space=space))
                 if n1 not in self._cur_idx_dims_values:
                     inds=[i for i,v in enumerate(d_dim.values) if v == opt1[0]]
                     self._cur_idx_dims_values[n1] = inds
                 if n2:                  
                     self._widgets[space][n2] = Select(title=n2, value=opt2[0], options=opt2)
                     self._widgets[space][n2].on_change("value", partial(self._widget_callback, w_title=n2, space=space)) 
-                    self._w1_w2_idx_mapping[space] = {}
-                    self._w1_w2_idx_mapping[space][n1] = n2
-                    self._w2_w1_idx_mapping[space] = {}
-                    self._w2_w1_idx_mapping[space][n2] = n1
-                    self._w2_w1_val_mapping[space] = {}
-                    self._w2_w1_val_mapping[space][n2] = get_w2_w1_val_mapping(d_dim)
+                    Cell._idx_widgets_mapping(space, d_dim, n1, n2)
                     if n2 not in self._cur_idx_dims_values:
                         self._cur_idx_dims_values[n2] = [0]  
+    @staticmethod
+    def _idx_widgets_mapping(space, d_dim, w1_title, w2_title):
+        if space in Cell._w1_w2_idx_mapping:
+            if w1_title in Cell._w1_w2_idx_mapping[space]:
+                if w2_title not in Cell._w1_w2_idx_mapping[space][w1_title]:
+                    Cell._w1_w2_idx_mapping[space][w1_title].append(w2_title)
+            else:
+                Cell._w1_w2_idx_mapping[space][w1_title] = [w2_title]
+            if w2_title in Cell._w2_w1_idx_mapping[space]:
+                if w1_title not in  Cell._w2_w1_idx_mapping[space][w2_title]:
+                    Cell._w2_w1_idx_mapping[space][w2_title].append(w1_title)
+            else:
+                Cell._w2_w1_idx_mapping[space][w2_title] = [w1_title]
+            if w2_title not in Cell._w2_w1_val_mapping[space]:
+                Cell._w2_w1_val_mapping[space][w2_title] = get_w2_w1_val_mapping(d_dim)
+        else:
+            Cell._w1_w2_idx_mapping[space] = {}
+            Cell._w1_w2_idx_mapping[space][w1_title] = [w2_title]
+            Cell._w2_w1_idx_mapping[space] = {}
+            Cell._w2_w1_idx_mapping[space][w2_title] = [w1_title]
+            Cell._w2_w1_val_mapping[space] = {}
+            Cell._w2_w1_val_mapping[space][w2_title] = get_w2_w1_val_mapping(d_dim)
 
-    def _idx_widget_callback(self, attr, old, new, w_title, space):
-        # self._widgets_lock.acquire()
-        w1_w2_idx_mapping = self._w1_w2_idx_mapping
-        w2_w1_val_mapping = self._w2_w1_val_mapping
-        widgets = self._widgets[space]
-        # self._widgets_lock.release() 
-        if space in w1_w2_idx_mapping and \
-            w_title in w1_w2_idx_mapping[space]:
-            w2_n = w1_w2_idx_mapping[space][w_title]
-            opt2 = w2_w1_val_mapping[space][w2_n][new]
-            # self._widgets_lock.acquire()
-            self._widgets[space][w2_n].value = opt2[0]
-            self._widgets[space][w2_n].options = opt2
-            print("idx_widg", self._widgets[space][w2_n].value)
-            # self._widgets_lock.release()
+    @staticmethod
+    def _idx_widget_update(cells, cells_widgets, new, w_title, space):
+        w1_w2_idx_mapping = Cell._get_w1_w2_idx_mapping()
+        w2_w1_val_mapping = Cell._get_w2_w1_val_mapping()
+        if space in w1_w2_idx_mapping and w_title in w1_w2_idx_mapping[space]:
+            for w2_n in w1_w2_idx_mapping[space][w_title]:
+                opt2 = w2_w1_val_mapping[space][w2_n][new]
+                if w2_n in cells_widgets:
+                    for sp in cells_widgets[w2_n]:
+                        if len(cells_widgets[w2_n][sp]):
+                            c_id = cells_widgets[w2_n][sp][0]
+                            if c_id in cells:
+                                w = cells[c_id].get_widget(sp,w2_n)
+                                w.options = opt2
+                                Cell._idx_widget_flag=True
+                                w.value = opt2[0]
+                        break                
+
+    @staticmethod
+    def _menu_item_click_callback(cells, cells_widgets, space, w_id, attr, old, new):
+        if old == new:
+            return
+        flag = Cell._idx_widget_flag
+        if flag:
+            Cell._idx_widget_flag = False
+            Cell._widget_lock.acquire()
+            Cell._widget_threads.clear()
+            Cell._widget_lock.release()
+            return
+        num_widg = 0
+        if w_id in cells_widgets:
+            for sp in cells_widgets[w_id]:
+                num_widg += len(cells_widgets[w_id][sp])
+        num_widg_threads = 0        
+        while num_widg_threads < num_widg:
+            Cell._widget_lock_event.wait()
+            Cell._widget_lock_event.clear()
+            Cell._widget_lock.acquire()
+            num_widg_threads = len(Cell._widget_threads)            
+            Cell._widget_lock.release()        
+        Cell._widget_lock.acquire()
+        t_sel = Cell._widget_threads
+        Cell._widget_lock.release()
+        for t in t_sel:
+            t.start()
+        for t in t_sel:
+            t.join()
+        Cell._widget_lock.acquire()
+        Cell._widget_threads.clear()
+        Cell._widget_lock.release()
+        Cell._idx_widget_update(cells, cells_widgets, new, w_id, space)
 
     def _initialize_toggle_div(self):
         for space in self._spaces:            
@@ -209,7 +267,7 @@ class Cell(ABC):
     def get_spaces(self):
         return self._spaces
 
-    ## Threads-related methods
+    ##Threads-related methods
     @staticmethod
     def _space_threads_join():
         Cell._space_lock.acquire()
@@ -272,6 +330,30 @@ class Cell(ABC):
         sp_t = Cell._space_threads
         Cell._space_lock.release()   
         return sp_t
+
+    @staticmethod
+    def _get_w1_w2_idx_mapping():
+        w1_w2_idx_mapping = {}
+        Cell._w1_w2_idx_mapping_lock.acquire()
+        w1_w2_idx_mapping = Cell._w1_w2_idx_mapping
+        Cell._w1_w2_idx_mapping_lock.release()
+        return w1_w2_idx_mapping
+
+    @staticmethod
+    def _get_w2_w1_idx_mapping():
+        w2_w1_idx_mapping = {}
+        Cell._w2_w1_idx_mapping_lock.acquire()
+        w2_w1_idx_mapping = Cell._w2_w1_idx_mapping
+        Cell._w2_w1_idx_mapping_lock.release()
+        return w2_w1_idx_mapping
+
+    @staticmethod
+    def _get_w2_w1_val_mapping():
+        w2_w1_val_mapping = {}
+        Cell._w2_w1_val_mapping_lock.acquire()
+        w2_w1_val_mapping = Cell._w2_w1_val_mapping
+        Cell._w2_w1_val_mapping_lock.release()
+        return w2_w1_val_mapping
 
     @staticmethod
     def _add_widget_threads(t):

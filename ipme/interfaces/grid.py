@@ -52,6 +52,7 @@ class Grid(ABC):
                             self._cells_widgets[w_id][space].append(c_id)
                         else:
                             self._cells_widgets[w_id][space] = [c_id]
+                        # Cell._num_widgets[w_id] = Cell._num_widgets[w_id] + 1
                         ## Every new widget is linked to the corresponding widget (of same name) 
                         ## of the 1st space in self._cells_widgets[w_id]
                         ## Find target cell to link with current cell
@@ -65,7 +66,7 @@ class Grid(ABC):
                             self._link_widget_to_target(w, w_id, f_space) 
                         else:
                             w = self._cells[c_id].get_widget(space,w_id)
-                            w.on_change('value', partial(self._menu_item_click_callback, space, w_id))
+                            w.on_change('value', partial(Cell._menu_item_click_callback, self._cells, self._cells_widgets, space, w_id))
 
     def _link_widget_to_target(self, w, w_id, f_space):
         if len(self._cells_widgets[w_id][f_space]):
@@ -93,32 +94,6 @@ class Grid(ABC):
             if space not in self._plotted_widgets:
                 self._plotted_widgets[space] = {}  
             self._plotted_widgets[space]["resetButton"] = b
-
-    def _menu_item_click_callback(self, space, w_id, attr, old, new):
-        if old == new:
-            return
-        num_widg = 0
-        for space in self._cells_widgets[w_id]:
-            num_widg += len(self._cells_widgets[w_id][space])
-        num_widg_threads = 0        
-        while num_widg_threads < num_widg:
-            Cell._widget_lock_event.wait()
-            Cell._widget_lock_event.clear()
-            Cell._widget_lock.acquire()
-            num_widg_threads = len(Cell._widget_threads)
-            print(num_widg_threads)
-            Cell._widget_lock.release()
-        Cell._widget_lock.acquire()
-        t_sel = Cell._widget_threads
-        Cell._widget_lock.release()
-        for t in t_sel:
-            t.start()
-        for t in t_sel:
-            t.join()
-        print('joined')
-        Cell._widget_lock.acquire()
-        Cell._widget_threads = []
-        Cell._widget_lock.release()
 
     def _global_reset_callback(self, event):
         Cell._reset_sel_var_inds()
