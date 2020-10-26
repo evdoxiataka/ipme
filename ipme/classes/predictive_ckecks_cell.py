@@ -10,7 +10,7 @@ from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool, Legend, LegendItem
 
 class PredictiveChecksCell(Cell):
-    def __init__(self, name, mode, function='min'):
+    def __init__(self, name, mode, inter_contr, function='min'):
         """
             Parameters:
             --------
@@ -33,7 +33,7 @@ class PredictiveChecksCell(Cell):
         self._seg = {}
         self._pvalue = {} 
         self._pvalue_rec = {}        
-        Cell.__init__(self, name, mode) 
+        Cell.__init__(self, name, mode, inter_contr) 
 
     def _get_data_for_cur_idx_dims_values(self,space):
         """
@@ -44,13 +44,13 @@ class PredictiveChecksCell(Cell):
             --------
                 A Tuple (data,samples): data-> observed data and samples-> predictive samples.
         """ 
-        data = Cell._data.get_samples(self._name,'observed_data')
-        if Cell._data.get_var_type(self._name) == "observed":
-            if space == "posterior" and "posterior_predictive" in Cell._data.get_spaces():
+        data = self._ic._data.get_samples(self._name,'observed_data')
+        if self._ic._data.get_var_type(self._name) == "observed":
+            if space == "posterior" and "posterior_predictive" in self._ic._data.get_spaces():
                 space="posterior_predictive"
-            elif space == "prior" and "prior_predictive" in Cell._data.get_spaces():
+            elif space == "prior" and "prior_predictive" in self._ic._data.get_spaces():
                 space="prior_predictive"
-        samples = Cell._data.get_samples(self._name,space)            
+        samples = self._ic._data.get_samples(self._name,space)            
         return (data,samples)     
 
     def initialize_fig(self,space):        
@@ -62,7 +62,7 @@ class PredictiveChecksCell(Cell):
         self._plot[space].border_fill_color = BORDER_COLORS[0]
         self._plot[space].xaxis[0].ticker.desired_num_ticks = 3
         if self._mode == "i":
-            Cell._sample_inds[space].on_change('data',partial(self._sample_inds_callback, space))
+            self._ic._sample_inds[space].on_change('data',partial(self._sample_inds_callback, space))
     
     def initialize_cds(self,space):
         ## ColumnDataSource for full sample set
@@ -146,7 +146,7 @@ class PredictiveChecksCell(Cell):
         samples = self._samples[space].data['x']
         max_full_hist = self._source[space].data['top'].max()  
         if samples.size:            
-            inds=Cell._sample_inds[space].data['inds']
+            inds=self._ic._sample_inds[space].data['inds']
             if len(inds):
                 sel_sample = samples[inds]
                 if ~np.isfinite(sel_sample).all():
@@ -194,7 +194,7 @@ class PredictiveChecksCell(Cell):
         pass
 
     def _widget_callback(self, attr, old, new, w_title, space):
-        inds = Cell._data.get_indx_for_idx_dim(self._name, w_title, new)
+        inds = self._ic._data.get_indx_for_idx_dim(self._name, w_title, new)
         if inds==-1:
             return
         self._cur_idx_dims_values[w_title]=inds

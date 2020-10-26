@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from ..interfaces.cell import Cell
 from bokeh.models.widgets import Button
 from bokeh import events
 import threading
@@ -7,14 +6,15 @@ from functools import partial
 #import pyautogui
 
 class Grid(ABC): 
-    def __init__(self, data_obj, mode):
+    def __init__(self, inter_contr, mode):
         """
             Parameters:
             --------
-                data_obj                A Data object.      
+                inter_contr             A IC object.      
                 mode                    A String in {"i","s"}, "i":interactive, "s":static.     
             Sets:
             --------
+                _ic
                 _data                    
                 _mode                                 
                 _grids                  A Dict of pn.GridSpec objects 
@@ -26,8 +26,9 @@ class Grid(ABC):
                 _cells_widgets          A Dict dict1 of the form (key1,value1) = (<widget_name>, dict2)
                                         dict2 of the form (key1,value1) = (<space>, List of <cell_name>).
                 _plotted_widgets        A Dict of the form {<space>: List of widget objects to be plotted} .
-        """
-        self._data = data_obj  
+        """ 
+        self._ic = inter_contr
+        self._data = inter_contr._data 
         self._mode = mode
         self._grids = {}
         self._cells = {}
@@ -66,7 +67,7 @@ class Grid(ABC):
                             self._link_widget_to_target(w, w_id, f_space) 
                         else:
                             w = self._cells[c_id].get_widget(space,w_id)
-                            w.on_change('value', partial(Cell._menu_item_click_callback, self._cells, self._cells_widgets, space, w_id))
+                            w.on_change('value', partial(self._ic._menu_item_click_callback, self._cells, self._cells_widgets, space, w_id))
 
     def _link_widget_to_target(self, w, w_id, f_space):
         if len(self._cells_widgets[w_id][f_space]):
@@ -96,19 +97,19 @@ class Grid(ABC):
             self._plotted_widgets[space]["resetButton"] = b
 
     def _global_reset_callback(self, event):
-        Cell._reset_sel_var_inds()
-        Cell._reset_sel_space()  
-        Cell._reset_sel_var_idx_dims_values()
-        Cell._reset_var_x_range() 
-        Cell._set_global_update(True)     
+        self._ic._reset_sel_var_inds()
+        self._ic._reset_sel_space()  
+        self._ic._reset_sel_var_idx_dims_values()
+        self._ic._reset_var_x_range() 
+        self._ic._set_global_update(True)     
         for sp in self._spaces:  
-            Cell._add_space_threads(threading.Thread(target=partial(self._global_reset_thread,sp), daemon=True)) 
-        Cell._space_threads_join()
-        Cell._set_global_update(False) 
+            self._ic._add_space_threads(threading.Thread(target=partial(self._global_reset_thread,sp), daemon=True)) 
+        self._ic._space_threads_join()
+        self._ic._set_global_update(False) 
 
     def _global_reset_thread(self,space):
-        Cell._reset_sample_inds(space)
-        Cell._selection_threads_join(space)
+        self._ic._reset_sample_inds(space)
+        self._ic._selection_threads_join(space)
 
     @abstractmethod
     def _create_grids(self):
