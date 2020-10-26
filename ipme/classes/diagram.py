@@ -1,7 +1,7 @@
 from .data import Data
-from ..interfaces.cell import Cell
 from .graph import Graph
 from .predictive_ckecks import PredictiveChecks
+from .interaction_control import IC
 
 import panel as pn
 
@@ -21,17 +21,15 @@ class Diagram():
                 _plotted_widgets        A List of widget objects to be plotted.
                 _diagram                A Panel component object to visualize diagram.
         """
-        self._data = Data(data_path) 
+        self._ic = IC(Data(data_path))
         if mode not in ["s","i"]:
             raise ValueError("ValueError: mode should take a value in {'i','s'}")
         self._mode = mode
         self._pred_checks = predictive_checks
-        Cell._data = self._data
         self._graph = self._create_graph()
         self._predictive_checks_grid = self._create_pred_checks_grid()
         self._diagram = self._create_diagram()     
         
-
     def _create_graph(self):
         """
             Creates a Graph object representing the model as a 
@@ -42,7 +40,7 @@ class Diagram():
             --------
                 _graph      A Graph object.
         """ 
-        return Graph(self._data, self._mode)
+        return Graph( self._ic, self._mode)
 
     def _create_pred_checks_grid(self):
         """
@@ -55,7 +53,7 @@ class Diagram():
             --------
                 _predictive_checks_grid      A PredictiveChecks object.
         """ 
-        return PredictiveChecks(self._data, self._mode, self._pred_checks)
+        return PredictiveChecks(self._ic, self._mode, self._pred_checks)
 
     def _create_diagram(self):
         """
