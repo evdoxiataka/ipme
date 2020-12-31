@@ -1,4 +1,4 @@
-import pandas as pd
+# import pandas as pd
 import numpy as np
 import json
 
@@ -17,12 +17,12 @@ class Data(Data_Interface):
                 _inferencedata      A structure of the inference data.
                 _graph              A structure of the  model's variables graph data.
                 _observed_variables A List of Strings of the observed variables.
-                _idx_dimensions     A List of Dimension Objects defining 
-                                    the indexing dimensions of the data. 
-                _spaces             A List of Strings in {'prior', 'posterior'} of all  
-                                    the available MCMC sample spaces in the inference data        
+                _idx_dimensions     A List of Dimension Objects defining
+                                    the indexing dimensions of the data.
+                _spaces             A List of Strings in {'prior', 'posterior'} of all
+                                    the available MCMC sample spaces in the inference data
         """
-        Data_Interface.__init__(self, inference_path) 
+        Data_Interface.__init__(self, inference_path)
 
     def _load_inference_data(self,datapath):
         """
@@ -34,7 +34,7 @@ class Data(Data_Interface):
             Returns:
             --------
                 A Dictionary of inference data
-        """   
+        """
         try:
             return np.load(datapath)
         except IOError:
@@ -43,7 +43,7 @@ class Data(Data_Interface):
 
     def _get_graph(self):
         """
-            A graph of the probabilistic model in json format is 
+            A graph of the probabilistic model in json format is
             retrieved from inference data.
 
             Returns:
@@ -52,7 +52,7 @@ class Data(Data_Interface):
         """
         graph=""
         try:
-            header = self._inferencedata['header.json']            
+            header = self._inferencedata['header.json']
             header_js = json.loads(header)
             graph = header_js["inference_data"]["sample_stats"]["attrs"]["graph"]
         except KeyError:
@@ -69,29 +69,29 @@ class Data(Data_Interface):
             Returns:
             --------
                 idx_dimensions      A Dict {<var_name>: List of Dimension objects}
-        """ 
+        """
         idx_dimensions={}
         for k,v in self._graph.items():
             if not k.endswith("__"):
-                idx_dimensions[v["name"]]={}
-                vdims=v["dims"] 
-                vcoords=v["coords"]
+                idx_dimensions[v["name"]] = {}
+                vdims = v["dims"]
+                vcoords = v["coords"]
                 for d in vdims:
                     if d in vcoords:
-                        idx_dimensions[v["name"]][d] = Dimension(d, values=vcoords[d])
+                        idx_dimensions[v["name"]][d] = Dimension(d, values = vcoords[d])
         return idx_dimensions
 
     def _get_spaces_from_data(self):
         """
             Returns:
             --------
-                spaces    A List of Strings in {'prior','posterior','prior_predictive','posterior_predictive','observed_data', 
+                spaces    A List of Strings in {'prior','posterior','prior_predictive','posterior_predictive','observed_data',
                           'constant_data', 'sample_stats', 'log_likelihood', 'predictions', 'predictions_constant_data'}
-        """ 
-        spaces=[]        
-        if 'header.json' in self._inferencedata:    
+        """
+        spaces=[]
+        if 'header.json' in self._inferencedata:
             header=self._inferencedata['header.json']
-            header_js=json.loads(header)
+            header_js = json.loads(header)
             if 'inference_data' in header_js:
                 for space in ['prior','posterior','prior_predictive','posterior_predictive','observed_data','constant_data', 'sample_stats', 'log_likelihood', 'predictions', 'predictions_constant_data']:
                     if space in header_js['inference_data']:
@@ -104,22 +104,28 @@ class Data(Data_Interface):
         else:
             return False
 
-    def get_var_type(self,var_name):
+    def get_var_type(self, var_name):
+        """"
+            Return any in {"observed","free","deterministic"}
+        """
         return self._graph[var_name]["type"]
 
-    def get_var_dist(self,var_name):
+    def get_var_dist(self, var_name):
         if "dist" in self._graph[var_name]["distribution"]:
             return self._graph[var_name]["distribution"]["dist"]
         else:
             return self._graph[var_name]["type"]
 
-    def get_var_dist_type(self,var_name):
+    def get_var_dist_type(self, var_name):
+        """"
+            Return any in {"Continuous","Discrete"}
+        """
         if "type" in self._graph[var_name]["distribution"]:
             return self._graph[var_name]["distribution"]["type"]
         else:
             return ""
 
-    def get_var_parents(self,var_name):
+    def get_var_parents(self, var_name):
         if "parents" in self._graph[var_name]:
             return self._graph[var_name]["parents"]
         else:
@@ -135,23 +141,23 @@ class Data(Data_Interface):
                 space         Either a List of Strings or a String with String in {'prior','posterior'}
             Returns:
             --------
-                A Dictionary of the form { <space> : <samples> }  
+                A Dictionary of the form { <space> : <samples> }
                 <space>    A String from {"prior", "posterior"}
                 <samples>  A numpy.ndarray of <space> samples of the <var_name> parameter.
                             e.g. PyMC3 shape=N, sample=M
-                                for i in M 
+                                for i in M
                                      for j in N:
                                         Element (i,j) = (ith sample, jth prior/posterior distribution draw).
                 If a String of space is given, it returns the numpy.ndarray.
-                                 
+
         """
         array_name=""
         header = self._inferencedata['header.json']
         header_js=json.loads(header)
         if isinstance(space, list):
             data = {}
-            for sp in space:    
-                if sp in self._spaces and self._is_var_in_space(var_name,sp):            
+            for sp in space:
+                if sp in self._spaces and self._is_var_in_space(var_name,sp):
                     array_name = header_js['inference_data'][sp]['array_names'][var_name]
                     if 'chain' in header_js['inference_data'][sp]['vars'][var_name]['dims']:
                         data[sp] = np.mean(self._inferencedata[array_name],axis=0)
@@ -159,8 +165,8 @@ class Data(Data_Interface):
                         data[sp] = self._inferencedata[array_name]
             return data
         elif isinstance(space, str):
-            data = np.asarray([])            
-            if space in self._spaces and self._is_var_in_space(var_name,space):            
+            data = np.asarray([])
+            if space in self._spaces and self._is_var_in_space(var_name,space):
                 array_name = header_js['inference_data'][space]['array_names'][var_name]
                 if 'chain' in header_js['inference_data'][space]['vars'][var_name]['dims']:
                     data = np.mean(self._inferencedata[array_name],axis=0)
@@ -181,14 +187,14 @@ class Data(Data_Interface):
             Returns:
             --------
                 Tuple (min,max)
-                                 
+
         """
         if self.get_var_type(var_name) == "observed":
             if space == "posterior" and "posterior_predictive" in self.get_spaces():
                 space="posterior_predictive"
             elif space == "prior" and "prior_predictive" in self.get_spaces():
                 space="prior_predictive"
-        data = self.get_samples(var_name, space) 
+        data = self.get_samples(var_name, space)
         min=0
         max=0
         if data.size:
@@ -206,7 +212,7 @@ class Data(Data_Interface):
                 Level 0 corresponds to the higher level.
                 {<level>: List of variable names}, level=0,1,2...
         """
-        nodes=self._add_nodes_to_graph(self._get_observed_nodes(), 0)    
+        nodes=self._add_nodes_to_graph(self._get_observed_nodes(), 0)
         return self._reverse_nodes_levels(nodes)
 
     def _is_var_in_space(self, var_name, space):
@@ -219,7 +225,7 @@ class Data(Data_Interface):
                 space          A String in {'prior','posterior','posterior_predictive','prior_predictive'}.
             Returns:
             --------
-                A Boolean                                 
+                A Boolean
         """
         header = self._inferencedata['header.json']
         header_js = json.loads(header)
@@ -243,7 +249,7 @@ class Data(Data_Interface):
             return [v for k,v in self._graph.items() if v['type'] == 'observed']
         except KeyError:
             print("Graph has no key 'type'")
-            return None        
+            return None
 
     def _get_graph_nodes(self,varnames):
         """
@@ -266,7 +272,7 @@ class Data(Data_Interface):
     @staticmethod
     def _reverse_nodes_levels(nodes):
         """
-            Reverses the nodes' levels so that level 0 corresponds 
+            Reverses the nodes' levels so that level 0 corresponds
             to the highest grid row.
 
             Parameters:
@@ -286,7 +292,7 @@ class Data(Data_Interface):
             Parameters:
             --------
                 level_nodes    A List of nodes (dict) of the same graph <level>.
-                level          An Int denoting the level of the graph 
+                level          An Int denoting the level of the graph
                                where <level_nodes> belong to.
             Returns:
             --------
@@ -298,7 +304,7 @@ class Data(Data_Interface):
         try:
             for v in level_nodes:
                 if level in nodes and v['name'] not in nodes[level]:
-                    nodes[level].append(v['name'])                
+                    nodes[level].append(v['name'])
                 else:
                     nodes[level]=[v['name']]
 
@@ -311,7 +317,7 @@ class Data(Data_Interface):
                                 if n not in nodes[k]:
                                     nodes[k].append(n)
                         else:
-                            nodes[k]=par_nodes[k]          
+                            nodes[k]=par_nodes[k]
             return nodes
         except KeyError:
             print("Graph node has no key 'name' or 'parents' ")

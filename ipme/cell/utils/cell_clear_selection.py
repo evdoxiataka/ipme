@@ -1,14 +1,20 @@
+from ...utils.functions import find_highest_point
+from ...utils.js_code import HOVER_CODE
+from bokeh.models import HoverTool, CustomJS
+
 class CellClearSelection():
 
+    @staticmethod
     def initialize_glyphs_x_button(variableCell, space):
         ## x-button to clear selection
-        sq_x=variableCell._plot[space].scatter('x', 'y', marker="square_x", size=10, fill_color="grey", hover_fill_color="firebrick", \
-                                               fill_alpha=0.5, hover_alpha=1.0, line_color="grey", hover_line_color="white", \
-                                               source=variableCell._clear_selection[space], name='clear_selection')
+        sq_x = variableCell._plot[space].scatter('x', 'y', marker = "square_x", size = 10, fill_color = "grey", hover_fill_color = "firebrick", \
+                                               fill_alpha = 0.5, hover_alpha = 1.0, line_color = "grey", hover_line_color = "white", \
+                                               source = variableCell._clear_selection[space], name = 'clear_selection')
         ## Add HoverTool for x-button
-        variableCell._plot[space].add_tools(HoverTool(tooltips="Clear Selection", renderers=[sq_x], mode='mouse', show_arrow=False,
-                                                      callback=CustomJS(args=dict(source=variableCell._clear_selection[space]), code=HOVER_CODE)))
+        variableCell._plot[space].add_tools(HoverTool(tooltips = "Clear Selection", renderers = [sq_x], mode = 'mouse', show_arrow = False,
+                                                      callback = CustomJS(args = dict(source = variableCell._clear_selection[space]), code = HOVER_CODE)))
 
+    @staticmethod
     def update_clear_selection_cds(variableCell, space):
         """
             Updates clear_selection ColumnDataSource (cds).
@@ -22,12 +28,11 @@ class CellClearSelection():
             max_x_range = var_x_range[(space, variableCell._name)].data['xmax'][0]
             hp = find_highest_point(variableCell._reconstructed[space].data['x'], variableCell._reconstructed[space].data['y'])
             if not hp:
-                hp=find_highest_point(variableCell._selection[space].data['x'], variableCell._selection[space].data['y'])
+                hp = find_highest_point(variableCell._selection[space].data['x'], variableCell._selection[space].data['y'])
                 if not hp:
-                    hp=find_highest_point(variableCell._source[space].data['x'], variableCell._source[space].data['y'])
+                    hp = find_highest_point(variableCell._source[space].data['x'], variableCell._source[space].data['y'])
                     if not hp:
-                        hp=(0,0)
-            variableCell._clear_selection[space].data = dict(x=[(max_x_range + min_x_range) / 2.], \
-                                                             y=[hp[1]+hp[1]*0.1], isIn=[0])
+                        hp = (0,0)
+            variableCell._clear_selection[space].data = dict( x = [(max_x_range + min_x_range) / 2.], y = [hp[1]+hp[1]*0.1], isIn = [0])
         else:
-            variableCell._clear_selection[space].data=dict(x=[], y=[], isIn=[])
+            variableCell._clear_selection[space].data = dict( x = [], y = [], isIn = [])

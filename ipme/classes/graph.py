@@ -1,22 +1,23 @@
 from ..interfaces.grid import Grid
-from .variable_cell import VariableCell
+from ..cell.interactive_continuous_cell import InteractiveContinuousCell, InteractiveDiscreteCell, StaticContinuousCell, StaticDiscreteCell
+
 from ..utils.constants import MAX_NUM_OF_COLS_PER_ROW, MAX_NUM_OF_VARS_PER_ROW, COLS_PER_VAR
 import panel as pn
 
 class Graph(Grid):
-    def _create_grids(self): 
+    def _create_grids(self):
         """
-            Creates one Cell object per variable. Cell object is the smallest  
+            Creates one Cell object per variable. Cell object is the smallest
             visualization unit in the grid. Moreover, it creates one Panel GridSpec
             object per space.
 
             Sets:
             --------
                 _cells      A Dict {<var_name>:Cell object}.
-                _grids      A Dict of pn.GridSpec objects: 
+                _grids      A Dict of pn.GridSpec objects:
                             {<space>:pn.GridSpec}
-        """ 
-        graph_grid_map = self._create_graph_grid_mapping() 
+        """
+        graph_grid_map = self._create_graph_grid_mapping()
         for row, map_data in graph_grid_map.items():
             level = map_data[0]
             vars_list = map_data[1]
@@ -25,14 +26,21 @@ class Graph(Grid):
                 level_previous = graph_grid_map[row-1][0]
             if level != level_previous:
                 col = int((MAX_NUM_OF_COLS_PER_ROW - len(vars_list)*COLS_PER_VAR) / 2.)
-            else: 
+            else:
                 col = int((MAX_NUM_OF_COLS_PER_ROW - MAX_NUM_OF_VARS_PER_ROW*COLS_PER_VAR) / 2.)
             for i,var_name in enumerate(vars_list):
-                start_point = ( row, int(col + i*COLS_PER_VAR) )  
+                start_point = ( row, int(col + i*COLS_PER_VAR) )
                 end_point = ( row+1, int(col + (i+1)*COLS_PER_VAR) )
                 #col_l = int(col_f + (i+1)*COLS_PER_VAR)
-                grid_bgrd_col = level    
-                c = VariableCell(var_name, self._mode, self._ic)                         
+                # grid_bgrd_col = level
+                if self._mode == "i" and self._data.get_var_dist_type() == "Continuous":
+                    c = InteractiveContinuousCell(var_name, self._ic)
+                elif self._mode == "i" and self._data.get_var_dist_type() == "Discrete":
+                    c = InteractiveDiscreteCell(var_name, self._ic)
+                elif self._mode == "s" and self._data.get_var_dist_type() == "Continuous":
+                    c = StaticContinuousCell(var_name, self._ic)
+                elif self._mode == "s" and self._data.get_var_dist_type() == "Discrete":
+                    c = StaticDiscreteCell(var_name, self._ic)
                 self._cells[var_name] = c
                 ##Add to grid
                 cell_spaces = c.get_spaces()
@@ -40,20 +48,19 @@ class Graph(Grid):
                     if space not in self._spaces:
                         self._spaces.append(space)
                     if space not in self._grids:
-                        self._grids[space] = pn.GridSpec(sizing_mode='stretch_both')
-                    self._grids[space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = pn.Column(c.get_plot(space), \
-                    width=220, height=220)
+                        self._grids[space] = pn.GridSpec(sizing_mode = 'stretch_both')
+                    self._grids[space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = pn.Column(c.get_plot(space), width=220, height=220)
         self._ic._num_cells = len(self._cells)
 
     def _create_graph_grid_mapping(self):
         """
-            Maps the graph levels and the variables to Panel GridSpec rows/cols. 
+            Maps the graph levels and the variables to Panel GridSpec rows/cols.
             Both <grid_row>=0 and <graph_level>=0 correspond to higher row/level.
 
             Returns:
             --------
-                A Dict {<grid_row>: (<graph_level>, List of varnames) } 
-        """ 
+                A Dict {<grid_row>: (<graph_level>, List of varnames) }
+        """
         _varnames_per_graph_level = self._data.get_varnames_per_graph_level()
         num_of_vars_per_graph_level = [len(_varnames_per_graph_level[k]) for k in sorted(_varnames_per_graph_level)]
         graph_grid_map = {}
