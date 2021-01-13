@@ -58,7 +58,7 @@ class CellDiscreteHandler:
         CellDiscreteHandler.initialize_fig(variableCell, space)
         ##Events
         variableCell.plot[space].on_event(events.Tap, partial(CellClearSelection.clear_selection_callback, space))
-        variableCell.plot[space].on_event(events.SelectionGeometry, partial(variableCell.selectionbox_callback, space))
+        variableCell.plot[space].on_event(events.SelectionGeometry, partial(CellDiscreteHandler.selectionbox_callback, space))
         ##on_change
         variableCell.ic.sample_inds_update[space].on_change('data', partial(variableCell.sample_inds_callback, space))
 
@@ -118,6 +118,31 @@ class CellDiscreteHandler:
             variableCell.source[space].data = pmf(samples)
 
     ## ONLY FOR INTERACTIVE CASE
+    @staticmethod
+    def selectionbox_callback(variableCell, space, event):
+        """
+            Callback called when selection box is drawn.
+        """
+        xmin = event.geometry['x0']
+        xmax = event.geometry['x1']
+        variableCell.ic._set_selection(variableCell.name, space, (xmin, xmax), variableCell.cur_idx_dims_values)
+        for sp in variableCell.spaces:
+            samples = variableCell.samples[sp].data['x']
+            variableCell.ic.add_space_threads(threading.Thread(target = partial(CellDiscreteHandler._selectionbox_space_thread, variableCell, sp, samples, xmin, xmax), daemon = True))
+        variableCell.ic.space_threads_join()
+
+    @staticmethod
+    def _selectionbox_space_thread(variableCell, space, samples, xmin, xmax):
+        x_range = variableCell.ic.get_var_x_range(space, variableCell.name)
+        if len(x_range):
+            variableCell.update_selection_cds(space, x_range[0], x_range[1])
+        else:
+            variableCell.selection[space].data = dict(x = np.array([]), y = np.array([]), y0 = np.array([]))
+        inds = find_indices(samples, lambda e: xmin <= e <= xmax, xmin, xmax)
+        variableCell.ic.set_sel_var_inds(space, variableCell.name, inds)
+        variableCell.compute_intersection_of_samples(space)
+        variableCell.ic.selection_threads_join(space)
+
     @staticmethod
     def update_source_cds_interactive(variableCell, space):
         """

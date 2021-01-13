@@ -48,7 +48,7 @@ class IC:
         self.sample_inds_update = dict(prior = ColumnDataSource(data = dict(updated = [False])), posterior = ColumnDataSource(data = dict(updated = [False])))
         self._sel_var_inds = {}
         self._sel_space = ""
-        self._sel_var_idx_dims_values = {}
+        self.sel_var_idx_dims_values = {}
         self.var_x_range = {}
         self._global_update = False
 
@@ -222,7 +222,7 @@ class IC:
         isup = self._get_sample_inds_update(space)
         self._set_sample_inds_update(space,dict(updated = [not isup]))
 
-    def get_sample_inds(self, space=None):
+    def get_sample_inds(self, space = None):
         inds = []
         self._sample_inds_lock.acquire()
         if space in self._sample_inds:
@@ -293,28 +293,28 @@ class IC:
 
     def _set_sel_var_idx_dims_values(self, var_name, dict_data):
         self._sel_var_idx_dims_values_lock.acquire()
-        self._sel_var_idx_dims_values[var_name] = dict_data
+        self.sel_var_idx_dims_values[var_name] = dict_data
         self._sel_var_idx_dims_values_lock.release()
 
     def _reset_sel_var_idx_dims_values(self):
         self._sel_var_idx_dims_values_lock.acquire()
-        self._sel_var_idx_dims_values = {}
+        self.sel_var_idx_dims_values = {}
         self._sel_var_idx_dims_values_lock.release()
 
     def get_sel_var_idx_dims_values(self, var_name=None):
         idx_v = {}
         self._sel_var_idx_dims_values_lock.acquire()
-        if var_name in self._sel_var_idx_dims_values:
-            idx_v = self._sel_var_idx_dims_values[var_name]
+        if var_name in self.sel_var_idx_dims_values:
+            idx_v = self.sel_var_idx_dims_values[var_name]
         else:
-            idx_v = self._sel_var_idx_dims_values
+            idx_v = self.sel_var_idx_dims_values
         self._sel_var_idx_dims_values_lock.release()
         return idx_v
 
     def delete_sel_var_idx_dims_values(self, var_name):
         self._sel_var_idx_dims_values_lock.acquire()
-        if var_name in self._sel_var_idx_dims_values:
-            del self._sel_var_idx_dims_values[var_name]
+        if var_name in self.sel_var_idx_dims_values:
+            del self.sel_var_idx_dims_values[var_name]
         self._sel_var_idx_dims_values_lock.release()
 
     def set_var_x_range(self, space, var_name, dict_data):

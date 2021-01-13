@@ -24,6 +24,11 @@ class CellContinuousHandler:
         variableCell.plot[space].line('x', 'y', line_color = COLORS[2], line_width = 2, source = variableCell.selection[space])
         variableCell.plot[space].dash('x', 'y', size='size', angle = 90.0, angle_units = 'deg', line_color = COLORS[0], source = variableCell.samples[space])
         variableCell.plot[space].dash('x', 'y', size='size', angle = 90.0, angle_units = 'deg', line_color = COLORS[1], source = variableCell.sel_samples[space])
+        #########TEST#######
+        ##Tooltips
+        TOOLTIPS = [("x", "@x"), ("y","@y"),]
+        hover = HoverTool( tooltips = TOOLTIPS, renderers = [so,re], mode = 'mouse')
+        variableCell.plot[space].tools.append(hover)
         return (so,re)
 
     @staticmethod
@@ -31,9 +36,10 @@ class CellContinuousHandler:
         so,re = CellContinuousHandler.initialize_glyphs(variableCell, space)
         ##Add BoxSelectTool
         variableCell.plot[space].add_tools(BoxSelectTool(dimensions = 'width', renderers = [so]))
-        TOOLTIPS = [("x", "@x"), ("y","@y"),]
-        hover = HoverTool( tooltips = TOOLTIPS, renderers = [so,re], mode = 'mouse')
-        variableCell.plot[space].tools.append(hover)
+        # ##Tooltips
+        # TOOLTIPS = [("x", "@x"), ("y","@y"),]
+        # hover = HoverTool( tooltips = TOOLTIPS, renderers = [so,re], mode = 'mouse')
+        # variableCell.plot[space].tools.append(hover)
 
     @staticmethod
     def initialize_glyphs_static(variableCell, space):
@@ -54,7 +60,7 @@ class CellContinuousHandler:
         CellContinuousHandler.initialize_fig(variableCell, space)
         ##Events
         variableCell.plot[space].on_event(events.Tap, partial(CellClearSelection.clear_selection_callback, space))
-        variableCell.plot[space].on_event(events.SelectionGeometry, partial(variableCell.selectionbox_callback, space))
+        variableCell.plot[space].on_event(events.SelectionGeometry, partial(CellContinuousHandler.selectionbox_callback, space))
         ##on_change
         variableCell.ic.sample_inds_update[space].on_change('data', partial(variableCell.sample_inds_callback, space))
 
@@ -120,6 +126,31 @@ class CellContinuousHandler:
             variableCell.samples[space].data = dict( x = samples, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(samples)), size = np.asarray([RUG_SIZE]*len(samples)))
 
     ## ONLY FOR INTERACTIVE CASE
+    @staticmethod
+    def selectionbox_callback(variableCell, space, event):
+        """
+            Callback called when selection box is drawn.
+        """
+        xmin = event.geometry['x0']
+        xmax = event.geometry['x1']
+        variableCell.ic._set_selection(variableCell.name, space, (xmin, xmax), variableCell.cur_idx_dims_values)
+        for sp in variableCell.spaces:
+            samples = variableCell.samples[sp].data['x']
+            variableCell.ic.add_space_threads(threading.Thread(target = partial(CellContinuousHandler._selectionbox_space_thread, variableCell, sp, samples, xmin, xmax), daemon = True))
+        variableCell.ic.space_threads_join()
+
+    @staticmethod
+    def _selectionbox_space_thread(variableCell, space, samples, xmin, xmax):
+        x_range = variableCell.ic.get_var_x_range(space, variableCell.name)
+        if len(x_range):
+            variableCell.update_selection_cds(space, x_range[0], x_range[1])
+        else:
+            variableCell.selection[space].data = dict(x = np.array([]), y = np.array([]))
+        inds = find_indices(samples, lambda e: xmin <= e <= xmax, xmin, xmax)
+        variableCell.ic.set_sel_var_inds(space, variableCell.name, inds)
+        variableCell.compute_intersection_of_samples(space)
+        variableCell.ic.selection_threads_join(space)
+
     @staticmethod
     def update_source_cds_interactive(variableCell, space):
         """

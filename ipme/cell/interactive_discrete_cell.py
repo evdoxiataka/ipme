@@ -11,6 +11,10 @@ class InteractiveDiscreteCell(VariableCell):
                 name            A String within the set {"<variableName>"}.
                 control         A Control object
         """
+        self.selection = {}
+        self.sel_samples = {}
+        self.reconstructed = {}
+        self.x_range = {}
         self.clear_selection = {}
         VariableCell.__init__(self, name, control)
 
@@ -39,3 +43,15 @@ class InteractiveDiscreteCell(VariableCell):
 
     def update_reconstructed_cds(self, space):
         CellDiscreteHandler.update_reconstructed_cds_interactive(self, space)
+
+    def get_max_prob(self, space):
+        """
+            Gets highest point --max probability-- of cds
+        """
+        max_sv = -1
+        max_rv = -1
+        if self.source[space].data['y'].size:
+            max_sv = self.source[space].data['y'].max()
+        if self.reconstructed[space].data['y'].size:
+            max_rv = self.reconstructed[space].data['y'].max()
+        return max([max_sv,max_rv])
