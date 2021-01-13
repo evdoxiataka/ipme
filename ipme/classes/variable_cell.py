@@ -41,12 +41,12 @@ class VariableCell(Cell):
             sets an entry into self._all_samples Dict.
         """
         space_gsam = space
-        if self._data.get_var_type(self._name) == "observed":
+        if self._data.get_var_type(self.name) == "observed":
             if space == "posterior" and "posterior_predictive" in self._data.get_spaces():
                 space_gsam="posterior_predictive"
             elif space == "prior" and "prior_predictive" in self._data.get_spaces():
                 space_gsam="prior_predictive"
-        self._all_samples[space] = self._data.get_samples(self._name, space_gsam).T
+        self._all_samples[space] = self._data.get_samples(self.name, space_gsam).T
         # compute x_range
         self._x_range[space] = find_x_range(self._all_samples[space])
 
@@ -63,24 +63,24 @@ class VariableCell(Cell):
             data =  self._all_samples[space]
         else:
             raise ValueError
-        for dim_name,dim_value in self._cur_idx_dims_values.items():
+        for dim_name,dim_value in self.cur_idx_dims_values.items():
             data = data[dim_value]
         return np.squeeze(data).T
 
     def initialize_fig(self,space):
-        self._plot[space]=figure( x_range = self._x_range[space], tools="wheel_zoom,reset,box_zoom", toolbar_location='right',
-                            plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT,  sizing_mode=SIZING_MODE)
-        self._plot[space].border_fill_color = BORDER_COLORS[0]
-        self._plot[space].xaxis.axis_label = ""
-        self._plot[space].yaxis.visible = False
-        self._plot[space].toolbar.logo = None
-        self._plot[space].xaxis[0].ticker.desired_num_ticks = 3
+        self.plot[space]=figure(x_range = self._x_range[space], tools="wheel_zoom,reset,box_zoom", toolbar_location='right',
+                                plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT, sizing_mode=SIZING_MODE)
+        self.plot[space].border_fill_color = BORDER_COLORS[0]
+        self.plot[space].xaxis.axis_label = ""
+        self.plot[space].yaxis.visible = False
+        self.plot[space].toolbar.logo = None
+        self.plot[space].xaxis[0].ticker.desired_num_ticks = 3
         if self._mode == "i":
             ##Events
-            self._plot[space].on_event(events.Tap, partial(self._clear_selection_callback,space))
-            self._plot[space].on_event(events.SelectionGeometry, partial(self._selectionbox_callback,space))
+            self.plot[space].on_event(events.Tap, partial(self._clear_selection_callback, space))
+            self.plot[space].on_event(events.SelectionGeometry, partial(self._selectionbox_callback, space))
         ##on_change
-        self._ic._sample_inds_update[space].on_change('data',partial(self._sample_inds_callback, space))
+        self.ic._sample_inds_update[space].on_change('data', partial(self._sample_inds_callback, space))
 
     def initialize_cds(self,space):
         samples = self._get_data_for_cur_idx_dims_values(space)
@@ -99,7 +99,7 @@ class VariableCell(Cell):
             self._selection[space] = ColumnDataSource(data=dict(x=np.array([]),y=np.array([])))
             self._reconstructed[space] = ColumnDataSource(data=dict(x=np.array([]),y=np.array([])))
         self._clear_selection[space] = ColumnDataSource(data=dict(x=[],y=[],isIn=[]))
-        self._ic._var_x_range[(space,self._name)] = ColumnDataSource(data=dict(xmin=np.array([]),xmax=np.array([])))
+        self.ic._var_x_range[(space, self.name)] = ColumnDataSource(data=dict(xmin=np.array([]), xmax=np.array([])))
 
     def initialize_glyphs(self,space):
         if self._type == "Discrete":
@@ -110,54 +110,54 @@ class VariableCell(Cell):
             self.initialize_glyphs_x_button(space)
 
     def initialize_glyphs_discrete(self,space):
-        so_seg=self._plot[space].segment(x0 = 'x', y0 ='y0', x1='x', y1='y', source=self._source[space], \
+        so_seg=self.plot[space].segment(x0 ='x', y0 ='y0', x1='x', y1='y', source=self._source[space], \
                                         line_alpha=1.0, color = COLORS[0], line_width=1, selection_color=COLORS[0],
                                         nonselection_color=COLORS[0], nonselection_line_alpha=1.0)
-        so_scat=self._plot[space].scatter('x', 'y', source=self._source[space], size=4, fill_color=COLORS[0], \
-                                          fill_alpha=1.0, line_color=COLORS[0], selection_fill_color=COLORS[0], \
-                                          nonselection_fill_color=COLORS[0], nonselection_fill_alpha=1.0, \
-                                          nonselection_line_color=COLORS[0])
-        self._plot[space].segment(x0 = 'x', y0 ='y0', x1='x', y1='y', source=self._selection[space], \
-                                  line_alpha=0.7, color = COLORS[2], line_width=1)
-        self._plot[space].scatter('x', 'y', source=self._selection[space], size=4, fill_color=COLORS[2], \
-                                  fill_alpha=0.7, line_color=COLORS[2])
-        self._plot[space].segment(x0 = 'x', y0 ='y0', x1='x', y1='y', source=self._reconstructed[space], \
-                                  line_alpha=0.5, color = COLORS[1], line_width=1)
-        self._plot[space].scatter('x', 'y', source=self._reconstructed[space], size=4, fill_color=COLORS[1], \
-                                  fill_alpha=0.5, line_color=COLORS[1])
+        so_scat=self.plot[space].scatter('x', 'y', source=self._source[space], size=4, fill_color=COLORS[0], \
+                                         fill_alpha=1.0, line_color=COLORS[0], selection_fill_color=COLORS[0], \
+                                         nonselection_fill_color=COLORS[0], nonselection_fill_alpha=1.0, \
+                                         nonselection_line_color=COLORS[0])
+        self.plot[space].segment(x0 ='x', y0 ='y0', x1='x', y1='y', source=self._selection[space], \
+                                 line_alpha=0.7, color = COLORS[2], line_width=1)
+        self.plot[space].scatter('x', 'y', source=self._selection[space], size=4, fill_color=COLORS[2], \
+                                 fill_alpha=0.7, line_color=COLORS[2])
+        self.plot[space].segment(x0 ='x', y0 ='y0', x1='x', y1='y', source=self._reconstructed[space], \
+                                 line_alpha=0.5, color = COLORS[1], line_width=1)
+        self.plot[space].scatter('x', 'y', source=self._reconstructed[space], size=4, fill_color=COLORS[1], \
+                                 fill_alpha=0.5, line_color=COLORS[1])
         if self._mode == "i":
             ##Add BoxSelectTool
-            self._plot[space].add_tools(BoxSelectTool(dimensions='width',renderers=[so_seg,so_scat]))
+            self.plot[space].add_tools(BoxSelectTool(dimensions='width', renderers=[so_seg, so_scat]))
 
     def initialize_glyphs_continuous(self,space):
-        so=self._plot[space].line('x', 'y', line_color = COLORS[0], line_width = 2, source=self._source[space])
-        re=self._plot[space].line('x', 'y', line_color = COLORS[1], line_width = 2, source=self._reconstructed[space])
-        self._plot[space].line('x', 'y', line_color = COLORS[2], line_width = 2, source=self._selection[space])
-        da=self._plot[space].dash('x','y', size='size',angle=90.0, angle_units='deg', line_color = COLORS[0], \
-                                        source=self._samples[space])
-        self._plot[space].dash('x','y', size='size',angle=90.0, angle_units='deg', line_color = COLORS[1], \
-                                        source=self._sel_samples[space])
+        so=self.plot[space].line('x', 'y', line_color = COLORS[0], line_width = 2, source=self._source[space])
+        re=self.plot[space].line('x', 'y', line_color = COLORS[1], line_width = 2, source=self._reconstructed[space])
+        self.plot[space].line('x', 'y', line_color = COLORS[2], line_width = 2, source=self._selection[space])
+        da=self.plot[space].dash('x', 'y', size='size', angle=90.0, angle_units='deg', line_color = COLORS[0], \
+                                 source=self._samples[space])
+        self.plot[space].dash('x', 'y', size='size', angle=90.0, angle_units='deg', line_color = COLORS[1], \
+                              source=self._sel_samples[space])
         if self._mode == "i":
             ##Add BoxSelectTool
-            self._plot[space].add_tools(BoxSelectTool(dimensions='width',renderers=[so]))
+            self.plot[space].add_tools(BoxSelectTool(dimensions='width', renderers=[so]))
             TOOLTIPS = [
             ("x", "@x"),
             ("y","@y"),
             ]
             hover = HoverTool( tooltips=TOOLTIPS,renderers=[so,re], mode='mouse')
-            self._plot[space].tools.append(hover)
+            self.plot[space].tools.append(hover)
 
     def initialize_glyphs_x_button(self,space):
         ## x-button to clear selection
-        sq_x=self._plot[space].scatter('x', 'y', marker="square_x", size=10, fill_color="grey", hover_fill_color="firebrick", \
-                                        fill_alpha=0.5, hover_alpha=1.0, line_color="grey", hover_line_color="white", \
-                                        source=self._clear_selection[space], name='clear_selection')
+        sq_x=self.plot[space].scatter('x', 'y', marker="square_x", size=10, fill_color="grey", hover_fill_color="firebrick", \
+                                      fill_alpha=0.5, hover_alpha=1.0, line_color="grey", hover_line_color="white", \
+                                      source=self._clear_selection[space], name='clear_selection')
         ## Add HoverTool for x-button
-        self._plot[space].add_tools(HoverTool(tooltips="Clear Selection", renderers=[sq_x], mode='mouse', show_arrow=False,
-                                        callback=CustomJS(args=dict(source=self._clear_selection[space]), code=HOVER_CODE)))
+        self.plot[space].add_tools(HoverTool(tooltips="Clear Selection", renderers=[sq_x], mode='mouse', show_arrow=False,
+                                             callback=CustomJS(args=dict(source=self._clear_selection[space]), code=HOVER_CODE)))
 
     def _initialize_plot(self):
-        for space in self._spaces:
+        for space in self.spaces:
             self._get_samples(space)
             self.initialize_cds(space)
             self.initialize_fig(space)
@@ -170,25 +170,25 @@ class VariableCell(Cell):
         """
         if old == new:
             return
-        self._ic._add_widget_threads(threading.Thread(target=partial(self._widget_callback_thread, new, w_title, space), daemon=True))
-        self._ic._widget_lock_event.set()
+        self.ic._add_widget_threads(threading.Thread(target=partial(self._widget_callback_thread, new, w_title, space), daemon=True))
+        self.ic._widget_lock_event.set()
 
     def _widget_callback_thread(self, new, w_title, space):
         inds = -1
         w2_title = ""
         values = []
-        w1_w2_idx_mapping = self._ic._get_w1_w2_idx_mapping()
-        w2_w1_val_mapping = self._ic._get_w2_w1_val_mapping()
-        w2_w1_idx_mapping = self._ic._get_w2_w1_idx_mapping()
-        widgets = self._widgets[space]
+        w1_w2_idx_mapping = self.ic.get_w1_w2_idx_mapping()
+        w2_w1_val_mapping = self.ic.get_w2_w1_val_mapping()
+        w2_w1_idx_mapping = self.ic.get_w2_w1_idx_mapping()
+        widgets = self.widgets[space]
         if space in w1_w2_idx_mapping and \
             w_title in w1_w2_idx_mapping[space]:
             for w2_title in w1_w2_idx_mapping[space][w_title]:
                 name = w_title+"_idx_"+w2_title
-                if name in self._idx_dims:
-                    values = self._idx_dims[name].values
-        elif w_title in self._idx_dims:
-            values = self._idx_dims[w_title].values
+                if name in self.idx_dims:
+                    values = self.idx_dims[name].values
+        elif w_title in self.idx_dims:
+            values = self.idx_dims[w_title].values
         elif space in w2_w1_idx_mapping and \
             w_title in w2_w1_idx_mapping[space]:
             for w1_idx in w2_w1_idx_mapping[space][w_title]:
@@ -197,12 +197,12 @@ class VariableCell(Cell):
         inds = [i for i,v in enumerate(values) if v == new]
         if inds == -1 or len(inds) == 0:
             return
-        self._cur_idx_dims_values[w_title] = inds
-        if w2_title and w2_title in self._cur_idx_dims_values:
-            self._cur_idx_dims_values[w2_title] = [0]
+        self.cur_idx_dims_values[w_title] = inds
+        if w2_title and w2_title in self.cur_idx_dims_values:
+            self.cur_idx_dims_values[w2_title] = [0]
         if self._mode == 'i':
             self._update_source_cds(space)
-            self._ic._set_global_update(True)
+            self.ic.set_global_update(True)
             self._update_cds_interactive(space)
         elif self._mode == 's':
             self._update_cds_static(space)
@@ -213,14 +213,14 @@ class VariableCell(Cell):
         """
         isIn = self._clear_selection[space].data['isIn']
         if 1 in isIn:
-            self._ic._set_var_x_range(space,self._name,dict(xmin=np.array([]),xmax=np.array([])))
-            self._ic._delete_sel_var_idx_dims_values(self._name)
-            for sp in self._spaces:
-                self._ic._add_space_threads(threading.Thread(target=partial(self._clear_selection_thread,sp), daemon=True))
-        self._ic._space_threads_join()
+            self.ic.set_var_x_range(space, self.name, dict(xmin=np.array([]), xmax=np.array([])))
+            self.ic.delete_sel_var_idx_dims_values(self.name)
+            for sp in self.spaces:
+                self.ic.add_space_threads(threading.Thread(target=partial(self._clear_selection_thread, sp), daemon=True))
+        self.ic.space_threads_join()
 
     def _clear_selection_thread(self,space):
-        x_range = self._ic._get_var_x_range(space,self._name)
+        x_range = self.ic.get_var_x_range(space, self.name)
         xmin_list = x_range['xmin']
         xmax_list = x_range['xmax']
         if len(xmin_list):
@@ -230,23 +230,23 @@ class VariableCell(Cell):
                 self._selection[space].data=dict(x=np.array([]),y=np.array([]),y0=np.array([]))
             else:
                 self._selection[space].data=dict(x=np.array([]),y=np.array([]))
-        self._ic._delete_sel_var_inds(space,self._name)
+        self.ic.delete_sel_var_inds(space, self.name)
         self._compute_intersection_of_samples(space)
-        self._ic._selection_threads_join(space)
+        self.ic.selection_threads_join(space)
 
     def _update_cds_interactive(self,space):
         """
             Updates interaction-related ColumnDataSources (cds).
         """
-        sel_var_idx_dims_values = self._ic._get_sel_var_idx_dims_values()
-        sel_space = self._ic._get_sel_space()
-        var_x_range = self._ic._get_var_x_range()
-        global_update = self._ic._get_global_update()
+        sel_var_idx_dims_values = self.ic.get_sel_var_idx_dims_values()
+        sel_space = self.ic.get_sel_space()
+        var_x_range = self.ic.get_var_x_range()
+        global_update = self.ic.get_global_update()
         if(global_update):
-            if (self._name in sel_var_idx_dims_values and space == sel_space and
-                self._cur_idx_dims_values == sel_var_idx_dims_values[self._name]):
-                self._update_selection_cds(space, var_x_range[(space,self._name)].data['xmin'][0],\
-                                            var_x_range[(space,self._name)].data['xmax'][0])
+            if (self.name in sel_var_idx_dims_values and space == sel_space and
+                self.cur_idx_dims_values == sel_var_idx_dims_values[self.name]):
+                self._update_selection_cds(space, var_x_range[(space,self.name)].data['xmin'][0], \
+                                           var_x_range[(space,self.name)].data['xmax'][0])
             else:
                 if self._type == "Discrete":
                     self._selection[space].data=dict(x=np.array([]),y=np.array([]),y0=np.array([]))
@@ -260,8 +260,8 @@ class VariableCell(Cell):
             Updates cds when indices of selected samples -- Cell._sample_inds--
             are updated.
         """
-        self._ic._add_selection_threads(space,threading.Thread(target=self._sample_inds_thread, args=(space,), daemon=True))
-        self._ic._sel_lock_event.set()
+        self.ic.add_selection_threads(space, threading.Thread(target=self._sample_inds_thread, args=(space,), daemon=True))
+        self.ic._sel_lock_event.set()
 
     def _sample_inds_thread(self,space):
         if self._mode == 'i':
@@ -274,7 +274,7 @@ class VariableCell(Cell):
             Update source & samples cds in the static mode
         """
         samples = self._get_data_for_cur_idx_dims_values(space)
-        inds = self._ic._get_sample_inds(space)
+        inds = self.ic.get_sample_inds(space)
         if len(inds):
             sel_sample = samples[inds]
             if self._type == "Discrete":
@@ -302,11 +302,11 @@ class VariableCell(Cell):
         samples = self._get_data_for_cur_idx_dims_values(space)
         xmin,xmax = get_stratum_range(samples,stratum)
         if self._mode == 'i':
-            self._ic._sel_space=space
-            self._ic._var_x_range[(space,self._name)].data=dict(xmin=np.asarray([xmin]),xmax=np.asarray([xmax]))
-            self._ic._sel_var_idx_dims_values[self._name]=dict(self._cur_idx_dims_values)
+            self.ic._sel_space=space
+            self.ic._var_x_range[(space, self.name)].data=dict(xmin=np.asarray([xmin]), xmax=np.asarray([xmax]))
+            self.ic._sel_var_idx_dims_values[self.name]=dict(self.cur_idx_dims_values)
         inds = find_indices(samples, lambda e: e >= xmin and e<= xmax,xmin,xmax)
-        self._set_sel_var_inds(space, self._name, inds)
+        self._set_sel_var_inds(space, self.name, inds)
         self._compute_intersection_of_samples(space)
         return (xmin,xmax)
 
@@ -316,16 +316,16 @@ class VariableCell(Cell):
         """
         xmin=event.geometry['x0']
         xmax=event.geometry['x1']
-        self._ic._set_sel_space(space)
-        self._ic._set_var_x_range(space,self._name,dict(xmin=np.asarray([xmin]),xmax=np.asarray([xmax])))
-        self._ic._set_sel_var_idx_dims_values(self._name,dict(self._cur_idx_dims_values))
-        for sp in self._spaces:
+        self.ic._set_sel_space(space)
+        self.ic.set_var_x_range(space, self.name, dict(xmin=np.asarray([xmin]), xmax=np.asarray([xmax])))
+        self.ic._set_sel_var_idx_dims_values(self.name, dict(self.cur_idx_dims_values))
+        for sp in self.spaces:
             samples = self._samples[sp].data['x']
-            self._ic._add_space_threads(threading.Thread(target=partial(self._selectionbox_space_thread,sp,samples, xmin, xmax), daemon=True))
-        self._ic._space_threads_join()
+            self.ic.add_space_threads(threading.Thread(target=partial(self._selectionbox_space_thread, sp, samples, xmin, xmax), daemon=True))
+        self.ic.space_threads_join()
 
     def _selectionbox_space_thread(self, space, samples, xmin, xmax):
-        x_range = self._ic._get_var_x_range(space,self._name)
+        x_range = self.ic.get_var_x_range(space, self.name)
         xmin_list = x_range['xmin']
         xmax_list = x_range['xmax']
         if len(xmin_list):
@@ -336,27 +336,27 @@ class VariableCell(Cell):
             else:
                 self._selection[space].data=dict(x=np.array([]),y=np.array([]))
         inds = find_indices(samples, lambda e: e >= xmin and e<= xmax,xmin,xmax)
-        self._ic._set_sel_var_inds(space, self._name, inds)
+        self.ic.set_sel_var_inds(space, self.name, inds)
         self._compute_intersection_of_samples(space)
-        self._ic._selection_threads_join(space)
+        self.ic.selection_threads_join(space)
 
     def _compute_intersection_of_samples(self,space):
         """
             Computes intersection of sample points based on user's
             restrictions per parameter.
         """
-        sel_var_inds = self._ic._get_sel_var_inds()
+        sel_var_inds = self.ic.get_sel_var_inds()
         sp_keys=[k for k in sel_var_inds if k[0]==space]
         if len(sp_keys)>1:
             sets=[]
             for i in range(0, len(sp_keys)):
                 sets.append(set(sel_var_inds[sp_keys[i]]))
             union=set.intersection(*sorted(sets, key=len))
-            self._ic._set_sample_inds(space,dict(inds=list(union)))
+            self.ic.set_sample_inds(space, dict(inds=list(union)))
         elif len(sp_keys)==1:
-            self._ic._set_sample_inds(space,dict(inds=sel_var_inds[sp_keys[0]]))
+            self.ic.set_sample_inds(space, dict(inds=sel_var_inds[sp_keys[0]]))
         else:
-            self._ic._set_sample_inds(space,dict(inds=[]))
+            self.ic.set_sample_inds(space, dict(inds=[]))
 
     def _update_source_cds(self,space):
         """
@@ -425,7 +425,7 @@ class VariableCell(Cell):
             Updates reconstructed ColumnDataSource (cds).
         """
         samples = self._samples[space].data['x']
-        inds = self._ic._get_sample_inds(space)
+        inds = self.ic.get_sample_inds(space)
         if len(inds):
             sel_sample = samples[inds]
             if self._type == "Discrete":
@@ -461,13 +461,13 @@ class VariableCell(Cell):
         """
             Updates clear_selection ColumnDataSource (cds).
         """
-        sel_var_idx_dims_values = self._ic._get_sel_var_idx_dims_values()
-        sel_space = self._ic._get_sel_space()
-        var_x_range = self._ic._get_var_x_range()
-        if (self._name in sel_var_idx_dims_values and space == sel_space and
-            self._cur_idx_dims_values == sel_var_idx_dims_values[self._name]):
-            min_x_range = var_x_range[(space,self._name)].data['xmin'][0]
-            max_x_range = var_x_range[(space,self._name)].data['xmax'][0]
+        sel_var_idx_dims_values = self.ic.get_sel_var_idx_dims_values()
+        sel_space = self.ic.get_sel_space()
+        var_x_range = self.ic.get_var_x_range()
+        if (self.name in sel_var_idx_dims_values and space == sel_space and
+            self.cur_idx_dims_values == sel_var_idx_dims_values[self.name]):
+            min_x_range = var_x_range[(space,self.name)].data['xmin'][0]
+            max_x_range = var_x_range[(space,self.name)].data['xmax'][0]
             hp = find_highest_point(self._reconstructed[space].data['x'],self._reconstructed[space].data['y'])
             if not hp:
                 hp=find_highest_point(self._selection[space].data['x'],self._selection[space].data['y'])

@@ -25,48 +25,48 @@ class PredictiveChecksCell(Cell):
                 _samples
                 _seg
 
-        """   
-        self._func = function       
-        self._source = {} 
-        self._reconstructed = {} 
+        """
+        self._func = function
+        self._source = {}
+        self._reconstructed = {}
         self._samples = {}
         self._seg = {}
-        self._pvalue = {} 
-        self._pvalue_rec = {}        
-        Cell.__init__(self, name, mode, inter_contr) 
+        self._pvalue = {}
+        self._pvalue_rec = {}
+        Cell.__init__(self, name, mode, inter_contr)
 
     def _get_data_for_cur_idx_dims_values(self,space):
         """
-            Returns the observed data and predictive samples of the observed variable 
+            Returns the observed data and predictive samples of the observed variable
             <self._name> in space <space>.
 
             Returns:
             --------
                 A Tuple (data,samples): data-> observed data and samples-> predictive samples.
-        """ 
-        data = self._ic._data.get_samples(self._name,'observed_data')
-        if self._ic._data.get_var_type(self._name) == "observed":
-            if space == "posterior" and "posterior_predictive" in self._ic._data.get_spaces():
+        """
+        data = self.ic._data.get_samples(self.name, 'observed_data')
+        if self.ic._data.get_var_type(self.name) == "observed":
+            if space == "posterior" and "posterior_predictive" in self.ic._data.get_spaces():
                 space="posterior_predictive"
-            elif space == "prior" and "prior_predictive" in self._ic._data.get_spaces():
+            elif space == "prior" and "prior_predictive" in self.ic._data.get_spaces():
                 space="prior_predictive"
-        samples = self._ic._data.get_samples(self._name,space)            
-        return (data,samples)     
+        samples = self.ic._data.get_samples(self.name, space)
+        return (data,samples)
 
-    def initialize_fig(self,space):        
-        self._plot[space] = figure(tools="wheel_zoom,reset", toolbar_location='right', plot_width=PLOT_WIDTH, 
-                                    plot_height=PLOT_HEIGHT, sizing_mode=SIZING_MODE)        
-        self._plot[space].toolbar.logo = None  
-        self._plot[space].yaxis.visible = False    
-        self._plot[space].xaxis.axis_label = self._func+"("+self._name+")"
-        self._plot[space].border_fill_color = BORDER_COLORS[0]
-        self._plot[space].xaxis[0].ticker.desired_num_ticks = 3
+    def initialize_fig(self,space):
+        self.plot[space] = figure(tools="wheel_zoom,reset", toolbar_location='right', plot_width=PLOT_WIDTH,
+                                  plot_height=PLOT_HEIGHT, sizing_mode=SIZING_MODE)
+        self.plot[space].toolbar.logo = None
+        self.plot[space].yaxis.visible = False
+        self.plot[space].xaxis.axis_label = self._func + "(" + self.name + ")"
+        self.plot[space].border_fill_color = BORDER_COLORS[0]
+        self.plot[space].xaxis[0].ticker.desired_num_ticks = 3
         if self._mode == "i":
-            self._ic._sample_inds[space].on_change('data',partial(self._sample_inds_callback, space))
-    
+            self.ic._sample_inds[space].on_change('data', partial(self._sample_inds_callback, space))
+
     def initialize_cds(self,space):
         ## ColumnDataSource for full sample set
-        data, samples = self._get_data_for_cur_idx_dims_values(space) 
+        data, samples = self._get_data_for_cur_idx_dims_values(space)
         self._samples[space] = ColumnDataSource(data=dict(x=samples))
         #data func
         if ~np.isfinite(data).all():
@@ -75,14 +75,14 @@ class PredictiveChecksCell(Cell):
         #samples func
         if ~np.isfinite(samples).all():
             samples = get_finite_samples(samples)
-        samples_func = get_samples_for_pred_check(samples, self._func)     
+        samples_func = get_samples_for_pred_check(samples, self._func)
         if samples_func.size:
-            #pvalue            
-            pv = np.count_nonzero(samples_func>=data_func) / len(samples_func)               
-            #histogram     
+            #pvalue
+            pv = np.count_nonzero(samples_func>=data_func) / len(samples_func)
+            #histogram
             if self._type == 'Discrete':
                 bins, range = get_hist_bins_range(samples_func, self._func, self._type, ref_length = None, ref_values=np.unique(samples.flatten()))
-            else:                
+            else:
                 bins, range = get_hist_bins_range(samples_func, self._func, self._type)
             his, edges = hist(samples_func, bins=bins, range=range, density=True)
             #cds
@@ -97,15 +97,15 @@ class PredictiveChecksCell(Cell):
         ## ColumnDataSource for restricted sample set
         self._pvalue_rec[space] = ColumnDataSource(data=dict(pv=[]))
         self._pvalue_rec[space].on_change('data',partial(self._update_legends, space))
-        self._reconstructed[space] = ColumnDataSource(data=dict(left=[],top=[],right=[], bottom=[]))        
+        self._reconstructed[space] = ColumnDataSource(data=dict(left=[],top=[],right=[], bottom=[]))
 
-    def initialize_glyphs(self,space):        
-        q = self._plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._source[space], \
-                                fill_color=COLORS[0], line_color="white", fill_alpha=1.0,name="full")
-        seg = self._plot[space].segment(x0 = 'x0', y0 ='y0', x1='x1',y1='y1', source=self._seg[space], \
-                                 color="black", line_width=2, name="seg")
-        q_sel = self._plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._reconstructed[space], \
-                                    fill_color=COLORS[1], line_color="white", fill_alpha=0.7, name="sel")
+    def initialize_glyphs(self,space):
+        q = self.plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._source[space], \
+                                  fill_color=COLORS[0], line_color="white", fill_alpha=1.0, name="full")
+        seg = self.plot[space].segment(x0 ='x0', y0 ='y0', x1='x1', y1='y1', source=self._seg[space], \
+                                       color="black", line_width=2, name="seg")
+        q_sel = self.plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self._reconstructed[space], \
+                                      fill_color=COLORS[1], line_color="white", fill_alpha=0.7, name="sel")
         ## Add Legends
         data = self._seg[space].data['x0']
         pvalue = self._pvalue[space].data["pv"]
@@ -113,7 +113,7 @@ class PredictiveChecksCell(Cell):
             legend = Legend(items=[ (self._func+"(obs) = "+format(data[0],'.2f'), [seg]),
                                     ("p-value = "+format(pvalue[0],'.4f'), [q]),
                                     ], location="top_left")
-            self._plot[space].add_layout(legend, 'above')
+            self.plot[space].add_layout(legend, 'above')
         ## Add Tooltips for hist
         #####TODO:Correct overlap of tooltips#####
         TOOLTIPS = [
@@ -122,31 +122,31 @@ class PredictiveChecksCell(Cell):
             ("left","@left"),
             ]
         hover = HoverTool( tooltips=TOOLTIPS,renderers=[q,q_sel])
-        self._plot[space].tools.append(hover)
+        self.plot[space].tools.append(hover)
 
     def _initialize_plot(self):
-        for space in self._spaces:
+        for space in self.spaces:
             self.initialize_cds(space)
             self.initialize_fig(space)
-            self.initialize_glyphs(space)            
+            self.initialize_glyphs(space)
 
     ## Update legends when data in _pvalue_rec cds is updated
     def _update_legends(self, space, attr, old, new):
-        if len(self._plot[space].legend.items) == 3:
-            self._plot[space].legend.items.pop()
-        r = self._plot[space].select(name="sel")
+        if len(self.plot[space].legend.items) == 3:
+            self.plot[space].legend.items.pop()
+        r = self.plot[space].select(name="sel")
         pvalue = self._pvalue_rec[space].data["pv"]
         if len(r) and len(pvalue):
-            self._plot[space].legend.items.append(LegendItem(label="p-value = "+format(pvalue[0],'.4f'), \
-                                                                renderers=[r[0]]))
+            self.plot[space].legend.items.append(LegendItem(label="p-value = " + format(pvalue[0], '.4f'), \
+                                                            renderers=[r[0]]))
 
     ## Update plots when indices of selected samples are updated
     def _sample_inds_callback(self, space, attr, old, new):
-        # _, samples = self._get_data_for_cur_idx_dims_values(space)   
+        # _, samples = self._get_data_for_cur_idx_dims_values(space)
         samples = self._samples[space].data['x']
-        max_full_hist = self._source[space].data['top'].max()  
-        if samples.size:            
-            inds=self._ic._sample_inds[space].data['inds']
+        max_full_hist = self._source[space].data['top'].max()
+        if samples.size:
+            inds=self.ic._sample_inds[space].data['inds']
             if len(inds):
                 sel_sample = samples[inds]
                 if ~np.isfinite(sel_sample).all():
@@ -155,7 +155,7 @@ class PredictiveChecksCell(Cell):
                 #data func
                 data_func = self._seg[space].data['x0'][0]
                 #pvalue in restricted space
-                sel_pv = np.count_nonzero(sel_sample_func >= data_func) / len(sel_sample_func)                 
+                sel_pv = np.count_nonzero(sel_sample_func >= data_func) / len(sel_sample_func)
                 #compute updated histogram
                 min_p = self._source[space].data['left'][0]
                 max_p = self._source[space].data['right'][-1]
@@ -180,7 +180,7 @@ class PredictiveChecksCell(Cell):
                 self._seg[space].data['y1'] = [max_full_hist + 0.1*max_full_hist]
         else:
             self._pvalue_rec[space].data = dict(pv=[])
-            self._reconstructed[space].data = dict(left=[],top=[],right=[], bottom=[])  
+            self._reconstructed[space].data = dict(left=[],top=[],right=[], bottom=[])
             self._seg[space].data['y1'] = [max_full_hist + 0.1*max_full_hist]
 
     def _update_plot(self,space):
@@ -188,14 +188,14 @@ class PredictiveChecksCell(Cell):
 
     def set_stratum(self, space, stratum = 0):
         """
-            Sets selection by spliting the ordered sample set 
+            Sets selection by spliting the ordered sample set
             in 4 equal-sized subsets.
         """
         pass
 
     def _widget_callback(self, attr, old, new, w_title, space):
-        inds = self._ic._data.get_indx_for_idx_dim(self._name, w_title, new)
+        inds = self.ic._data.get_indx_for_idx_dim(self.name, w_title, new)
         if inds==-1:
             return
-        self._cur_idx_dims_values[w_title]=inds
+        self.cur_idx_dims_values[w_title]=inds
         self._update_plot(space)

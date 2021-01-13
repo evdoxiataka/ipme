@@ -101,15 +101,15 @@ class Grid(ABC):
         self._ic._reset_sel_space()
         self._ic._reset_sel_var_idx_dims_values()
         self._ic._reset_var_x_range()
-        self._ic._set_global_update(True)
+        self._ic.set_global_update(True)
         for sp in self._spaces:
-            self._ic._add_space_threads(threading.Thread(target=partial(self._global_reset_thread,sp), daemon=True))
-        self._ic._space_threads_join()
-        self._ic._set_global_update(False)
+            self._ic.add_space_threads(threading.Thread(target=partial(self._global_reset_thread, sp), daemon=True))
+        self._ic.space_threads_join()
+        self._ic.set_global_update(False)
 
     def _global_reset_thread(self,space):
         self._ic._reset_sample_inds(space)
-        self._ic._selection_threads_join(space)
+        self._ic.selection_threads_join(space)
 
     @abstractmethod
     def _create_grids(self):
