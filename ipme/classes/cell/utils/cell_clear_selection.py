@@ -1,5 +1,5 @@
-from ...utils.functions import find_highest_point
-from ...utils.js_code import HOVER_CODE
+from ipme.utils.functions import find_highest_point
+from ipme.utils.js_code import HOVER_CODE
 
 from bokeh.models import HoverTool, CustomJS
 

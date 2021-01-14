@@ -215,7 +215,7 @@ class IC:
         isup = self._get_sample_inds_update(space)
         self._set_sample_inds_update(space,dict(updated = [not isup]))
 
-    def _reset_sample_inds(self, space):
+    def reset_sample_inds(self, space):
         self._sample_inds_lock.acquire()
         self._sample_inds[space].data = dict(inds=[])
         self._sample_inds_lock.release()
@@ -253,7 +253,7 @@ class IC:
         self._sel_var_inds[(space,var_name)] = inds
         self._sel_var_inds_lock.release()
 
-    def _reset_sel_var_inds(self):
+    def reset_sel_var_inds(self):
         self._sel_var_inds_lock.acquire()
         self._sel_var_inds = {}
         self._sel_var_inds_lock.release()
@@ -279,7 +279,7 @@ class IC:
         self._sel_space = space
         self._sel_space_lock.release()
 
-    def _reset_sel_space(self):
+    def reset_sel_space(self):
         self._sel_space_lock.acquire()
         self._sel_space = ""
         self._sel_space_lock.release()
@@ -296,7 +296,7 @@ class IC:
         self.sel_var_idx_dims_values[var_name] = dict_data
         self._sel_var_idx_dims_values_lock.release()
 
-    def _reset_sel_var_idx_dims_values(self):
+    def reset_sel_var_idx_dims_values(self):
         self._sel_var_idx_dims_values_lock.acquire()
         self.sel_var_idx_dims_values = {}
         self._sel_var_idx_dims_values_lock.release()
@@ -323,7 +323,7 @@ class IC:
             self.var_x_range[(space, var_name)].data = dict_data
         self._var_x_range_lock.release()
 
-    def _reset_var_x_range(self):
+    def reset_var_x_range(self):
         self._var_x_range_lock.acquire()
         for sp, var in self.var_x_range:
             self.var_x_range[(sp, var)].data = dict(xmin=[], xmax=[])

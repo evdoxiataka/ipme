@@ -1,8 +1,8 @@
 from .cell_clearselection import CellClearSelection
 
-from ...utils.constants import  COLORS, BORDER_COLORS, PLOT_HEIGHT, PLOT_WIDTH, SIZING_MODE
-from ...utils.stats import pmf
-from ...utils.functions import find_indices
+from ipme.utils.constants import  COLORS, BORDER_COLORS, PLOT_HEIGHT, PLOT_WIDTH, SIZING_MODE
+from ipme.utils.stats import pmf
+from ipme.utils.functions import find_indices
 
 from bokeh.models import BoxSelectTool, HoverTool
 from bokeh.models import ColumnDataSource

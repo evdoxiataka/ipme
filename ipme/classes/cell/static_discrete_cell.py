@@ -1,10 +1,10 @@
-from ..interfaces.variable_cell import VariableCell
-from .utils.cell_continuous_handler import CellContinuousHandler
+from ipme.interfaces.variable_cell import VariableCell
+from .utils.cell_discrete_handler import CellDiscreteHandler
 from ..cell.utils.cell_widgets import CellWidgets
 
-from ..utils.functions import get_stratum_range, find_indices
+from ipme.utils.functions import get_stratum_range, find_indices
 
-class StaticContinuousCell(VariableCell):
+class StaticDiscreteCell(VariableCell):
     def __init__(self, name, control):
         """
             Parameters:
@@ -15,19 +15,19 @@ class StaticContinuousCell(VariableCell):
         VariableCell.__init__(self, name, control)
 
     def initialize_cds(self, space):
-        CellContinuousHandler.initialize_cds_static(self, space)
+        CellDiscreteHandler.initialize_cds_static(self, space)
 
     def initialize_fig(self, space):
-        CellContinuousHandler.initialize_fig_static(self, space)
+        CellDiscreteHandler.initialize_fig_static(self, space)
 
     def initialize_glyphs(self, space):
-        CellContinuousHandler.initialize_glyphs_static(self, space)
+        CellDiscreteHandler.initialize_glyphs_static(self, space)
 
     def widget_callback(self, attr, old, new, w_title, space):
         CellWidgets.widget_callback_static(self, attr, old, new, w_title, space)
 
     def update_cds(self, space):
-        CellContinuousHandler.update_cds_static(self, space)
+        CellDiscreteHandler.update_cds_static(self, space)
 
     ## ONLY FOR STATIC CASE
     def set_stratum(self, space, stratum = 0):
@@ -41,4 +41,3 @@ class StaticContinuousCell(VariableCell):
         self.ic.set_sel_var_inds(space, self.name, inds)
         self.compute_intersection_of_samples(space)
         return (xmin,xmax)
-

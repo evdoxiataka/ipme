@@ -1,8 +1,8 @@
 from .cell_clear_selection import CellClearSelection
 
-from ...utils.constants import  COLORS, BORDER_COLORS, PLOT_HEIGHT, PLOT_WIDTH, SIZING_MODE, RUG_DIST_RATIO, RUG_SIZE
-from ...utils.stats import kde
-from ...utils.functions import find_inds_before_after, find_indices
+from ipme.utils.constants import  COLORS, BORDER_COLORS, PLOT_HEIGHT, PLOT_WIDTH, SIZING_MODE, RUG_DIST_RATIO, RUG_SIZE
+from ipme.utils.stats import kde
+from ipme.utils.functions import find_inds_before_after, find_indices
 
 from bokeh.models import BoxSelectTool, HoverTool
 from bokeh.models import ColumnDataSource

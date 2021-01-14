@@ -1,4 +1,4 @@
-from ..interfaces.variable_cell import VariableCell
+from ipme.interfaces.variable_cell import VariableCell
 from .utils.cell_discrete_handler import CellDiscreteHandler
 from .utils.cell_clear_selection import CellClearSelection
 from ..cell.utils.cell_widgets import CellWidgets

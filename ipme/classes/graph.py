@@ -1,8 +1,8 @@
 from ..interfaces.grid import Grid
-from ..cell.interactive_continuous_cell import InteractiveContinuousCell
-from ..cell.interactive_discrete_cell import InteractiveDiscreteCell
-from ..cell.static_continuous_cell import  StaticContinuousCell
-from ..cell.static_discrete_cell import StaticDiscreteCell
+from ipme.classes.cell.interactive_continuous_cell import InteractiveContinuousCell
+from ipme.classes.cell.interactive_discrete_cell import InteractiveDiscreteCell
+from ipme.classes.cell.static_continuous_cell import  StaticContinuousCell
+from ipme.classes.cell.static_discrete_cell import StaticDiscreteCell
 
 from ..utils.constants import MAX_NUM_OF_COLS_PER_ROW, MAX_NUM_OF_VARS_PER_ROW, COLS_PER_VAR
 import panel as pn
@@ -37,23 +37,23 @@ class Graph(Grid):
                 #col_l = int(col_f + (i+1)*COLS_PER_VAR)
                 # grid_bgrd_col = level
                 if self._mode == "i" and self._data.get_var_dist_type() == "Continuous":
-                    c = InteractiveContinuousCell(var_name, self._ic)
+                    c = InteractiveContinuousCell(var_name, self.ic)
                 elif self._mode == "i" and self._data.get_var_dist_type() == "Discrete":
-                    c = InteractiveDiscreteCell(var_name, self._ic)
+                    c = InteractiveDiscreteCell(var_name, self.ic)
                 elif self._mode == "s" and self._data.get_var_dist_type() == "Continuous":
-                    c = StaticContinuousCell(var_name, self._ic)
+                    c = StaticContinuousCell(var_name, self.ic)
                 elif self._mode == "s" and self._data.get_var_dist_type() == "Discrete":
-                    c = StaticDiscreteCell(var_name, self._ic)
-                self._cells[var_name] = c
+                    c = StaticDiscreteCell(var_name, self.ic)
+                self.cells[var_name] = c
                 ##Add to grid
                 cell_spaces = c.get_spaces()
                 for space in cell_spaces:
-                    if space not in self._spaces:
-                        self._spaces.append(space)
+                    if space not in self.spaces:
+                        self.spaces.append(space)
                     if space not in self._grids:
                         self._grids[space] = pn.GridSpec(sizing_mode = 'stretch_both')
                     self._grids[space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = pn.Column(c.get_plot(space), width=220, height=220)
-        self._ic._num_cells = len(self._cells)
+        self.ic._num_cells = len(self.cells)
 
     def _create_graph_grid_mapping(self):
         """

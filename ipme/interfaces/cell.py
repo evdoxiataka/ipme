@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from ..cell.utils.cell_widgets import CellWidgets
+from ipme.classes.cell.utils.cell_widgets import CellWidgets
 from ..utils.constants import BORDER_COLORS
 
 from bokeh.models import  Toggle, Div
