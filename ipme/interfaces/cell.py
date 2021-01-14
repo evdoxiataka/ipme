@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
+
+from ..cell.utils.cell_widgets import CellWidgets
+from ..utils.constants import BORDER_COLORS
+
 from bokeh.models import  Toggle, Div
 from bokeh.layouts import layout
 from bokeh.io.export import get_screenshot_as_png
-
-from ..utils.constants import BORDER_COLORS
-from ..cell.utils.cell_widgets import CellWidgets
 
 class Cell(ABC):
     def __init__(self, name, control):
@@ -17,14 +18,13 @@ class Cell(ABC):
             Sets:
             --------
                 name
-                _control
-                _spaces                 A List of Strings in {"prior","posterior"}.
-                _type                   A String in {"Discrete","Continuous",""}.
-                _idx_dims
-                _cur_idx_dims_values    A Dict {<idx_dim_name>: Integer of current value index of <idx_dim_name>}.
+                ic
+                spaces                 A List of Strings in {"prior","posterior"}.
+                idx_dims
+                cur_idx_dims_values    A Dict {<idx_dim_name>: Integer of current value index of <idx_dim_name>}.
 
                 plot                   A Dict {<space>: (bokeh) plot object}.
-                _widgets                A Dict {<space>: {<widget_title>: A (bokeh) widget object} }.
+                widgets                A Dict {<space>: {<widget_title>: A (bokeh) widget object} }.
                 _w1_w2_idx_mapping      A Dict {<space>: Dict {<w_name1>:(w_name2,widgets_idx)}}.
                 _w2_w1_idx_mapping      A Dict {<space>: Dict {<w_name2>:(w_name1,widgets_idx)}}.
                 _w2_w1_val_mapping      A Dict {<space>: Dict {<w_name2>:{<w1_value>: A List of <w_name2> values for <w1_value>}}.
@@ -33,9 +33,9 @@ class Cell(ABC):
         """
         self.name = name
         self.ic = control
-        self._data = control._data
+        self._data = control.data
         self.spaces = self._define_spaces()
-        self._type = self._data.get_var_dist_type(self.name)##to be deleted
+        # self._type = self._data.get_var_dist_type(self.name)##to be deleted
 
         #idx_dims-related variables
         self.idx_dims = self._data.get_idx_dimensions(self.name)
@@ -98,10 +98,7 @@ class Cell(ABC):
     def _initialize_plot(self):
         pass
 
-    # @abstractmethod
-    # def set_stratum(self, space, stratum = 0):
-    #     pass
-
+    ## GETTERS
     def get_widgets(self):
         return self.widgets
 

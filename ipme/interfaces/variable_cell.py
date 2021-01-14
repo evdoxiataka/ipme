@@ -1,5 +1,4 @@
 from ..interfaces.cell import Cell
-from ..utils.functions import find_indices
 from ..utils.stats import find_x_range
 
 import threading

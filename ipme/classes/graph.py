@@ -1,5 +1,8 @@
 from ..interfaces.grid import Grid
-from ..cell.interactive_continuous_cell import InteractiveContinuousCell, InteractiveDiscreteCell, StaticContinuousCell, StaticDiscreteCell
+from ..cell.interactive_continuous_cell import InteractiveContinuousCell
+from ..cell.interactive_discrete_cell import InteractiveDiscreteCell
+from ..cell.static_continuous_cell import  StaticContinuousCell
+from ..cell.static_discrete_cell import StaticDiscreteCell
 
 from ..utils.constants import MAX_NUM_OF_COLS_PER_ROW, MAX_NUM_OF_VARS_PER_ROW, COLS_PER_VAR
 import panel as pn

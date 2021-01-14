@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from bokeh.models.widgets import Button
-from bokeh import events
 import threading
 from functools import partial
 #import pyautogui
@@ -28,7 +27,7 @@ class Grid(ABC):
                 _plotted_widgets        A Dict of the form {<space>: List of widget objects to be plotted} .
         """
         self._ic = control
-        self._data = control._data
+        self._data = control.data
         self._mode = mode
         self._grids = {}
         self._cells = {}
@@ -67,7 +66,7 @@ class Grid(ABC):
                             self._link_widget_to_target(w, w_id, f_space)
                         else:
                             w = self._cells[c_id].get_widget(space,w_id)
-                            w.on_change('value', partial(self._ic._menu_item_click_callback, self._cells, self._cells_widgets, space, w_id))
+                            w.on_change('value', partial(self._ic.menu_item_click_callback, self._cells, self._cells_widgets, space, w_id))
 
     def _link_widget_to_target(self, w, w_id, f_space):
         if len(self._cells_widgets[w_id][f_space]):

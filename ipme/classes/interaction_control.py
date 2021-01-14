@@ -15,7 +15,7 @@ class IC:
             --------
 
         """
-        self._data = data_obj
+        self.data = data_obj
         self._num_cells = 0
         self._idx_widget_flag = False
         ##threads lists
@@ -91,7 +91,7 @@ class IC:
                                 w.value = opt2[0]
                         break
 
-    def _menu_item_click_callback(self, cells, cells_widgets, space, w_id, attr, old, new):
+    def menu_item_click_callback(self, cells, cells_widgets, space, w_id, attr, old, new):
         if old == new:
             return
         flag = self._idx_widget_flag
