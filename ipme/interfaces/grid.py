@@ -44,8 +44,8 @@ class Grid(ABC):
         pass
 
     def _add_widgets(self):
-        CellWidgets.link_cells_widgets
-        CellWidgets.set_plotted_widgets
+        CellWidgets.link_cells_widgets(self)
+        CellWidgets.set_plotted_widgets(self)
         # self._link_cells_widgets()
         # self._set_plotted_widgets()
 
@@ -120,7 +120,7 @@ class Grid(ABC):
     def set_coordinate(self, coord_name, new_val):
         try:
             if coord_name in self.cells_widgets:
-                space_widgets = self.cells_widgets[coord_name]
+                # space_widgets = self.cells_widgets[coord_name]
                 for space in self.cells_widgets[coord_name]:
                     c_id_list = self.cells_widgets[coord_name][space]
                     for c_id in c_id_list:

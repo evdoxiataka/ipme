@@ -58,7 +58,9 @@ class CellWidgets:
     @staticmethod
     def widget_callback_interactive(variableCell, attr, old, new, w_title, space):
         CellWidgets.widget_callback(variableCell, attr, old, new, w_title, space)
+        print(variableCell.name, "before", variableCell.source[space].data['x'][0])
         variableCell.update_source_cds(space)
+        print(variableCell.name, "after func ret", variableCell.source[space].data['x'][0])
         variableCell.ic.set_global_update(True)
         variableCell.update_cds(space)
 

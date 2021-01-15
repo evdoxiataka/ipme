@@ -9,6 +9,7 @@ from bokeh.models import ColumnDataSource
 from bokeh import events
 from bokeh.plotting import figure
 
+import numpy as np
 import threading
 from functools import partial
 
@@ -59,8 +60,8 @@ class CellContinuousHandler:
     def initialize_fig_interactive(variableCell, space):
         CellContinuousHandler.initialize_fig(variableCell, space)
         ##Events
-        variableCell.plot[space].on_event(events.Tap, partial(CellClearSelection.clear_selection_callback, space))
-        variableCell.plot[space].on_event(events.SelectionGeometry, partial(CellContinuousHandler.selectionbox_callback, space))
+        variableCell.plot[space].on_event(events.Tap, partial(CellContinuousHandler.clear_selection_callback, variableCell, space))
+        variableCell.plot[space].on_event(events.SelectionGeometry, partial(CellContinuousHandler.selectionbox_callback, variableCell, space))
         ##on_change
         variableCell.ic.sample_inds_update[space].on_change('data', partial(variableCell.sample_inds_callback, space))
 
@@ -133,15 +134,17 @@ class CellContinuousHandler:
         """
         xmin = event.geometry['x0']
         xmax = event.geometry['x1']
-        variableCell.ic._set_selection(variableCell.name, space, (xmin, xmax), variableCell.cur_idx_dims_values)
+        variableCell.ic.set_selection(variableCell.name, space, (xmin, xmax), variableCell.cur_idx_dims_values)
         for sp in variableCell.spaces:
             samples = variableCell.samples[sp].data['x']
-            variableCell.ic.add_space_threads(threading.Thread(target = partial(CellContinuousHandler._selectionbox_space_thread, variableCell, sp, samples, xmin, xmax), daemon = True))
-        variableCell.ic.space_threads_join()
+            # variableCell.ic.add_space_threads(threading.Thread(target = partial(CellContinuousHandler._selectionbox_space_thread, variableCell, sp, samples, xmin, xmax), daemon = True))
+            CellContinuousHandler._selectionbox_space_thread(variableCell, sp, samples, xmin, xmax)
+        # variableCell.ic.space_threads_join()
 
     @staticmethod
     def _selectionbox_space_thread(variableCell, space, samples, xmin, xmax):
         x_range = variableCell.ic.get_var_x_range(space, variableCell.name)
+        print(x_range)
         if len(x_range):
             variableCell.update_selection_cds(space, x_range[0], x_range[1])
         else:
@@ -149,7 +152,7 @@ class CellContinuousHandler:
         inds = find_indices(samples, lambda e: xmin <= e <= xmax, xmin, xmax)
         variableCell.ic.set_sel_var_inds(space, variableCell.name, inds)
         variableCell.compute_intersection_of_samples(space)
-        variableCell.ic.selection_threads_join(space)
+        # variableCell.ic.selection_threads_join(space)
 
     @staticmethod
     def update_source_cds_interactive(variableCell, space):
@@ -158,6 +161,7 @@ class CellContinuousHandler:
         """
         samples = variableCell.get_data_for_cur_idx_dims_values(space)
         variableCell.source[space].data = kde(samples)
+        print(variableCell.name, "after", variableCell.source[space].data['x'][0])
         max_v = variableCell.get_max_prob(space)
         variableCell.samples[space].data = dict( x = samples, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(samples)), size = np.asarray([RUG_SIZE]*len(samples)))
 

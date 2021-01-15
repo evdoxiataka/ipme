@@ -36,13 +36,13 @@ class Graph(Grid):
                 end_point = ( row+1, int(col + (i+1)*COLS_PER_VAR) )
                 #col_l = int(col_f + (i+1)*COLS_PER_VAR)
                 # grid_bgrd_col = level
-                if self._mode == "i" and self._data.get_var_dist_type() == "Continuous":
+                if self._mode == "i" and self._data.get_var_dist_type(var_name) == "Continuous":
                     c = InteractiveContinuousCell(var_name, self.ic)
-                elif self._mode == "i" and self._data.get_var_dist_type() == "Discrete":
+                elif self._mode == "i" and self._data.get_var_dist_type(var_name) == "Discrete":
                     c = InteractiveDiscreteCell(var_name, self.ic)
-                elif self._mode == "s" and self._data.get_var_dist_type() == "Continuous":
+                elif self._mode == "s" and self._data.get_var_dist_type(var_name) == "Continuous":
                     c = StaticContinuousCell(var_name, self.ic)
-                elif self._mode == "s" and self._data.get_var_dist_type() == "Discrete":
+                elif self._mode == "s" and self._data.get_var_dist_type(var_name) == "Discrete":
                     c = StaticDiscreteCell(var_name, self.ic)
                 self.cells[var_name] = c
                 ##Add to grid

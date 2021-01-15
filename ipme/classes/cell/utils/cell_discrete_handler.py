@@ -1,4 +1,4 @@
-from .cell_clearselection import CellClearSelection
+from ipme.classes.cell.utils.cell_clear_selection import CellClearSelection
 
 from ipme.utils.constants import  COLORS, BORDER_COLORS, PLOT_HEIGHT, PLOT_WIDTH, SIZING_MODE
 from ipme.utils.stats import pmf
@@ -9,6 +9,7 @@ from bokeh.models import ColumnDataSource
 from bokeh import events
 from bokeh.plotting import figure
 
+import numpy as np
 import threading
 from functools import partial
 
@@ -57,8 +58,8 @@ class CellDiscreteHandler:
     def initialize_fig_interactive(variableCell, space):
         CellDiscreteHandler.initialize_fig(variableCell, space)
         ##Events
-        variableCell.plot[space].on_event(events.Tap, partial(CellClearSelection.clear_selection_callback, space))
-        variableCell.plot[space].on_event(events.SelectionGeometry, partial(CellDiscreteHandler.selectionbox_callback, space))
+        variableCell.plot[space].on_event(events.Tap, partial(CellDiscreteHandler.clear_selection_callback, variableCell, space))
+        variableCell.plot[space].on_event(events.SelectionGeometry, partial(CellDiscreteHandler.selectionbox_callback, variableCell, space))
         ##on_change
         variableCell.ic.sample_inds_update[space].on_change('data', partial(variableCell.sample_inds_callback, space))
 
@@ -125,7 +126,7 @@ class CellDiscreteHandler:
         """
         xmin = event.geometry['x0']
         xmax = event.geometry['x1']
-        variableCell.ic._set_selection(variableCell.name, space, (xmin, xmax), variableCell.cur_idx_dims_values)
+        variableCell.ic.set_selection(variableCell.name, space, (xmin, xmax), variableCell.cur_idx_dims_values)
         for sp in variableCell.spaces:
             samples = variableCell.samples[sp].data['x']
             variableCell.ic.add_space_threads(threading.Thread(target = partial(CellDiscreteHandler._selectionbox_space_thread, variableCell, sp, samples, xmin, xmax), daemon = True))

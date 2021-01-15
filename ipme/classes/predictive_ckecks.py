@@ -1,6 +1,6 @@
 from ..interfaces.grid import Grid
-from .predictive_ckecks_cell import PredictiveChecksCell
-from ..utils.constants import MAX_NUM_OF_COLS_PER_ROW, MAX_NUM_OF_VARS_PER_ROW, COLS_PER_VAR
+from ipme.classes.cell.interactive_pred_ckeck_cell import InteractivePredCheckCell
+from ..utils.constants import MAX_NUM_OF_COLS_PER_ROW, COLS_PER_VAR
 import panel as pn
 
 class PredictiveChecks(Grid):
@@ -14,15 +14,15 @@ class PredictiveChecks(Grid):
             Sets:
             --------
                 _data                   A Data object.
-                _mode                   A String in {"i","s"}, "i":interactive, "s":static.
+                mode                   A String in {"i","s"}, "i":interactive, "s":static.
                 _grids                  A Dict of pn.GridSpec objects:
                                         {<var_name>:{<space>:pn.GridSpec}}
-                _cells                  A Dict {<pred_check>:Cell object},
+                cells                  A Dict {<pred_check>:Cell object},
                                         where pred_check in {'min','max','mean','std'}.
-                _cells_widgets          A Dict dict1 of the form (key1,value1) = (<widget_name>, dict2)
+                cells_widgets          A Dict dict1 of the form (key1,value1) = (<widget_name>, dict2)
                                         dict2 of the form (key1,value1) = (<space>, List of tuples (<cell_id>,<widget_id>)
                                         of the widgets with same name).
-                _plotted_widgets        A List of widget objects to be plotted.
+                plotted_widgets        A List of widget objects to be plotted.
         """
         self._pred_checks = predictive_ckecks
         Grid.__init__(self, inter_contr, mode)
@@ -39,10 +39,10 @@ class PredictiveChecks(Grid):
         """
         for var in self._pred_checks:
             if self._data.is_observed_variable(var):
-                c_min = PredictiveChecksCell(var, self._mode, self.ic, "min")
-                c_max = PredictiveChecksCell(var, self._mode, self.ic, "max")
-                c_mean = PredictiveChecksCell(var, self._mode, self.ic, "mean")
-                c_std = PredictiveChecksCell(var, self._mode, self.ic, "std")
+                c_min = InteractivePredCheckCell(var, self._mode, self.ic, "min")
+                c_max = InteractivePredCheckCell(var, self._mode, self.ic, "max")
+                c_mean = InteractivePredCheckCell(var, self._mode, self.ic, "mean")
+                c_std = InteractivePredCheckCell(var, self._mode, self.ic, "std")
                 self.cells['min'] = c_min
                 self.cells['max'] = c_max
                 self.cells['mean'] = c_mean

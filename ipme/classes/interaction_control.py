@@ -2,6 +2,7 @@ from ..utils.functions import get_w2_w1_val_mapping
 
 from bokeh.models import ColumnDataSource
 
+import numpy as np
 import threading
 
 class IC:
@@ -44,7 +45,7 @@ class IC:
         self._w2_w1_idx_mapping = {}
         self._w2_w1_val_mapping = {}
         ##Interaction-related variables
-        self._sample_inds = dict(prior = ColumnDataSource(data = dict(inds = [])), posterior = ColumnDataSource(data = dict(inds=[])))
+        self.sample_inds = dict(prior = ColumnDataSource(data = dict(inds = [])), posterior = ColumnDataSource(data = dict(inds=[])))
         self.sample_inds_update = dict(prior = ColumnDataSource(data = dict(updated = [False])), posterior = ColumnDataSource(data = dict(updated = [False])))
         self._sel_var_inds = {}
         self._sel_space = ""
@@ -153,6 +154,14 @@ class IC:
         del self._selection_threads[space]
         self._sel_lock.release()
 
+    def set_selection(self, var_name, space, x_range, cur_idx_dims_values):
+        """
+            Sets user selection
+        """
+        self._set_sel_space(space)
+        self.set_var_x_range(space, var_name, dict(xmin = np.asarray([x_range[0]]), xmax = np.asarray([x_range[1]])))
+        self._set_sel_var_idx_dims_values(var_name, dict(cur_idx_dims_values))
+
     def add_selection_threads(self, space, t):
         self._sel_lock.acquire()
         if space in self._selection_threads:
@@ -209,26 +218,26 @@ class IC:
 
     def set_sample_inds(self, space, dict_data):
         self._sample_inds_lock.acquire()
-        if space in self._sample_inds:
-            self._sample_inds[space].data = dict_data
+        if space in self.sample_inds:
+            self.sample_inds[space].data = dict_data
         self._sample_inds_lock.release()
         isup = self._get_sample_inds_update(space)
-        self._set_sample_inds_update(space,dict(updated = [not isup]))
+        self._set_sample_inds_update(space, dict(updated = [not isup]))
 
     def reset_sample_inds(self, space):
         self._sample_inds_lock.acquire()
-        self._sample_inds[space].data = dict(inds=[])
+        self.sample_inds[space].data = dict(inds=[])
         self._sample_inds_lock.release()
         isup = self._get_sample_inds_update(space)
-        self._set_sample_inds_update(space,dict(updated = [not isup]))
+        self._set_sample_inds_update(space, dict(updated = [not isup]))
 
     def get_sample_inds(self, space = None):
         inds = []
         self._sample_inds_lock.acquire()
-        if space in self._sample_inds:
-            inds = self._sample_inds[space].data['inds']
+        if space in self.sample_inds:
+            inds = self.sample_inds[space].data['inds']
         else:
-            inds = self._sample_inds
+            inds = self.sample_inds
         self._sample_inds_lock.release()
         return inds
 

@@ -1,7 +1,12 @@
 from ..interfaces.cell import Cell
 from ..utils.stats import find_x_range
+from ..utils.constants import BORDER_COLORS
 
+from bokeh.models import  Toggle, Div
+
+import numpy as np
 import threading
+from abc import abstractmethod
 
 class VariableCell(Cell):
     def __init__(self, name, control):
@@ -15,6 +20,9 @@ class VariableCell(Cell):
         self.samples = {}
         self._all_samples = {}
         Cell.__init__(self, name, control)
+        self._toggle = {}
+        self._div = {}
+        self._initialize_toggle_div()
 
     ## DATA
     def get_samples(self, space):
@@ -119,3 +127,31 @@ class VariableCell(Cell):
             self.ic.set_sample_inds(space, dict(inds = sel_var_inds[sp_keys[0]]))
         else:
             self.ic.set_sample_inds(space, dict(inds = []))
+
+    def _initialize_toggle_div(self):
+        for space in self.spaces:
+            width = self.plot[space].plot_width
+            height = 40
+            sizing_mode = self.plot[space].sizing_mode
+            label = self.name + " ~ " + self._data.get_var_dist(self.name)
+            text = """parents: %s <br>dims: %s"""%(self._data.get_var_parents(self.name), list(self._data.get_idx_dimensions(self.name)))
+            if sizing_mode == 'fixed':
+                self._toggle[space] = Toggle(label = label,  active = False,
+                                             width = width, height = height, sizing_mode = sizing_mode, margin = (0,0,0,0))
+                self._div[space] = Div(text = text,
+                                       width = width, height = height, sizing_mode = sizing_mode, margin = (0,0,0,0), background = BORDER_COLORS[0] )
+            elif sizing_mode == 'scale_width' or sizing_mode == 'stretch_width':
+                self._toggle[space] = Toggle(label = label,  active = False,
+                                             height = height, sizing_mode = sizing_mode, margin = (0,0,0,0))
+                self._div[space] = Div(text = text,
+                                       height = height, sizing_mode = sizing_mode, margin = (0,0,0,0), background = BORDER_COLORS[0] )
+            elif sizing_mode == 'scale_height' or sizing_mode == 'stretch_height':
+                self._toggle[space] = Toggle(label = label,  active = False,
+                                             width = width, sizing_mode = sizing_mode, margin = (0,0,0,0))
+                self._div[space] = Div(text = text,
+                                       width = width, sizing_mode = sizing_mode, margin = (0,0,0,0), background = BORDER_COLORS[0] )
+            else:
+                self._toggle[space] = Toggle(label = label,  active = False,
+                                             sizing_mode = sizing_mode, margin = (0,0,0,0))
+                self._div[space] = Div(text = text, sizing_mode = sizing_mode, margin = (0,0,0,0), background = BORDER_COLORS[0] )
+            self._toggle[space].js_link('active', self.plot[space], 'visible')
