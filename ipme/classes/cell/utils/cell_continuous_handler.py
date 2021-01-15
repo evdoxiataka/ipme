@@ -137,22 +137,23 @@ class CellContinuousHandler:
         variableCell.ic.set_selection(variableCell.name, space, (xmin, xmax), variableCell.cur_idx_dims_values)
         for sp in variableCell.spaces:
             samples = variableCell.samples[sp].data['x']
-            # variableCell.ic.add_space_threads(threading.Thread(target = partial(CellContinuousHandler._selectionbox_space_thread, variableCell, sp, samples, xmin, xmax), daemon = True))
-            CellContinuousHandler._selectionbox_space_thread(variableCell, sp, samples, xmin, xmax)
-        # variableCell.ic.space_threads_join()
+            variableCell.ic.add_space_threads(threading.Thread(target = partial(CellContinuousHandler._selectionbox_space_thread, variableCell, sp, samples, xmin, xmax), daemon = True))
+            # CellContinuousHandler._selectionbox_space_thread(variableCell, sp, samples, xmin, xmax)
+        variableCell.ic.space_threads_join()
 
     @staticmethod
     def _selectionbox_space_thread(variableCell, space, samples, xmin, xmax):
         x_range = variableCell.ic.get_var_x_range(space, variableCell.name)
-        print(x_range)
-        if len(x_range):
-            variableCell.update_selection_cds(space, x_range[0], x_range[1])
+        xmin_list = x_range['xmin']
+        xmax_list = x_range['xmax']
+        if len(xmin_list):
+            variableCell.update_selection_cds(space, xmin_list[0], xmax_list[0])
         else:
             variableCell.selection[space].data = dict(x = np.array([]), y = np.array([]))
         inds = find_indices(samples, lambda e: xmin <= e <= xmax, xmin, xmax)
         variableCell.ic.set_sel_var_inds(space, variableCell.name, inds)
         variableCell.compute_intersection_of_samples(space)
-        # variableCell.ic.selection_threads_join(space)
+        variableCell.ic.selection_threads_join(space)
 
     @staticmethod
     def update_source_cds_interactive(variableCell, space):
