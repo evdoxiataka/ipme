@@ -24,21 +24,21 @@ with pm.Model(coords=coords) as NonCentered_eight:
     theta_tilde = pm.Normal('theta_t', mu=0, sigma=1, dims='school')
     theta = pm.Deterministic('theta', mu + tau * theta_tilde, dims='school')
     y = pm.Normal('y', mu=theta, sigma=sigma, observed=obs, dims='school')
-	#inference
+    #inference
     trace_nc = pm.sample(samples, chains=chains, tune=tune, random_seed=SEED, target_accept=.90)
     prior_nc= pm.sample_prior_predictive(samples=samples)
     posterior_predictive_nc = pm.sample_posterior_predictive(trace_nc,samples=samples)
-	
-## STEP 1	    
+
+## STEP 1
 # will also capture all the sampler statistics
 data_nc = az.from_pymc3(trace = trace_nc, prior = prior_nc, posterior_predictive = posterior_predictive_nc)
 
 ## STEP 2
-#dag	
-dag_nc = get_dag(NonCentered_eight)    
+#dag
+dag_nc = get_dag(NonCentered_eight)
 # insert dag into sampler stat attributes
 data_nc.sample_stats.attrs["graph"] = str(dag_nc)
 
-## STEP 3   
-# save data   
+## STEP 3
+# save data
 arviz_to_json(data_nc, fileName+'.npz')
