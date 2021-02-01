@@ -19,32 +19,27 @@ class CellContinuousHandler:
         pass
 
     @staticmethod
-    def initialize_glyphs(variableCell, space):
+    def initialize_glyphs_interactive(variableCell, space):
         so = variableCell.plot[space].line('x', 'y', line_color = COLORS[0], line_width = 2, source = variableCell.source[space])
         re = variableCell.plot[space].line('x', 'y', line_color = COLORS[1], line_width = 2, source = variableCell.reconstructed[space])
         variableCell.plot[space].line('x', 'y', line_color = COLORS[2], line_width = 2, source = variableCell.selection[space])
         variableCell.plot[space].dash('x', 'y', size='size', angle = 90.0, angle_units = 'deg', line_color = COLORS[0], source = variableCell.samples[space])
         variableCell.plot[space].dash('x', 'y', size='size', angle = 90.0, angle_units = 'deg', line_color = COLORS[1], source = variableCell.sel_samples[space])
-        #########TEST#######
+        ##Add BoxSelectTool
+        variableCell.plot[space].add_tools(BoxSelectTool(dimensions = 'width', renderers = [so]))
         ##Tooltips
         TOOLTIPS = [("x", "@x"), ("y","@y"),]
         hover = HoverTool( tooltips = TOOLTIPS, renderers = [so,re], mode = 'mouse')
         variableCell.plot[space].tools.append(hover)
-        return (so,re)
-
-    @staticmethod
-    def initialize_glyphs_interactive(variableCell, space):
-        so,re = CellContinuousHandler.initialize_glyphs(variableCell, space)
-        ##Add BoxSelectTool
-        variableCell.plot[space].add_tools(BoxSelectTool(dimensions = 'width', renderers = [so]))
-        # ##Tooltips
-        # TOOLTIPS = [("x", "@x"), ("y","@y"),]
-        # hover = HoverTool( tooltips = TOOLTIPS, renderers = [so,re], mode = 'mouse')
-        # variableCell.plot[space].tools.append(hover)
 
     @staticmethod
     def initialize_glyphs_static(variableCell, space):
-        so,re = CellContinuousHandler.initialize_glyphs(variableCell, space)
+        so = variableCell.plot[space].line('x', 'y', line_color = COLORS[0], line_width = 2, source = variableCell.source[space])
+        variableCell.plot[space].dash('x', 'y', size='size', angle = 90.0, angle_units = 'deg', line_color = COLORS[0], source = variableCell.samples[space])
+        ##Tooltips
+        TOOLTIPS = [("x", "@x"), ("y","@y"),]
+        hover = HoverTool( tooltips = TOOLTIPS, renderers = [so], mode = 'mouse')
+        variableCell.plot[space].tools.append(hover)
 
     @staticmethod
     def initialize_fig(variableCell, space):
@@ -162,7 +157,6 @@ class CellContinuousHandler:
         """
         samples = variableCell.get_data_for_cur_idx_dims_values(space)
         variableCell.source[space].data = kde(samples)
-        print(variableCell.name, "after", variableCell.source[space].data['x'][0])
         max_v = variableCell.get_max_prob(space)
         variableCell.samples[space].data = dict( x = samples, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(samples)), size = np.asarray([RUG_SIZE]*len(samples)))
 

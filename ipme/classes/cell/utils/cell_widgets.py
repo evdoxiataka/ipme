@@ -4,6 +4,7 @@ from .global_reset import GlobalReset
 from bokeh.models.widgets import Select, Button
 
 from functools import partial
+import threading
 
 class CellWidgets:
 
@@ -28,8 +29,73 @@ class CellWidgets:
                     if n2 not in cell.cur_idx_dims_values:
                         cell.cur_idx_dims_values[n2] = [0]
 
+    # def _widget_callback(self, attr, old, new, w_title, space):
+    #     """
+    #         Callback called when an indexing dimension is set to
+    #         a new coordinate (e.g through indexing dimensions widgets).
+    #     """
+    #     if old == new:
+    #         return
+    #     self._ic.add_widget_threads(threading.Thread(target=partial(self._widget_callback_thread, new, w_title, space), daemon=True))
+    #     self._ic._widget_lock_event.set()
+    #
+    # def _widget_callback_thread(self, new, w_title, space):
+    #     inds = -1
+    #     w2_title = ""
+    #     values = []
+    #     w1_w2_idx_mapping = self._ic._get_w1_w2_idx_mapping()
+    #     w2_w1_val_mapping = self._ic._get_w2_w1_val_mapping()
+    #     w2_w1_idx_mapping = self._ic._get_w2_w1_idx_mapping()
+    #     widgets = self._widgets[space]
+    #     if space in w1_w2_idx_mapping and \
+    #         w_title in w1_w2_idx_mapping[space]:
+    #         for w2_title in w1_w2_idx_mapping[space][w_title]:
+    #             name = w_title+"_idx_"+w2_title
+    #             if name in self._idx_dims:
+    #                 values = self._idx_dims[name].values
+    #     elif w_title in self._idx_dims:
+    #         values = self._idx_dims[w_title].values
+    #     elif space in w2_w1_idx_mapping and \
+    #         w_title in w2_w1_idx_mapping[space]:
+    #         for w1_idx in w2_w1_idx_mapping[space][w_title]:
+    #             w1_value = widgets[w1_idx].value
+    #             values = w2_w1_val_mapping[space][w_title][w1_value]
+    #     inds = [i for i,v in enumerate(values) if v == new]
+    #     if inds == -1 or len(inds) == 0:
+    #         return
+    #     self._cur_idx_dims_values[w_title] = inds
+    #     if w2_title and w2_title in self._cur_idx_dims_values:
+    #         self._cur_idx_dims_values[w2_title] = [0]
+    #     if self._mode == 'i':
+    #         self._update_source_cds(space)
+    #         self._ic._set_global_update(True)
+    #         self._update_cds_interactive(space)
+    #     elif self._mode == 's':
+    #         self._update_cds_static(space)
+
     @staticmethod
-    def widget_callback(variableCell, attr, old, new, w_title, space):
+    def _widget_callback_int(variableCell, attr, old, new, w_title, space):
+        """
+            Callback called when an indexing dimension is set to
+            a new coordinate (e.g through indexing dimensions widgets).
+        """
+        if old == new:
+            return
+        variableCell.ic.add_widget_threads(threading.Thread(target = partial(CellWidgets._widget_callback_thread_inter, variableCell, new, w_title, space), daemon = True))
+        variableCell.ic.widget_lock_event.set()
+
+    @staticmethod
+    def _widget_callback_static(variableCell, attr, old, new, w_title, space):
+        """
+            Callback called when an indexing dimension is set to
+            a new coordinate (e.g through indexing dimensions widgets).
+        """
+        if old == new:
+            return
+        variableCell.ic.add_widget_threads(threading.Thread(target = partial(CellWidgets._widget_callback_thread_static, variableCell, new, w_title, space), daemon = True))
+        variableCell.ic.widget_lock_event.set()
+
+    def _widget_callback_thread_inter(variableCell, new, w_title, space):
         inds = -1
         w2_title = ""
         values = []
@@ -54,20 +120,44 @@ class CellWidgets:
         variableCell.cur_idx_dims_values[w_title] = inds
         if w2_title and w2_title in variableCell.cur_idx_dims_values:
             variableCell.cur_idx_dims_values[w2_title] = [0]
-
-    @staticmethod
-    def widget_callback_interactive(variableCell, attr, old, new, w_title, space):
-        CellWidgets.widget_callback(variableCell, attr, old, new, w_title, space)
-        print(variableCell.name, "before", variableCell.source[space].data['x'][0])
         variableCell.update_source_cds(space)
-        print(variableCell.name, "after func ret", variableCell.source[space].data['x'][0])
         variableCell.ic.set_global_update(True)
         variableCell.update_cds(space)
 
+    def _widget_callback_thread_static(variableCell, new, w_title, space):
+        inds = -1
+        w2_title = ""
+        values = []
+        w1_w2_idx_mapping = variableCell.ic.get_w1_w2_idx_mapping()
+        w2_w1_val_mapping = variableCell.ic.get_w2_w1_val_mapping()
+        w2_w1_idx_mapping = variableCell.ic.get_w2_w1_idx_mapping()
+        widgets = variableCell.widgets[space]
+        if space in w1_w2_idx_mapping and w_title in w1_w2_idx_mapping[space]:
+            for w2_title in w1_w2_idx_mapping[space][w_title]:
+                name = w_title+"_idx_"+w2_title
+                if name in variableCell.idx_dims:
+                    values = variableCell.idx_dims[name].values
+        elif w_title in variableCell.idx_dims:
+            values = variableCell.idx_dims[w_title].values
+        elif space in w2_w1_idx_mapping and w_title in w2_w1_idx_mapping[space]:
+            for w1_idx in w2_w1_idx_mapping[space][w_title]:
+                w1_value = widgets[w1_idx].value
+                values = w2_w1_val_mapping[space][w_title][w1_value]
+        inds = [i for i,v in enumerate(values) if v == new]
+        if inds == -1 or len(inds) == 0:
+            return
+        variableCell.cur_idx_dims_values[w_title] = inds
+        if w2_title and w2_title in variableCell.cur_idx_dims_values:
+            variableCell.cur_idx_dims_values[w2_title] = [0]
+        variableCell.update_cds(space)
+
+    @staticmethod
+    def widget_callback_interactive(variableCell, attr, old, new, w_title, space):
+        CellWidgets._widget_callback_int(variableCell, attr, old, new, w_title, space)
+
     @staticmethod
     def widget_callback_static(variableCell, attr, old, new, w_title, space):
-        CellWidgets.widget_callback(variableCell, attr, old, new, w_title, space)
-        variableCell.update_cds(space)
+        CellWidgets._widget_callback_static(variableCell, attr, old, new, w_title, space)
 
     @staticmethod
     def link_cells_widgets(grid):
@@ -105,7 +195,7 @@ class CellWidgets:
                 t_w.js_link('value', w, 'value')
 
     @staticmethod
-    def set_plotted_widgets(grid):
+    def set_plotted_widgets_interactive(grid):
         grid.plotted_widgets = {}
         for w_id, space_widgets_dict in grid.cells_widgets.items():
             w_spaces = list(space_widgets_dict.keys())
@@ -124,3 +214,21 @@ class CellWidgets:
             if space not in grid.plotted_widgets:
                 grid.plotted_widgets[space] = {}
             grid.plotted_widgets[space]["resetButton"] = b
+
+    @staticmethod
+    def set_plotted_widgets_static(grid):
+        grid.plotted_widgets = {}
+        for w_id, space_widgets_dict in grid.cells_widgets.items():
+            w_spaces = list(space_widgets_dict.keys())
+            if len(w_spaces):
+                f_space = w_spaces[0]
+                f_w_list = space_widgets_dict[f_space]
+                if len(f_w_list):
+                    c_id = f_w_list[0]
+                    for space in w_spaces:
+                        if space not in grid.plotted_widgets:
+                            grid.plotted_widgets[space] = {}
+                        grid.plotted_widgets[space][w_id] = grid.cells[c_id].get_widget(f_space, w_id)
+        for space in grid.spaces:
+            if space not in grid.plotted_widgets:
+                grid.plotted_widgets[space] = {}

@@ -36,14 +36,16 @@ class Graph(Grid):
                 end_point = ( row+1, int(col + (i+1)*COLS_PER_VAR) )
                 #col_l = int(col_f + (i+1)*COLS_PER_VAR)
                 # grid_bgrd_col = level
-                if self._mode == "i" and self._data.get_var_dist_type(var_name) == "Continuous":
-                    c = InteractiveContinuousCell(var_name, self.ic)
-                elif self._mode == "i" and self._data.get_var_dist_type(var_name) == "Discrete":
-                    c = InteractiveDiscreteCell(var_name, self.ic)
-                elif self._mode == "s" and self._data.get_var_dist_type(var_name) == "Continuous":
-                    c = StaticContinuousCell(var_name, self.ic)
-                elif self._mode == "s" and self._data.get_var_dist_type(var_name) == "Discrete":
-                    c = StaticDiscreteCell(var_name, self.ic)
+                if self._mode == "i":
+                    if self._data.get_var_dist_type(var_name) == "Continuous":
+                        c = InteractiveContinuousCell(var_name, self.ic)
+                    else:
+                        c = InteractiveDiscreteCell(var_name, self.ic)
+                elif self._mode == "s":
+                    if self._data.get_var_dist_type(var_name) == "Continuous":
+                        c = StaticContinuousCell(var_name, self.ic)
+                    else:
+                        c = StaticDiscreteCell(var_name, self.ic)
                 self.cells[var_name] = c
                 ##Add to grid
                 cell_spaces = c.get_spaces()
@@ -53,7 +55,7 @@ class Graph(Grid):
                     if space not in self._grids:
                         self._grids[space] = pn.GridSpec(sizing_mode = 'stretch_both')
                     self._grids[space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = pn.Column(c.get_plot(space), width=220, height=220)
-        self.ic._num_cells = len(self.cells)
+        self.ic.num_cells = len(self.cells)
 
     def _create_graph_grid_mapping(self):
         """

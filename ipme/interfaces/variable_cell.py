@@ -15,10 +15,14 @@ class VariableCell(Cell):
             --------
                 name            A String within the set {"<variableName>"}.
                 control         A Control object
+            Sets:
+            -----
+                x_range         Figures axes x_range
         """
         self.source = {}
         self.samples = {}
         self._all_samples = {}
+        self.x_range = {}
         Cell.__init__(self, name, control)
         self._toggle = {}
         self._div = {}
@@ -87,18 +91,6 @@ class VariableCell(Cell):
     def update_cds(self, space):
         pass
 
-    @abstractmethod
-    def update_source_cds(self, space):
-        pass
-
-    @abstractmethod
-    def update_selection_cds(self, space, xmin, xmax):
-        pass
-
-    @abstractmethod
-    def update_reconstructed_cds(self, space):
-        pass
-
     def sample_inds_callback(self, space, attr, old, new):
         """
             Updates cds when indices of selected samples -- Cell._sample_inds--
@@ -155,3 +147,15 @@ class VariableCell(Cell):
                                              sizing_mode = sizing_mode, margin = (0,0,0,0))
                 self._div[space] = Div(text = text, sizing_mode = sizing_mode, margin = (0,0,0,0), background = BORDER_COLORS[0] )
             self._toggle[space].js_link('active', self.plot[space], 'visible')
+
+    def get_max_prob(self, space):
+        """
+            Gets highest point --max probability-- of cds
+        """
+        max_sv = -1
+        max_rv = -1
+        if self.source[space].data['y'].size:
+            max_sv = self.source[space].data['y'].max()
+        if hasattr(self,'reconstructed') and self.reconstructed[space].data['y'].size:
+            max_rv = self.reconstructed[space].data['y'].max()
+        return max([max_sv,max_rv])

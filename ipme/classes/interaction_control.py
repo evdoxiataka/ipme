@@ -17,7 +17,7 @@ class IC:
 
         """
         self.data = data_obj
-        self._num_cells = 0
+        self.num_cells = 0
         self._idx_widget_flag = False
         ##threads lists
         self._selection_threads = {}
@@ -39,7 +39,7 @@ class IC:
         self._w2_w1_val_mapping_lock = threading.Lock()
         ##events
         self.sel_lock_event = threading.Event()
-        self._widget_lock_event = threading.Event()
+        self.widget_lock_event = threading.Event()
         ##idx_widgets
         self._w1_w2_idx_mapping = {}
         self._w2_w1_idx_mapping = {}
@@ -75,6 +75,20 @@ class IC:
             self._w2_w1_val_mapping[space] = {}
             self._w2_w1_val_mapping[space][w2_title] = get_w2_w1_val_mapping(d_dim)
 
+    def set_coordinates(self, grid, dim, options, value):
+        if dim in grid.cells_widgets:
+            spaces = list(grid.cells_widgets[dim].keys())
+            if len(spaces):
+                f_space = spaces[0]
+                ws = grid.cells_widgets[dim][f_space]
+                if len(ws):
+                    f_cell_id = ws[0]
+                    if f_cell_id in grid.cells:
+                        f_cell = grid.cells[f_cell_id]
+                        f_widget = f_cell.get_widget(f_space, dim)
+                        f_widget.options = options
+                        f_widget.value = value
+
     def _idx_widget_update(self, cells, cells_widgets, new, w_title, space):
         w1_w2_idx_mapping = self.get_w1_w2_idx_mapping()
         w2_w1_val_mapping = self.get_w2_w1_val_mapping()
@@ -108,8 +122,8 @@ class IC:
                 num_widg += len(cells_widgets[w_id][sp])
         num_widg_threads = 0
         while num_widg_threads < num_widg:
-            self._widget_lock_event.wait()
-            self._widget_lock_event.clear()
+            self.widget_lock_event.wait()
+            self.widget_lock_event.clear()
             self._widget_lock.acquire()
             num_widg_threads = len(self._widget_threads)
             self._widget_lock.release()
@@ -136,7 +150,7 @@ class IC:
 
     def selection_threads_join(self, space):
         num_sel_threads = 0
-        while num_sel_threads < self._num_cells:
+        while num_sel_threads < self.num_cells:
             self.sel_lock_event.wait()
             self.sel_lock_event.clear()
             self._sel_lock.acquire()
@@ -211,7 +225,7 @@ class IC:
         self._w2_w1_val_mapping_lock.release()
         return w2_w1_val_mapping
 
-    def _add_widget_threads(self, t):
+    def add_widget_threads(self, t):
         self._widget_lock.acquire()
         self._widget_threads.append(t)
         self._widget_lock.release()

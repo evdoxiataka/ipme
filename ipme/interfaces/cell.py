@@ -33,7 +33,6 @@ class Cell(ABC):
         self.ic = control
         self._data = control.data
         self.spaces = self._define_spaces()
-        # self._type = self._data.get_var_dist_type(self.name)##to be deleted
 
         #idx_dims-related variables
         self.idx_dims = self._data.get_idx_dimensions(self.name)
