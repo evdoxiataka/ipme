@@ -78,11 +78,11 @@ class IC:
     def set_coordinates(self, grid, dim, options, value):
         if dim in grid.cells_widgets:
             spaces = list(grid.cells_widgets[dim].keys())
-            if len(spaces):
-                f_space = spaces[0]
-                ws = grid.cells_widgets[dim][f_space]
-                if len(ws):
-                    f_cell_id = ws[0]
+            for sp in spaces[::-1]:
+                f_space = sp
+                f_w_list = grid.cells_widgets[dim][f_space]
+                for c_id in f_w_list[::-1]:
+                    f_cell_id = c_id
                     if f_cell_id in grid.cells:
                         f_cell = grid.cells[f_cell_id]
                         f_widget = f_cell.get_widget(f_space, dim)
