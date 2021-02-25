@@ -129,6 +129,7 @@ class CellContinuousHandler:
         """
         xmin = event.geometry['x0']
         xmax = event.geometry['x1']
+        variableCell.ic.increase_selection_interactions()
         variableCell.ic.set_selection(variableCell.name, space, (xmin, xmax), variableCell.cur_idx_dims_values)
         for sp in variableCell.spaces:
             samples = variableCell.samples[sp].data['x']

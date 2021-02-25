@@ -121,6 +121,9 @@ class VariableCell(Cell):
             self.ic.set_sample_inds(space, dict(inds = []))
 
     def _initialize_toggle_div(self):
+        """"
+            Creates the toggle headers of each variable node.
+        """
         for space in self.spaces:
             width = self.plot[space].plot_width
             height = 40

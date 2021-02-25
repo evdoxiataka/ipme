@@ -100,6 +100,12 @@ class Diagram():
             # except IndexError:
             #     raise IndexError()
 
+    def get_selection_interactions(self):
+        return self.ic.get_selection_interactions()
+
+    def get_widgets_interactions(self):
+        return self.ic.get_widgets_interactions()
+
     def get_diagram(self):
         return self._diagram
 

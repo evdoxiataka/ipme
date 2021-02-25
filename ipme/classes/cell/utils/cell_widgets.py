@@ -170,7 +170,6 @@ class CellWidgets:
                             grid.cells_widgets[w_id][space].append(c_id)
                         else:
                             grid.cells_widgets[w_id][space] = [c_id]
-                        # Cell._num_widgets[w_id] = Cell._num_widgets[w_id] + 1
                         ## Every new widget is linked to the corresponding widget (of same name)
                         ## of the 1st space in grid.cells_widgets[w_id]
                         ## Find target cell to link with current cell
@@ -184,7 +183,7 @@ class CellWidgets:
                             CellWidgets._link_widget_to_target(grid, w, w_id, f_space)
                         else:
                             w = grid.cells[c_id].get_widget(space, w_id)
-                            w.on_change('value', partial(grid.ic.menu_item_click_callback, grid.cells, grid.cells_widgets, space, w_id))
+                            w.on_change('value', partial(grid.ic.menu_item_click_callback, grid, space, w_id))
 
     @staticmethod
     def _link_widget_to_target(grid, w, w_id, f_space):
