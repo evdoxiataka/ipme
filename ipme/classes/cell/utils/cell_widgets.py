@@ -103,23 +103,23 @@ class CellWidgets:
         w2_w1_val_mapping = variableCell.ic.get_w2_w1_val_mapping()
         w2_w1_idx_mapping = variableCell.ic.get_w2_w1_idx_mapping()
         widgets = variableCell.widgets[space]
-        if space in w1_w2_idx_mapping and w_title in w1_w2_idx_mapping[space]:
+        if space in w1_w2_idx_mapping and w_title in w1_w2_idx_mapping[space]:  
             for w2_title in w1_w2_idx_mapping[space][w_title]:
                 name = w_title+"_idx_"+w2_title
                 if name in variableCell.idx_dims:
                     values = variableCell.idx_dims[name].values
-        elif w_title in variableCell.idx_dims:
+        if len(values) == 0 and w_title in variableCell.idx_dims:
             values = variableCell.idx_dims[w_title].values
-        elif space in w2_w1_idx_mapping and w_title in w2_w1_idx_mapping[space]:
+        if len(values) == 0 and space in w2_w1_idx_mapping and w_title in w2_w1_idx_mapping[space]: 
             for w1_idx in w2_w1_idx_mapping[space][w_title]:
                 w1_value = widgets[w1_idx].value
                 values = w2_w1_val_mapping[space][w_title][w1_value]
-        inds = [i for i,v in enumerate(values) if v == new]
+        inds = [i for i,v in enumerate(values) if v == new]       
         if inds == -1 or len(inds) == 0:
             return
         variableCell.cur_idx_dims_values[w_title] = inds
         if w2_title and w2_title in variableCell.cur_idx_dims_values:
-            variableCell.cur_idx_dims_values[w2_title] = [0]
+            variableCell.cur_idx_dims_values[w2_title] = [0]        
         variableCell.update_source_cds(space)
         variableCell.ic.set_global_update(True)
         variableCell.update_cds(space)
