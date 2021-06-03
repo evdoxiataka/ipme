@@ -38,33 +38,35 @@ golf_data = """distance tries successes
 data = pd.read_csv(io.StringIO(golf_data), sep=" ")
 
 #model-inference
-dims={"p_goes_in":["distance"],"successes":["distance"]}
 coords = {"distance": data.distance}
 fileName='golf_geometry_PyMC3'
 samples=2000
 chains=2 
 tune=1000
-geometry_model=pm.Model()
+geometry_model=pm.Model(coords=coords)
 with geometry_model:
     #to store the n-parameter of Binomial dist 
     #in the constant group of ArviZ InferenceData
     #You should always call it n for imd to retrieve it
     n = pm.Data('n', data.tries)
     sigma_angle = pm.HalfNormal('sigma_angle')
-    p_goes_in = pm.Deterministic('p_goes_in', 2 * Phi(tt.arcsin((CUP_RADIUS - BALL_RADIUS) / data.distance) / sigma_angle) - 1)
-    successes = pm.Binomial('successes', n=n, p=p_goes_in, observed=data.successes)
+    p_goes_in = pm.Deterministic('p_goes_in', 2 * Phi(tt.arcsin((CUP_RADIUS - BALL_RADIUS) / data.distance) / sigma_angle) - 1, dims='distance')
+    successes = pm.Binomial('successes', n=n, p=p_goes_in, observed=data.successes, dims='distance')
     #inference
     trace_g = pm.sample(draws=samples, chains=chains, tune=tune)
     prior_g= pm.sample_prior_predictive(samples=samples)
     posterior_predictive_g = pm.sample_posterior_predictive(trace_g,samples=samples)    
-    #dag    
-    dag_g = get_dag(geometry_model,dims,coords)
-
-# will also capture all the sampler statistics
-data_g = az.from_pymc3(trace=trace_g, prior=prior_g, posterior_predictive=posterior_predictive_g, coords=coords, dims=dims)
     
+## STEP 1
+# will also capture all the sampler statistics
+data_g = az.from_pymc3(trace=trace_g, prior=prior_g, posterior_predictive=posterior_predictive_g)
+
+## STEP 2
+#dag    
+dag_g = get_dag(geometry_model)    
 # insert dag into sampler stat attributes
 data_g.sample_stats.attrs["graph"] = str(dag_g)
-    
+
+## STEP 3    
 # save data
 arviz_to_json(data_g, fileName+'.npz')

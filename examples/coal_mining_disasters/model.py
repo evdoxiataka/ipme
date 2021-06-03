@@ -22,27 +22,28 @@ fileName='coal_mining_disasters_PyMC3'
 samples=10000
 tune=10000
 chains=2
-dims={ "disasters": ["year"], "disasters_missing": ["missing_years"]}
-coords = {"year": years,"missing_years":years_missing}
-with pm.Model() as disaster_model:
+coords = {"year": years}
+with pm.Model(coords=coords) as disaster_model:
     switchpoint = pm.DiscreteUniform('switchpoint', lower=years.min(), upper=years.max(), testval=1900)
     early_rate = pm.Exponential('early_rate', 1)
     late_rate = pm.Exponential('late_rate', 1)
     rate = pm.math.switch(switchpoint >= years, early_rate, late_rate)
-    disasters = pm.Poisson('disasters', rate, observed=disaster_data)
+    disasters = pm.Poisson('disasters', rate, observed=disaster_data, dims='year')
 	#inference
 	trace = pm.sample(samples, chains=chains, tune=tune)
     prior = pm.sample_prior_predictive(samples=samples)
-    prior['disasters_missing']=prior['disasters_missing'][:,[39,83]]
     posterior_predictive = pm.sample_posterior_predictive(trace,samples=samples) 
-	#dag
-    dag = get_dag(disaster_model,dims,coords)
 	
+## STEP 1	
 # will also capture all the sampler statistics
-data = az.from_pymc3(trace=trace, prior=prior, posterior_predictive=posterior_predictive,coords=coords, dims=dims)
+data = az.from_pymc3(trace=trace, prior=prior, posterior_predictive=posterior_predictive)
 
+## STEP 2	
+# extract dag
+dag = get_dag(disaster_model)
 # insert dag into sampler stat attributes
 data.sample_stats.attrs["graph"] = str(dag)
-    
+
+## STEP 3  
 # save data      
 arviz_to_json(data, fileName+'.npz')
