@@ -1,8 +1,7 @@
-# import pandas as pd
 import numpy as np
 import json
 
-from ..interfaces.data_interface import Data_Interface
+from ...interfaces.data_interface import Data_Interface
 from .dimension import Dimension
 
 class Data(Data_Interface):

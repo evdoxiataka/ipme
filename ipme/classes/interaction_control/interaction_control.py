@@ -1,4 +1,4 @@
-from ..utils.functions import get_w2_w1_val_mapping
+from ...utils.functions import get_w2_w1_val_mapping
 
 from bokeh.models import ColumnDataSource
 

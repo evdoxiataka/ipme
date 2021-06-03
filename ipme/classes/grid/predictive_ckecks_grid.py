@@ -1,9 +1,9 @@
-from ..interfaces.grid import Grid
+from ...interfaces.grid import Grid
 from ipme.classes.cell.interactive_pred_ckeck_cell import InteractivePredCheckCell
-from ..utils.constants import MAX_NUM_OF_COLS_PER_ROW, COLS_PER_VAR
+from ...utils.constants import MAX_NUM_OF_COLS_PER_ROW, COLS_PER_VAR
 import panel as pn
 
-class PredictiveChecks(Grid):
+class PredictiveChecksGrid(Grid):
     def __init__(self, inter_contr, mode, predictive_ckecks = []):
         """
             Parameters:

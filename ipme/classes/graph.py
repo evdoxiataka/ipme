@@ -1,85 +1,117 @@
-from ..interfaces.grid import Grid
-from ipme.classes.cell.interactive_continuous_cell import InteractiveContinuousCell
-from ipme.classes.cell.interactive_discrete_cell import InteractiveDiscreteCell
-from ipme.classes.cell.static_continuous_cell import  StaticContinuousCell
-from ipme.classes.cell.static_discrete_cell import StaticDiscreteCell
+from .data import Data
+from .grid.graph_grid import GraphGrid
+from .grid.predictive_ckecks_grid import PredictiveChecksGrid
+from .interaction_control.interaction_control import IC
 
-from ..utils.constants import MAX_NUM_OF_COLS_PER_ROW, MAX_NUM_OF_VARS_PER_ROW, COLS_PER_VAR
 import panel as pn
 
-class Graph(Grid):
-    def _create_grids(self):
+class Graph():
+    def __init__(self, data_path, mode = "i", predictive_checks = []):
         """
-            Creates one Cell object per variable. Cell object is the smallest
-            visualization unit in the grid. Moreover, it creates one Panel GridSpec
-            object per space.
+            Parameters:
+            --------
+                data_path               A String of the zip file with the inference data.
+                mode                    A String in {'i','s'}: defines the type of diagram
+                                        (interactive or static).
+                predictive_checks       A List of observed variables to plot predictive checks.
+            Sets:
+            --------
+                _data                   A Data object.
+                _mode                   A String in {"i","s"}, "i":interactive, "s":static.
+                _plotted_widgets        A List of widget objects to be plotted.
+                _diagram                A Panel component object to visualize diagram.
+        """
+        self.ic = IC(Data(data_path))
+        if mode not in ["s","i"]:
+            raise ValueError("ValueError: mode should take a value in {'i','s'}")
+        self._mode = mode
+        self._pred_checks = predictive_checks
+        self._graph_grid = self._create_graph_grid()
+        self._predictive_checks_grid = self._create_pred_checks_grid()
+        self._graph = self._create_graph()
+
+    def _create_graph_grid(self):
+        """
+            Creates a GraphGrid object representing the model as a
+            collection of Panel grids (one per space) and a
+            collection of plotted widges.
 
             Sets:
             --------
-                _cells      A Dict {<var_name>:Cell object}.
-                _grids      A Dict of pn.GridSpec objects:
-                            {<space>:pn.GridSpec}
+                _graph      A Graph object.
         """
-        graph_grid_map = self._create_graph_grid_mapping()
-        for row, map_data in graph_grid_map.items():
-            level = map_data[0]
-            vars_list = map_data[1]
-            level_previous = -1
-            if (row-1) in graph_grid_map:
-                level_previous = graph_grid_map[row-1][0]
-            if level != level_previous:
-                col = int((MAX_NUM_OF_COLS_PER_ROW - len(vars_list)*COLS_PER_VAR) / 2.)
-            else:
-                col = int((MAX_NUM_OF_COLS_PER_ROW - MAX_NUM_OF_VARS_PER_ROW*COLS_PER_VAR) / 2.)
-            for i,var_name in enumerate(vars_list):
-                start_point = ( row, int(col + i*COLS_PER_VAR) )
-                end_point = ( row+1, int(col + (i+1)*COLS_PER_VAR) )
-                #col_l = int(col_f + (i+1)*COLS_PER_VAR)
-                # grid_bgrd_col = level
-                if self._mode == "i":
-                    if self._data.get_var_dist_type(var_name) == "Continuous":
-                        c = InteractiveContinuousCell(var_name, self.ic)
-                    else:
-                        c = InteractiveDiscreteCell(var_name, self.ic)
-                elif self._mode == "s":
-                    if self._data.get_var_dist_type(var_name) == "Continuous":
-                        c = StaticContinuousCell(var_name, self.ic)
-                    else:
-                        c = StaticDiscreteCell(var_name, self.ic)
-                self.cells[var_name] = c
-                ##Add to grid
-                cell_spaces = c.get_spaces()
-                for space in cell_spaces:
-                    if space not in self.spaces:
-                        self.spaces.append(space)
-                    if space not in self._grids:
-                        self._grids[space] = pn.GridSpec(sizing_mode = 'stretch_both')
-                    self._grids[space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = pn.Column(c.get_plot(space), width=220, height=220)
-        self.ic.num_cells = len(self.cells)
+        return GraphGrid(self.ic, self._mode)
 
-    def _create_graph_grid_mapping(self):
+    def _create_pred_checks_grid(self):
         """
-            Maps the graph levels and the variables to Panel GridSpec rows/cols.
-            Both <grid_row>=0 and <graph_level>=0 correspond to higher row/level.
+            Creates a PredictiveChecks object representing the model's
+            predictive checks for min, max, mean, std of predictions as a
+            collection of Panel grids (one per space) and a
+            collection of plotted widges.
 
-            Returns:
+            Sets:
             --------
-                A Dict {<grid_row>: (<graph_level>, List of varnames) }
+                _predictive_checks_grid      A PredictiveChecks object.
         """
-        _varnames_per_graph_level = self._data.get_varnames_per_graph_level()
-        num_of_vars_per_graph_level = [len(_varnames_per_graph_level[k]) for k in sorted(_varnames_per_graph_level)]
-        graph_grid_map = {}
-        for level, num_vars in enumerate(num_of_vars_per_graph_level):
-            row = level
-            indx = 0
-            while num_vars > MAX_NUM_OF_VARS_PER_ROW:
-                while row in graph_grid_map:
-                    row+=1
-                graph_grid_map[row] = (level,_varnames_per_graph_level[level][indx:indx+MAX_NUM_OF_VARS_PER_ROW])
-                row += 1
-                indx += MAX_NUM_OF_VARS_PER_ROW
-                num_vars -= MAX_NUM_OF_VARS_PER_ROW
-            while row in graph_grid_map:
-                row+=1
-            graph_grid_map[row] = (level,_varnames_per_graph_level[level][indx:indx+num_vars])
-        return graph_grid_map
+        return PredictiveChecksGrid(self.ic, self._mode, self._pred_checks)
+
+    def _create_graph(self):
+        """
+            Creates one Tab per space presenting the space interactive diagram.
+
+            Sets:
+            --------
+                _diagram (Panel) visualization object.
+        """
+        tabs = pn.Tabs(sizing_mode='stretch_both')#sizing_mode='stretch_both'
+        ## Tabs for prior-posterior graph
+        g_grids = self._graph_grid.get_grids()
+        g_plotted_widgets = self._graph_grid.get_plotted_widgets()
+
+        for space in g_grids:
+            g_col = pn.Column(g_grids[space])
+            if space in g_plotted_widgets:
+                widgetBox = pn.WidgetBox(*list(g_plotted_widgets[space].values()),sizing_mode = 'scale_both')
+                w_col = pn.Column(widgetBox, width_policy='max', max_width=300, width=250)
+                tabs.append((space, pn.Row(w_col, g_col)))#, height_policy='max', max_height=800
+            else:
+                tabs.append((space, pn.Row(g_col)))
+        ## Tabs for predictive checks
+        if self._pred_checks:
+            pc_grids = self._predictive_checks_grid.get_grids()
+            for var in pc_grids:
+                for space in pc_grids[var]:
+                    g_col = pn.Column(pc_grids[var][space])
+                    tabs.append((var+'_'+space+'_predictive_checks', pn.Row(g_col)))
+        #tabs.append((space+'_predictive_checks', pn.Row(c.get_plot(space,add_info=False), sizing_mode='stretch_both')))
+        return tabs
+
+    def set_coordinates(self, dim, options, value):
+        self.ic.set_coordinates(self._graph_grid, dim, options, value)
+            # try:
+            #     if coord_name in self.cells_widgets:
+            #         # space_widgets = self.cells_widgets[coord_name]
+            #         for space in self.cells_widgets[coord_name]:
+            #             c_id_list = self.cells_widgets[coord_name][space]
+            #             for c_id in c_id_list:
+            #                 w = self.cells[c_id].get_widget(space, coord_name)
+            #                 # old_v = w.value
+            #                 w.value = new_val
+            #                 w.trigger('value', new_val, new_val)
+            # except IndexError:
+            #     raise IndexError()
+
+    def get_selection_interactions(self):
+        return self.ic.get_selection_interactions()
+
+    def get_widgets_interactions(self):
+        return self.ic.get_widgets_interactions()
+
+    def get_graph(self):
+        return self._graph
+
+    def get_graph_grid(self):
+        return self._graph_grid
+
+    def get_pred_checks_grid(self):
+        return self._create_pred_checks_grid
