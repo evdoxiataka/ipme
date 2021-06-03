@@ -1,5 +1,5 @@
 # Interactive Probabilistic Models Explorer (IPME)
-This tool provides an interactive visual explorer for the probabilistic models' graphs and inference results. This tool requires that:
+This tool provides an interactive visual explorer for the probabilistc models' graphs and inference results. This tool requires that:
 * probabilistic models are expressed in a Probabilistic Programming Language (PPL), and 
 * a sample-based inference algorithm is used for the inference (e.g. MCMC). 
 
