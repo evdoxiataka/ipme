@@ -67,6 +67,7 @@ class Diagram():
         ## Tabs for prior-posterior graph
         g_grids = self._graph.get_grids()
         g_plotted_widgets = self._graph.get_plotted_widgets()
+        
         for space in g_grids:
             g_col = pn.Column(g_grids[space])
             if space in g_plotted_widgets:
