@@ -16,10 +16,8 @@ class Graph():
                 predictive_checks       A List of observed variables to plot predictive checks.
             Sets:
             --------
-                _data                   A Data object.
                 _mode                   A String in {"i","s"}, "i":interactive, "s":static.
-                _plotted_widgets        A List of widget objects to be plotted.
-                _diagram                A Panel component object to visualize diagram.
+                _graph                  A Panel component object to visualize model's graoh.
         """
         self.ic = IC(Data(data_path))
         if mode not in ["s","i"]:
@@ -35,10 +33,6 @@ class Graph():
             Creates a GraphGrid object representing the model as a
             collection of Panel grids (one per space) and a
             collection of plotted widges.
-
-            Sets:
-            --------
-                _graph      A Graph object.
         """
         return GraphGrid(self.ic, self._mode)
 
@@ -48,26 +42,17 @@ class Graph():
             predictive checks for min, max, mean, std of predictions as a
             collection of Panel grids (one per space) and a
             collection of plotted widges.
-
-            Sets:
-            --------
-                _predictive_checks_grid      A PredictiveChecks object.
         """
         return PredictiveChecksGrid(self.ic, self._mode, self._pred_checks)
 
     def _create_graph(self):
         """
-            Creates one Tab per space presenting the space interactive diagram.
-
-            Sets:
-            --------
-                _diagram (Panel) visualization object.
+            Creates one Tab per space (posterior, prior) presenting the graph.
         """
         tabs = pn.Tabs(sizing_mode='stretch_both')#sizing_mode='stretch_both'
         ## Tabs for prior-posterior graph
         g_grids = self._graph_grid.get_grids()
         g_plotted_widgets = self._graph_grid.get_plotted_widgets()
-
         for space in g_grids:
             g_col = pn.Column(g_grids[space])
             if space in g_plotted_widgets:
