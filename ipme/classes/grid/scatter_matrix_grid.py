@@ -1,4 +1,6 @@
 from ...interfaces.grid import Grid
+from ipme.classes.cell.interactive_scatter_cell import InteractiveScatterCell
+from ipme.classes.cell.static_scatter_cell import StaticScatterCell
 from ipme.classes.cell.interactive_continuous_cell import InteractiveContinuousCell
 from ipme.classes.cell.interactive_discrete_cell import InteractiveDiscreteCell
 from ipme.classes.cell.static_continuous_cell import  StaticContinuousCell
@@ -38,11 +40,11 @@ class ScatterMatrixGrid(Grid):
             for col in range(len(self._vars)):
                 if col > row:
                     break
+                start_point = ( row, int(1 + col*COLS_PER_VAR) )
+                end_point = ( row+1, int(1 + (col+1)*COLS_PER_VAR) )
                 if col == row:
                     ##plot VariableCell
-                    var_name = vars[col]
-                    start_point = ( row, int(1+ col*COLS_PER_VAR) )
-                    end_point = ( row+1, int(1 + (col+1)*COLS_PER_VAR) )
+                    var_name = self._vars[col]                    
                     if self._mode == "i":
                         if self._data.get_var_dist_type(var_name) == "Continuous":
                             c = InteractiveContinuousCell(var_name, self.ic)
@@ -53,18 +55,23 @@ class ScatterMatrixGrid(Grid):
                             c = StaticContinuousCell(var_name, self.ic)
                         else:
                             c = StaticDiscreteCell(var_name, self.ic)
-                    self.cells[var_name] = c
-                    ##Add to grid
-                    cell_spaces = c.get_spaces()
-                    for space in cell_spaces:
-                        if space not in self.spaces:
-                            self.spaces.append(space)
-                        if space not in self._grids:
-                            self._grids[space] = pn.GridSpec(sizing_mode = 'stretch_both')
-                        self._grids[space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = pn.Column(c.get_plot(space), width=220, height=220)
                 else:
                     ##plot pair scatter
-                    pass
+                    var1 = self._vars[row] 
+                    var2 = self._vars[col] 
+                    if self._mode == "i":
+                        c = InteractiveScatterCell([var1, var2], self.ic)
+                    elif self._mode == "s":
+                        c = StaticScatterCell([var1, var2], self.ic)
+                self.cells.append(c)
+                ##Add to grid
+                cell_spaces = c.get_spaces()
+                for space in cell_spaces:
+                    if space not in self.spaces:
+                        self.spaces.append(space)
+                    if space not in self._grids:
+                        self._grids[space] = pn.GridSpec(sizing_mode = 'stretch_both')
+                    self._grids[space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = pn.Column(c.get_plot(space), width=220, height=220)
 
 
 
