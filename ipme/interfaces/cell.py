@@ -4,31 +4,31 @@ from ipme.classes.cell.utils.cell_widgets import CellWidgets
 from bokeh.io.export import get_screenshot_as_png
 
 class Cell(ABC):
-    def __init__(self, name, control):
+    def __init__(self, vars, control):
         """
             Each cell will occupy a certain number of grid columns and will lie on a certain grid row.
             Parameters:
             --------
-                name                    A String within the set {"<variableName>"}.
+                vars                    A List of variableNames of the model.
                 control                 An IC object
             Sets:
             --------
-                name
+                vars
                 ic
                 spaces                 A List of Strings in {"prior","posterior"}.
-                idx_dims
+                idx_dims               A Dict {<var_name>:{<dim_name>:Dimension obj}}.
                 cur_idx_dims_values    A Dict {<idx_dim_name>: Integer of current value index of <idx_dim_name>}.
 
                 plot                   A Dict {<space>: (bokeh) plot object}.
                 widgets                A Dict {<space>: {<widget_title>: A (bokeh) widget object} }.
         """
-        self.name = name
+        self.vars = vars
         self.ic = control
         self._data = control.data
         self.spaces = self._define_spaces()
 
         #idx_dims-related variables
-        self.idx_dims = self._data.get_idx_dimensions(self.name)
+        self.idx_dims = self._data.get_idx_dimensions(self.vars)
         self.cur_idx_dims_values = {}
 
         self.plot = {}

@@ -18,13 +18,14 @@ class PredictiveCheckCell(Cell):
                 _seg
 
         """
+        self.name = name
         self.source = {}
         self.reconstructed = {}
         self.samples = {}
         self.seg = {}
         self.pvalue = {}
         self.pvalue_rec = {}
-        Cell.__init__(self, name, control)
+        Cell.__init__(self, [name], control)
 
     ## DATA
     def get_data_for_cur_idx_dims_values(self, space):

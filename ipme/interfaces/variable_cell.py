@@ -23,11 +23,12 @@ class VariableCell(Cell):
                 _toggle                 A Dict {<space>: (bokeh) toggle button for visibility of figure}.
                 _div                    A Dict {<space>: (bokeh) div parameter-related information}.
         """
+        self.name = name
         self.source = {}
         self.samples = {}
         self._all_samples = {}
         self.x_range = {}
-        Cell.__init__(self, name, control)
+        Cell.__init__(self, [name], control)
         self._toggle = {}
         self._div = {}
         self._initialize_toggle_div()
