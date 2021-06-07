@@ -39,10 +39,11 @@ class PredictiveChecksGrid(Grid):
         """
         for var in self._pred_checks:
             if self._data.is_observed_variable(var):
-                c_min = InteractivePredCheckCell(var, self._mode, self.ic, "min")
-                c_max = InteractivePredCheckCell(var, self._mode, self.ic, "max")
-                c_mean = InteractivePredCheckCell(var, self._mode, self.ic, "mean")
-                c_std = InteractivePredCheckCell(var, self._mode, self.ic, "std")
+                # if self._mode == "i":
+                c_min = InteractivePredCheckCell(var, self.ic, "min")
+                c_max = InteractivePredCheckCell(var, self.ic, "max")
+                c_mean = InteractivePredCheckCell(var,self.ic, "mean")
+                c_std = InteractivePredCheckCell(var, self.ic, "std")
                 self.cells['min'] = c_min
                 self.cells['max'] = c_max
                 self.cells['mean'] = c_mean
@@ -60,13 +61,15 @@ class PredictiveChecksGrid(Grid):
                             end_point = ( row+1, int(col + (i+1)*COLS_PER_VAR) )
                             if row == 0 and i == 0:
                                 self._grids[var][space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = \
-                                                pn.Column(c_min.get_plot(space,add_info=False), width=220, height=220)
+                                                pn.Column(c_min.get_plot(space), width=220, height=220)
                             elif row == 0 and i == 1:
                                 self._grids[var][space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = \
-                                                pn.Column(c_max.get_plot(space,add_info=False), width=220, height=220)
+                                                pn.Column(c_max.get_plot(space), width=220, height=220)
                             elif row == 1 and i == 0:
                                 self._grids[var][space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = \
-                                                pn.Column(c_mean.get_plot(space,add_info=False), width=220, height=220)
+                                                pn.Column(c_mean.get_plot(space), width=220, height=220)
                             elif row == 1 and i == 1:
                                 self._grids[var][space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = \
-                                                pn.Column(c_std.get_plot(space,add_info=False), width=220, height=220)
+                                                pn.Column(c_std.get_plot(space), width=220, height=220)
+            else:
+                raise ValueError("Declared predive check variable {} is not an observed variable".format(var))

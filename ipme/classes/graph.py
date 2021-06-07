@@ -1,4 +1,4 @@
-from .data import Data
+from .data.data import Data
 from .grid.graph_grid import GraphGrid
 from .grid.predictive_ckecks_grid import PredictiveChecksGrid
 from .interaction_control.interaction_control import IC

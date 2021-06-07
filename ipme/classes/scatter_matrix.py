@@ -1,4 +1,4 @@
-from .data import Data
+from .data.data import Data
 from .grid.scatter_matrix_grid import ScatterMatrixGrid
 from .interaction_control.interaction_control import IC
 

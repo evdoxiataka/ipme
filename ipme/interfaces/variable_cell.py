@@ -3,6 +3,8 @@ from ..utils.stats import find_x_range
 from ..utils.constants import BORDER_COLORS
 
 from bokeh.models import  Toggle, Div
+from bokeh.layouts import layout
+from bokeh.io.export import get_screenshot_as_png
 
 import numpy as np
 import threading
@@ -18,6 +20,8 @@ class VariableCell(Cell):
             Sets:
             -----
                 x_range         Figures axes x_range
+                _toggle                 A Dict {<space>: (bokeh) toggle button for visibility of figure}.
+                _div                    A Dict {<space>: (bokeh) div parameter-related information}.
         """
         self.source = {}
         self.samples = {}
@@ -162,3 +166,21 @@ class VariableCell(Cell):
         if hasattr(self,'reconstructed') and self.reconstructed[space].data['y'].size:
             max_rv = self.reconstructed[space].data['y'].max()
         return max([max_sv,max_rv])
+
+    def get_plot(self, space, add_info = True):
+        if space in self.plot:
+            if add_info and space in self._toggle and space in self._div:
+                return layout([self._toggle[space]], [self._div[space]], [self.plot[space]])
+            else:
+                return self.plot[space]
+        else:
+            return None
+
+    def get_screenshot(self, space, add_info=True):
+        if space in self.plot:
+            if add_info and space in self._toggle and space in self._div:
+                return get_screenshot_as_png(layout([self._toggle[space]], [self._div[space]], [self.plot[space]]))
+            else:
+                return get_screenshot_as_png(self.plot[space])
+        else:
+            return None

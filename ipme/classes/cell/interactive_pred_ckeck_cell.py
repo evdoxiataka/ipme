@@ -19,11 +19,11 @@ class InteractivePredCheckCell(PredictiveCheckCell):
                 function        A String in {"min","max","mean","std"}.
             Sets:
             --------
-                _func
-                _source
-                _reconstructed
-                _samples
-                _seg
+                func
+                source
+                reconstructed
+                samples
+                seg
         """
         self.func = function
         PredictiveCheckCell.__init__(self, name, control)
@@ -31,40 +31,43 @@ class InteractivePredCheckCell(PredictiveCheckCell):
     def initialize_fig(self, space):
         CellPredCheckHandler.initialize_fig_interactive(self, space)
 
-    def initialize_cds(self,space):
-        ## ColumnDataSource for full sample set
-        data, samples = self.get_data_for_cur_idx_dims_values(space)
-        self.samples[space] = ColumnDataSource(data=dict(x=samples))
-        #data func
-        if ~np.isfinite(data).all():
-            data = get_finite_samples(data)
-        data_func = get_samples_for_pred_check(data, self.func)
-        #samples func
-        if ~np.isfinite(samples).all():
-            samples = get_finite_samples(samples)
-        samples_func = get_samples_for_pred_check(samples, self.func)
-        if samples_func.size:
-            #pvalue
-            pv = np.count_nonzero(samples_func>=data_func) / len(samples_func)
-            #histogram
-            if self._type == 'Discrete':
-                bins, range = get_hist_bins_range(samples_func, self.func, self._type, ref_length = None, ref_values=np.unique(samples.flatten()))
-            else:
-                bins, range = get_hist_bins_range(samples_func, self.func, self._type)
-            his, edges = hist(samples_func, bins=bins, range=range, density=True)
-            #cds
-            self.pvalue[space] = ColumnDataSource(data=dict(pv=[pv]))
-            self.source[space] = ColumnDataSource(data=dict(left=edges[:-1], top=his, right=edges[1:], bottom=np.zeros(len(his))))
-            self.seg[space] = ColumnDataSource(data=dict(x0=[data_func], x1=[data_func], y0=[0], y1=[his.max() + 0.1 * his.max()]))
-        else:
-            self.pvalue[space] = ColumnDataSource(data=dict(pv=[]))
-            self.source[space] = ColumnDataSource(data=dict(left=[], top=[], right=[], bottom=[]))
-            self.seg[space] = ColumnDataSource(data=dict(x0=[], x1=[], y0=[], y1=[]))
+    def initialize_cds(self, space):
+        CellPredCheckHandler.initialize_cds_interactive(self, space)
+        # ## ColumnDataSource for full sample set
+        # data, samples = self.get_data_for_cur_idx_dims_values(space)
+        # self.samples[space] = ColumnDataSource(data=dict(x=samples))
+        # #data func
+        # if ~np.isfinite(data).all():
+        #     data = get_finite_samples(data)
+        # data_func = get_samples_for_pred_check(data, self.func)
+        # #samples func
+        # if ~np.isfinite(samples).all():
+        #     samples = get_finite_samples(samples)
+        # samples_func = get_samples_for_pred_check(samples, self.func)
+        # if samples_func.size:
+        #     #pvalue
+        #     pv = np.count_nonzero(samples_func>=data_func) / len(samples_func)
+        #     #histogram     
+        #     type =  self._data.get_var_dist_type(self.name)          
+        #     if type == "Continuous":
+        #         bins, range = get_hist_bins_range(samples_func, self.func, type)
+        #     else:
+        #         bins, range = get_hist_bins_range(samples_func, self.func, type, ref_length = None, ref_values=np.unique(samples.flatten()))
 
-        ## ColumnDataSource for restricted sample set
-        self.pvalue_rec[space] = ColumnDataSource(data=dict(pv=[]))
-        self.pvalue_rec[space].on_change('data', partial(self._update_legends, space))
-        self.reconstructed[space] = ColumnDataSource(data=dict(left=[], top=[], right=[], bottom=[]))
+        #     his, edges = hist(samples_func, bins=bins, range=range, density=True)
+        #     #cds
+        #     self.pvalue[space] = ColumnDataSource(data=dict(pv=[pv]))
+        #     self.source[space] = ColumnDataSource(data=dict(left=edges[:-1], top=his, right=edges[1:], bottom=np.zeros(len(his))))
+        #     self.seg[space] = ColumnDataSource(data=dict(x0=[data_func], x1=[data_func], y0=[0], y1=[his.max() + 0.1 * his.max()]))
+        # else:
+        #     self.pvalue[space] = ColumnDataSource(data=dict(pv=[]))
+        #     self.source[space] = ColumnDataSource(data=dict(left=[], top=[], right=[], bottom=[]))
+        #     self.seg[space] = ColumnDataSource(data=dict(x0=[], x1=[], y0=[], y1=[]))
+
+        # ## ColumnDataSource for restricted sample set
+        # self.pvalue_rec[space] = ColumnDataSource(data=dict(pv=[]))
+        # self.pvalue_rec[space].on_change('data', partial(self._update_legends, space))
+        # self.reconstructed[space] = ColumnDataSource(data=dict(left=[], top=[], right=[], bottom=[]))
 
     def initialize_glyphs(self,space):
         q = self.plot[space].quad(top='top', bottom='bottom', left='left', right='right', source=self.source[space], \
@@ -102,12 +105,12 @@ class InteractivePredCheckCell(PredictiveCheckCell):
                                                             renderers=[r[0]]))
 
     ## Update plots when indices of selected samples are updated
-    def _sample_inds_callback(self, space, attr, old, new):
+    def sample_inds_callback(self, space, attr, old, new):
         # _, samples = self._get_data_for_cur_idx_dims_values(space)
         samples = self.samples[space].data['x']
         max_full_hist = self.source[space].data['top'].max()
         if samples.size:
-            inds=self.ic._sample_inds[space].data['inds']
+            inds=self.ic.sample_inds[space].data['inds']
             if len(inds):
                 sel_sample = samples[inds]
                 if ~np.isfinite(sel_sample).all():

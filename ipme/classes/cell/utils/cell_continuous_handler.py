@@ -4,8 +4,7 @@ from ipme.utils.constants import  COLORS, BORDER_COLORS, PLOT_HEIGHT, PLOT_WIDTH
 from ipme.utils.stats import kde
 from ipme.utils.functions import find_inds_before_after, find_indices
 
-from bokeh.models import BoxSelectTool, HoverTool
-from bokeh.models import ColumnDataSource
+from bokeh.models import ColumnDataSource, BoxSelectTool, HoverTool
 from bokeh import events
 from bokeh.plotting import figure
 

@@ -14,13 +14,14 @@ class IC:
                 data_obj                A Data object.
             Sets:
             --------
-
+            _w1_w2_idx_mapping      A Dict {<space>: Dict {<w_name1>:(w_name2,widgets_idx)}}.
+            _w2_w1_idx_mapping      A Dict {<space>: Dict {<w_name2>:(w_name1,widgets_idx)}}.
+            _w2_w1_val_mapping      A Dict {<space>: Dict {<w_name2>:{<w1_value>: A List of <w_name2> values for <w1_value>}}.
         """
         self.data = data_obj
         self.num_cells = 0
         self.widgets_interactions = 0
         self.selection_interactions = 0
-        # self._idx_widget_flag = False
         ##threads lists
         self._selection_threads = {}
         self._space_threads = []

@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from ..classes.cell.utils.cell_widgets import CellWidgets
-#import pyautogui
 
 class Grid(ABC):
     def __init__(self, control, mode):
