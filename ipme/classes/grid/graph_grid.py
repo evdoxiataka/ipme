@@ -46,7 +46,7 @@ class GraphGrid(Grid):
                         c = StaticContinuousCell(var_name, self.ic)
                     else:
                         c = StaticDiscreteCell(var_name, self.ic)
-                self.cells[var_name] = c
+                self.cells.append(c)
                 ##Add to grid
                 cell_spaces = c.get_spaces()
                 for space in cell_spaces:

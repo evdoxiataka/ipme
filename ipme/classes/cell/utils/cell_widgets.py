@@ -161,7 +161,7 @@ class CellWidgets:
 
     @staticmethod
     def link_cells_widgets(grid):
-        for c_id, cell in grid.cells.items():
+        for c_id, cell in enumerate(grid.cells):
             cell_spaces = cell.get_spaces()
             for space in cell_spaces:
                 for w_id, w in cell.get_widgets_in_space(space).items():

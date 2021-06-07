@@ -27,7 +27,7 @@ class Grid(ABC):
         self._data = control.data
         self._mode = mode
         self._grids = {}
-        self.cells = {}
+        self.cells = []
         self.spaces = []
         self._create_grids()
 
