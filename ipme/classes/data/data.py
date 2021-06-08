@@ -130,6 +130,10 @@ class Data(Data_Interface):
         else:
             return []
 
+    # def get_all_variables(self):
+    #     self.all_variables = self._observed_variables
+    #     for var in self._observed_variables:
+
     def get_samples(self, var_name, space=['prior','posterior']):
         """
             Returns the samples of <var_name> variable of the given space(s).
@@ -211,7 +215,7 @@ class Data(Data_Interface):
                 Level 0 corresponds to the higher level.
                 {<level>: List of variable names}, level=0,1,2...
         """
-        nodes=self._add_nodes_to_graph(self._get_observed_nodes(), 0)
+        nodes = self._add_nodes_to_graph(self._get_observed_nodes(), 0)
         return self._reverse_nodes_levels(nodes)
 
     def _is_var_in_space(self, var_name, space):
@@ -299,7 +303,7 @@ class Data(Data_Interface):
                 Level 0 corresponds to the lowest level.
                 {<level>: List of variables names}, level=0,1,2...
         """
-        nodes={}
+        nodes = {}
         try:
             for v in level_nodes:
                 if level in nodes and v['name'] not in nodes[level]:
@@ -307,16 +311,16 @@ class Data(Data_Interface):
                 else:
                     nodes[level]=[v['name']]
 
-                parents_nodes=self._get_graph_nodes(v['parents'])
+                parents_nodes = self._get_graph_nodes(v['parents'])
                 if(len(parents_nodes)):
-                    par_nodes=self._add_nodes_to_graph(parents_nodes,level+1)
+                    par_nodes = self._add_nodes_to_graph(parents_nodes, level+1)
                     for k in par_nodes:
                         if k in nodes:
                             for n in par_nodes[k]:
                                 if n not in nodes[k]:
                                     nodes[k].append(n)
                         else:
-                            nodes[k]=par_nodes[k]
+                            nodes[k] = par_nodes[k]
             return nodes
         except KeyError:
             print("Graph node has no key 'name' or 'parents' ")

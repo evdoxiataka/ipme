@@ -19,6 +19,7 @@ class Data_Interface(ABC):
         self._inferencedata = self._load_inference_data(inference_path)
         self._graph = self._get_graph()
         self._observed_variables = self._get_obeserved_variables()
+        self.all_variables = []
         self._idx_dimensions = self._get_idx_dimensions()      
         self._spaces = self._get_spaces_from_data()
 

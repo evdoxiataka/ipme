@@ -48,7 +48,7 @@ class CellDiscreteHandler:
 
     @staticmethod
     def initialize_fig(variableCell, space):
-        variableCell.plot[space] = figure( x_range = variableCell.x_range[space], tools = "wheel_zoom,reset,box_zoom", toolbar_location = 'right',
+        variableCell.plot[space] = figure( x_range = variableCell.x_range[variableCell.name][space], tools = "wheel_zoom,reset,box_zoom", toolbar_location = 'right',
                                             plot_width = PLOT_WIDTH, plot_height = PLOT_HEIGHT, sizing_mode = SIZING_MODE)
         variableCell.plot[space].border_fill_color = BORDER_COLORS[0]
         variableCell.plot[space].xaxis.axis_label = ""
@@ -73,7 +73,7 @@ class CellDiscreteHandler:
 
     @staticmethod
     def initialize_cds(variableCell, space):
-        samples = variableCell.get_data_for_cur_idx_dims_values(space)
+        samples = variableCell.get_data_for_cur_idx_dims_values(variableCell.name, space)
         variableCell.source[space] = ColumnDataSource(data = pmf(samples))
         variableCell.samples[space] = ColumnDataSource(data = dict(x = samples))
 
@@ -100,7 +100,10 @@ class CellDiscreteHandler:
         var_x_range = variableCell.ic.get_var_x_range()
         global_update = variableCell.ic.get_global_update()
         if global_update:
-            if variableCell.name in sel_var_idx_dims_values and space == sel_space and variableCell.cur_idx_dims_values[variableCell.name] == sel_var_idx_dims_values[variableCell.name]:
+            cur_idx_dims_values = {}
+            if variableCell.name in variableCell.cur_idx_dims_values:
+                cur_idx_dims_values = variableCell.cur_idx_dims_values[variableCell.name]
+            if variableCell.name in sel_var_idx_dims_values and space == sel_space and cur_idx_dims_values == sel_var_idx_dims_values[variableCell.name]:
                 variableCell.update_selection_cds(space, var_x_range[(space, variableCell.name)].data['xmin'][0], var_x_range[(space, variableCell.name)].data['xmax'][0])
             else:
                 variableCell.selection[space].data = dict(x = np.array([]), y = np.array([]), y0 = np.array([]))
@@ -112,7 +115,7 @@ class CellDiscreteHandler:
         """
             Update source & samples cds in the static mode
         """
-        samples = variableCell.get_data_for_cur_idx_dims_values(space)
+        samples = variableCell.get_data_for_cur_idx_dims_values(variableCell.name, space)
         inds = variableCell.ic.get_sample_inds(space)
         if len(inds):
             sel_sample = samples[inds]
@@ -128,7 +131,10 @@ class CellDiscreteHandler:
         """
         xmin = event.geometry['x0']
         xmax = event.geometry['x1']
-        variableCell.ic.set_selection(variableCell.name, space, (xmin, xmax), variableCell.cur_idx_dims_values[variableCell.name])
+        cur_idx_dims_values = {}
+        if variableCell.name in variableCell.cur_idx_dims_values:
+            cur_idx_dims_values = variableCell.cur_idx_dims_values[variableCell.name]
+        variableCell.ic.set_selection(variableCell.name, space, (xmin, xmax), cur_idx_dims_values)
         for sp in variableCell.spaces:
             samples = variableCell.samples[sp].data['x']
             variableCell.ic.add_space_threads(threading.Thread(target = partial(CellDiscreteHandler._selectionbox_space_thread, variableCell, sp, samples, xmin, xmax), daemon = True))
@@ -153,7 +159,7 @@ class CellDiscreteHandler:
         """
             Updates source ColumnDataSource (cds).
         """
-        samples = variableCell.get_data_for_cur_idx_dims_values(space)
+        samples = variableCell.get_data_for_cur_idx_dims_values(variableCell.name, space)
         variableCell.source[space].data = pmf(samples)
 
     @staticmethod
