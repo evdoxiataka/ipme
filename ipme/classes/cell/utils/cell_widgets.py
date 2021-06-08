@@ -15,19 +15,24 @@ class CellWidgets:
     def initialize_widgets(cell):
         for space in cell.spaces:
             cell.widgets[space] = {}
-            for _, d_dim in cell.idx_dims.items():
-                n1, n2, opt1, opt2 = get_dim_names_options(d_dim)
-                cell.widgets[space][n1] = Select(title = n1, value = opt1[0], options = opt1)
-                cell.widgets[space][n1].on_change("value", partial(cell.widget_callback, w_title = n1, space = space))
-                if n1 not in cell.cur_idx_dims_values:
-                    inds = [i for i,v in enumerate(d_dim.values) if v == opt1[0]]
-                    cell.cur_idx_dims_values[n1] = inds
-                if n2:
-                    cell.widgets[space][n2] = Select(title = n2, value = opt2[0], options=opt2)
-                    cell.widgets[space][n2].on_change("value", partial(cell.widget_callback, w_title = n2, space = space))
-                    cell.ic.idx_widgets_mapping(space, d_dim, n1, n2)
-                    if n2 not in cell.cur_idx_dims_values:
-                        cell.cur_idx_dims_values[n2] = [0]
+            for var in cell.idx_dims:                
+                for _, d_dim in cell.idx_dims[var].items():
+                    n1, n2, opt1, opt2 = get_dim_names_options(d_dim)
+                    if n1 not in cell.widgets[space]:
+                        cell.widgets[space][n1] = Select(title = n1, value = opt1[0], options = opt1)
+                        cell.widgets[space][n1].on_change("value", partial(cell.widget_callback, w_title = n1, space = space))
+                    if var not in cell.cur_idx_dims_values:
+                        cell.cur_idx_dims_values[var] = {}
+                    if n1 not in cell.cur_idx_dims_values[var]:
+                        inds = [i for i,v in enumerate(d_dim.values) if v == opt1[0]]
+                        cell.cur_idx_dims_values[var][n1] = inds
+                    if n2:
+                        if n2 not in cell.widgets[space]:
+                            cell.widgets[space][n2] = Select(title = n2, value = opt2[0], options=opt2)
+                            cell.widgets[space][n2].on_change("value", partial(cell.widget_callback, w_title = n2, space = space))
+                            cell.ic.idx_widgets_mapping(space, d_dim, n1, n2)
+                        if n2 not in cell.cur_idx_dims_values[var]:
+                            cell.cur_idx_dims_values[var][n2] = [0]
 
     # def _widget_callback(self, attr, old, new, w_title, space):
     #     """
@@ -96,59 +101,66 @@ class CellWidgets:
         variableCell.ic.widget_lock_event.set()
 
     def _widget_callback_thread_inter(variableCell, new, w_title, space):
-        inds = -1
-        w2_title = ""
-        values = []
         w1_w2_idx_mapping = variableCell.ic.get_w1_w2_idx_mapping()
         w2_w1_val_mapping = variableCell.ic.get_w2_w1_val_mapping()
         w2_w1_idx_mapping = variableCell.ic.get_w2_w1_idx_mapping()
         widgets = variableCell.widgets[space]
-        if space in w1_w2_idx_mapping and w_title in w1_w2_idx_mapping[space]:  
-            for w2_title in w1_w2_idx_mapping[space][w_title]:
-                name = w_title+"_idx_"+w2_title
-                if name in variableCell.idx_dims:
-                    values = variableCell.idx_dims[name].values
-        if len(values) == 0 and w_title in variableCell.idx_dims:
-            values = variableCell.idx_dims[w_title].values
-        if len(values) == 0 and space in w2_w1_idx_mapping and w_title in w2_w1_idx_mapping[space]: 
-            for w1_idx in w2_w1_idx_mapping[space][w_title]:
-                w1_value = widgets[w1_idx].value
-                values = w2_w1_val_mapping[space][w_title][w1_value]
-        inds = [i for i,v in enumerate(values) if v == new]       
-        if inds == -1 or len(inds) == 0:
-            return
-        variableCell.cur_idx_dims_values[w_title] = inds
-        if w2_title and w2_title in variableCell.cur_idx_dims_values:
-            variableCell.cur_idx_dims_values[w2_title] = [0]        
+        for var in variableCell.idx_dims:
+            inds = -1
+            w2_title = ""
+            values = []
+            if space in w1_w2_idx_mapping and w_title in w1_w2_idx_mapping[space]:  
+                for w2_title in w1_w2_idx_mapping[space][w_title]:##review this
+                    name = w_title+"_idx_"+w2_title
+                    if name in variableCell.idx_dims[var]:                      
+                        values = variableCell.idx_dims[var][name].values
+            if len(values) == 0 and w_title in variableCell.idx_dims[var]:
+                values = variableCell.idx_dims[var][w_title].values
+            if len(values) == 0 and space in w2_w1_idx_mapping and w_title in w2_w1_idx_mapping[space]: 
+                for w1_idx in w2_w1_idx_mapping[space][w_title]:
+                    w1_value = widgets[w1_idx].value
+                    values = w2_w1_val_mapping[space][w_title][w1_value]
+            inds = [i for i,v in enumerate(values) if v == new]       
+            if inds == -1 or len(inds) == 0:
+                return
+            if w_title in variableCell.cur_idx_dims_values[var]:
+                variableCell.cur_idx_dims_values[var][w_title] = inds
+            if w2_title and w2_title in variableCell.cur_idx_dims_values[var]:
+                variableCell.cur_idx_dims_values[var][w2_title] = [0]        
         variableCell.update_source_cds(space)
         variableCell.ic.set_global_update(True)
         variableCell.update_cds(space)
 
     def _widget_callback_thread_static(variableCell, new, w_title, space):
-        inds = -1
-        w2_title = ""
-        values = []
         w1_w2_idx_mapping = variableCell.ic.get_w1_w2_idx_mapping()
         w2_w1_val_mapping = variableCell.ic.get_w2_w1_val_mapping()
         w2_w1_idx_mapping = variableCell.ic.get_w2_w1_idx_mapping()
         widgets = variableCell.widgets[space]
-        if space in w1_w2_idx_mapping and w_title in w1_w2_idx_mapping[space]:
-            for w2_title in w1_w2_idx_mapping[space][w_title]:
-                name = w_title+"_idx_"+w2_title
-                if name in variableCell.idx_dims:
-                    values = variableCell.idx_dims[name].values
-        elif w_title in variableCell.idx_dims:
-            values = variableCell.idx_dims[w_title].values
-        elif space in w2_w1_idx_mapping and w_title in w2_w1_idx_mapping[space]:
-            for w1_idx in w2_w1_idx_mapping[space][w_title]:
-                w1_value = widgets[w1_idx].value
-                values = w2_w1_val_mapping[space][w_title][w1_value]
-        inds = [i for i,v in enumerate(values) if v == new]
-        if inds == -1 or len(inds) == 0:
-            return
-        variableCell.cur_idx_dims_values[w_title] = inds
-        if w2_title and w2_title in variableCell.cur_idx_dims_values:
-            variableCell.cur_idx_dims_values[w2_title] = [0]
+        for var in variableCell.idx_dims:
+            inds = -1
+            w2_title = ""
+            values = []
+            if space in w1_w2_idx_mapping and w_title in w1_w2_idx_mapping[space]:
+                for w2_title in w1_w2_idx_mapping[space][w_title]:
+                    name = w_title+"_idx_"+w2_title
+                    if name in variableCell.idx_dims[var]:
+                        values = variableCell.idx_dims[var][name].values
+            if len(values) == 0 and w_title in variableCell.idx_dims[var]:
+                values = variableCell.idx_dims[var][w_title].values
+            # elif w_title in variableCell.idx_dims:
+            #     values = variableCell.idx_dims[w_title].values
+            if len(values) == 0 and space in w2_w1_idx_mapping and w_title in w2_w1_idx_mapping[space]: 
+            # elif space in w2_w1_idx_mapping and w_title in w2_w1_idx_mapping[space]:
+                for w1_idx in w2_w1_idx_mapping[space][w_title]:
+                    w1_value = widgets[w1_idx].value
+                    values = w2_w1_val_mapping[space][w_title][w1_value]
+            inds = [i for i,v in enumerate(values) if v == new]
+            if inds == -1 or len(inds) == 0:
+                return
+            if w_title in variableCell.cur_idx_dims_values[var]:
+                variableCell.cur_idx_dims_values[var][w_title] = inds
+            if w2_title and w2_title in variableCell.cur_idx_dims_values[var]:
+                variableCell.cur_idx_dims_values[var][w2_title] = [0]
         variableCell.update_cds(space)
 
     @staticmethod

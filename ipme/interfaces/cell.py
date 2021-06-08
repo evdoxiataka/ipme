@@ -17,7 +17,7 @@ class Cell(ABC):
                 ic
                 spaces                 A List of Strings in {"prior","posterior"}.
                 idx_dims               A Dict {<var_name>:{<dim_name>:Dimension obj}}.
-                cur_idx_dims_values    A Dict {<idx_dim_name>: Integer of current value index of <idx_dim_name>}.
+                cur_idx_dims_values    A Dict {<var_name>:{<dim_name>: Current value of <dim_name>}}.
 
                 plot                   A Dict {<space>: (bokeh) plot object}.
                 widgets                A Dict {<space>: {<widget_title>: A (bokeh) widget object} }.

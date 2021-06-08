@@ -27,7 +27,7 @@ class CellClearSelection:
         sel_space = variableCell.ic.get_sel_space()
         var_x_range = variableCell.ic.get_var_x_range()
         if (variableCell.name in sel_var_idx_dims_values and space == sel_space and
-            variableCell.cur_idx_dims_values == sel_var_idx_dims_values[variableCell.name]):
+            variableCell.cur_idx_dims_values[variableCell.name] == sel_var_idx_dims_values[variableCell.name]):
             min_x_range = var_x_range[(space, variableCell.name)].data['xmin'][0]
             max_x_range = var_x_range[(space, variableCell.name)].data['xmax'][0]
             hp = find_highest_point(variableCell.reconstructed[space].data['x'], variableCell.reconstructed[space].data['y'])

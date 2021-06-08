@@ -62,8 +62,9 @@ class VariableCell(Cell):
             data =  self._all_samples[space]
         else:
             raise ValueError
-        for dim_name, dim_value in self.cur_idx_dims_values.items():
-            data = data[dim_value]
+        if self.name in self.cur_idx_dims_values:
+            for dim_name, dim_value in self.cur_idx_dims_values[self.name].items():
+                data = data[dim_value]
         return np.squeeze(data).T
 
     ## INITIALIZATION

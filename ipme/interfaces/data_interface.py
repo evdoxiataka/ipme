@@ -87,9 +87,9 @@ class Data_Interface(ABC):
         idx_dims = {}
         for var in var_names:
             if var in self._idx_dimensions:
+                idx_dims[var] = {}
                 for dim in self._idx_dimensions[var]:
-                    if dim not in idx_dims:
-                        idx_dims[dim] = self._idx_dimensions[var][dim]
+                    idx_dims[var][dim] = self._idx_dimensions[var][dim]
         return idx_dims
 
     def get_indx_for_idx_dim(self, var_name, d_name, d_value):

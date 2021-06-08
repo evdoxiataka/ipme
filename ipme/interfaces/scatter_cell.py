@@ -35,7 +35,8 @@ class ScatterCell(Cell):
                     space_gsam = "posterior_predictive"
                 elif space == "prior" and "prior_predictive" in self._data.get_spaces():
                     space_gsam = "prior_predictive"
-            self._all_samples[var] = {}
+            if var not in self._all_samples:
+                self._all_samples[var] = {}
             self._all_samples[var][space] = self._data.get_samples(var, space_gsam).T
             # compute x_range
             self.x_range[var] = {}
@@ -49,13 +50,18 @@ class ScatterCell(Cell):
             Returns:
             --------
                 A numpy.ndarray.
-        """
-        if var_name in self._all_samples and space in self._all_samples[var_name]:
-            data =  self._all_samples[var_name][space]
+        """    
+        if var_name in self._all_samples:
+            data =  self._all_samples[var_name]
+            if space in data:
+                data = data[space]
+            else:
+                raise ValueError("cel {}-{}: space {} not in self._all_samples[{}].keys() {}".format(self.vars[0],self.vars[1],space,var_name,data.keys()))
         else:
-            raise ValueError
-        for dim_name, dim_value in self.cur_idx_dims_values.items():
-            data = data[dim_value]
+            raise ValueError("var_name {} not in self._all_samples.keys() {}".format(var_name, self._all_samples.keys()))
+        if var_name in self.cur_idx_dims_values:
+            for _, dim_value in self.cur_idx_dims_values[var_name].items():
+                data = data[dim_value]
         return np.squeeze(data).T
 
     ## INITIALIZATION

@@ -32,8 +32,5 @@ class InteractiveScatterCell(ScatterCell):
     def update_source_cds(self, space):
         CellScatterHandler.update_source_cds_interactive(self, space)
 
-    def update_selection_cds(self, space, xmin, xmax):
-        CellScatterHandler.update_selection_cds_interactive(self, space, xmin, xmax)
-
-    def update_reconstructed_cds(self, space):
-        CellScatterHandler.update_reconstructed_cds_interactive(self, space)
+    def update_sel_samples_cds(self, space):
+        CellScatterHandler.update_sel_samples_cds_interactive(self, space)

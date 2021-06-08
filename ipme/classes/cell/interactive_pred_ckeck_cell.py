@@ -154,5 +154,5 @@ class InteractivePredCheckCell(PredictiveCheckCell):
         inds = self.ic.data.get_indx_for_idx_dim(self.name, w_title, new)
         if inds==-1:
             return
-        self.cur_idx_dims_values[w_title] = inds
+        self.cur_idx_dims_values[self.name][w_title] = inds
         self._update_plot(space)

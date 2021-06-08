@@ -100,7 +100,7 @@ class CellDiscreteHandler:
         var_x_range = variableCell.ic.get_var_x_range()
         global_update = variableCell.ic.get_global_update()
         if global_update:
-            if variableCell.name in sel_var_idx_dims_values and space == sel_space and variableCell.cur_idx_dims_values == sel_var_idx_dims_values[variableCell.name]:
+            if variableCell.name in sel_var_idx_dims_values and space == sel_space and variableCell.cur_idx_dims_values[variableCell.name] == sel_var_idx_dims_values[variableCell.name]:
                 variableCell.update_selection_cds(space, var_x_range[(space, variableCell.name)].data['xmin'][0], var_x_range[(space, variableCell.name)].data['xmax'][0])
             else:
                 variableCell.selection[space].data = dict(x = np.array([]), y = np.array([]), y0 = np.array([]))
@@ -128,7 +128,7 @@ class CellDiscreteHandler:
         """
         xmin = event.geometry['x0']
         xmax = event.geometry['x1']
-        variableCell.ic.set_selection(variableCell.name, space, (xmin, xmax), variableCell.cur_idx_dims_values)
+        variableCell.ic.set_selection(variableCell.name, space, (xmin, xmax), variableCell.cur_idx_dims_values[variableCell.name])
         for sp in variableCell.spaces:
             samples = variableCell.samples[sp].data['x']
             variableCell.ic.add_space_threads(threading.Thread(target = partial(CellDiscreteHandler._selectionbox_space_thread, variableCell, sp, samples, xmin, xmax), daemon = True))
