@@ -1,6 +1,6 @@
 from ipme.utils.constants import  COLORS, BORDER_COLORS, PLOT_HEIGHT, PLOT_WIDTH, SIZING_MODE
 
-from bokeh.models import ColumnDataSource, HoverTool
+from bokeh.models import ColumnDataSource, HoverTool, CDSView, IndexFilter
 from bokeh.plotting import figure
 
 import numpy as np
@@ -13,8 +13,8 @@ class CellScatterHandler:
 
     @staticmethod
     def initialize_glyphs_interactive(scatterCell, space):
-        so = scatterCell.plot[space].circle(x="x", y="y", source=scatterCell.source[space], size=7, color=COLORS[0], line_color=None)
-        re = scatterCell.plot[space].circle(x="x", y="y", source=scatterCell.sel_samples[space], size=7, color=COLORS[1], line_color=None)
+        so = scatterCell.plot[space].circle(x="x", y="y", source=scatterCell.samples[space], size=7, color=COLORS[0], line_color=None, fill_alpha = 0.5, view = scatterCell.non_sel_samples_view[space])
+        re = scatterCell.plot[space].circle(x="x", y="y", source=scatterCell.samples[space], size=7, color=COLORS[1], line_color=None, fill_alpha = 0.5, view = scatterCell.sel_samples_view[space])
         ##Tooltips
         TOOLTIPS = [("x", "@x"), ("y","@y"),]
         hover = HoverTool( tooltips = TOOLTIPS, renderers = [so,re], mode = 'mouse')
@@ -22,7 +22,7 @@ class CellScatterHandler:
 
     @staticmethod
     def initialize_glyphs_static(scatterCell, space):
-        so = scatterCell.plot[space].circle(x="x", y="y", source=scatterCell.source[space], size=7, color=COLORS[0], line_color=None)
+        so = scatterCell.plot[space].circle(x="x", y="y", source=scatterCell.samples[space], size=7, color=COLORS[0], line_color=None, fill_alpha = 0.5)
         ##Tooltips
         TOOLTIPS = [("x", "@x"), ("y","@y"),]
         hover = HoverTool( tooltips = TOOLTIPS, renderers = [so], mode = 'mouse')
@@ -59,12 +59,15 @@ class CellScatterHandler:
         var2 = scatterCell.vars[1]
         samples1 = scatterCell.get_data_for_cur_idx_dims_values(var1, space)
         samples2 = scatterCell.get_data_for_cur_idx_dims_values(var2, space)
-        scatterCell.source[space] = ColumnDataSource(data = dict(x=samples2, y=samples1))
+        scatterCell.samples[space] = ColumnDataSource(data = dict(x=samples2, y=samples1))
         
     @staticmethod
     def initialize_cds_interactive(scatterCell, space):
         CellScatterHandler.initialize_cds(scatterCell, space)
-        scatterCell.sel_samples[space] = ColumnDataSource(data = dict(x = np.array([]), y = np.array([]), size = np.array([])))
+        inds, non_inds = scatterCell.ic.get_sample_inds(space)
+        scatterCell.sel_samples_view[space] = CDSView(source = scatterCell.samples[space], filters=[IndexFilter(inds)])
+        scatterCell.non_sel_samples_view[space] = CDSView(source = scatterCell.samples[space], filters=[IndexFilter(non_inds)])
+        # scatterCell.sel_samples[space] = ColumnDataSource(data = dict(x = np.array([]), y = np.array([]), size = np.array([])))
         # scatterCell.ic.var_x_range[(space, scatterCell.name)] = ColumnDataSource(data = dict(xmin = np.array([]), xmax = np.array([])))
 
     @staticmethod
@@ -82,40 +85,40 @@ class CellScatterHandler:
     @staticmethod
     def update_cds_static(scatterCell, space):
         """
-            Update source & samples cds in the static mode
+            Update samples cds in the static mode
         """
         var1 = scatterCell.vars[0]
         var2 = scatterCell.vars[1]
         samples1 = scatterCell.get_data_for_cur_idx_dims_values(var1, space)
         samples2 = scatterCell.get_data_for_cur_idx_dims_values(var2, space)
-        inds = scatterCell.ic.get_sample_inds(space)
+        inds, non_inds = scatterCell.ic.get_sample_inds(space)
         if len(inds):
             sel_sample1 = samples1[inds]
             sel_sample2 = samples2[inds]
-            scatterCell.source[space].data = dict(x=sel_sample2, y=sel_sample1)
+            scatterCell.samples[space].data = dict(x=sel_sample2, y=sel_sample1)
         else:
-            scatterCell.source[space].data = dict(x=samples2, y=samples1)
+            scatterCell.samples[space].data = dict(x=samples2, y=samples1)
             
     ## ONLY FOR INTERACTIVE CASE
     @staticmethod
     def update_source_cds_interactive(scatterCell, space):
         """
-            Updates source ColumnDataSource (cds).
+            Updates samples ColumnDataSource (cds).
         """
         var1 = scatterCell.vars[0]
         var2 = scatterCell.vars[1]
         samples1 = scatterCell.get_data_for_cur_idx_dims_values(var1, space)
         samples2 = scatterCell.get_data_for_cur_idx_dims_values(var2, space)
-        scatterCell.source[space].data = dict(x=samples2, y=samples1)
+        scatterCell.samples[space].data = dict(x=samples2, y=samples1)
 
     @staticmethod
     def update_sel_samples_cds_interactive(scatterCell, space):
         """
             Updates reconstructed ColumnDataSource (cds).
         """
-        samples1 = scatterCell.source[space].data['x']
-        samples2 = scatterCell.source[space].data['y']
-        inds = scatterCell.ic.get_sample_inds(space)
+        samples1 = scatterCell.samples[space].data['x']
+        samples2 = scatterCell.samples[space].data['y']
+        inds, non_inds = scatterCell.ic.get_sample_inds(space)
         if len(inds):
             sel_sample1 = samples1[inds]
             sel_sample2 = samples2[inds]

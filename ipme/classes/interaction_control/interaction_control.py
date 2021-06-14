@@ -14,6 +14,7 @@ class IC:
                 data_obj                A Data object.
             Sets:
             --------
+            _sel_var_inds           A Dict {<space>: Dict {<var_name>: List of indices} }
             _w1_w2_idx_mapping      A Dict {<space>: Dict {<w_name1>:(w_name2,widgets_idx)}}.
             _w2_w1_idx_mapping      A Dict {<space>: Dict {<w_name2>:(w_name1,widgets_idx)}}.
             _w2_w1_val_mapping      A Dict {<space>: Dict {<w_name2>:{<w1_value>: A List of <w_name2> values for <w1_value>}}.
@@ -51,6 +52,7 @@ class IC:
         self._w2_w1_val_mapping = {}
         ##Interaction-related variables
         self.sample_inds = dict(prior = ColumnDataSource(data = dict(inds = [])), posterior = ColumnDataSource(data = dict(inds=[])))
+        self.sample_non_inds = dict(prior = ColumnDataSource(data = dict(non_inds = [])), posterior = ColumnDataSource(data = dict(non_inds=[])))
         self.sample_inds_update = dict(prior = ColumnDataSource(data = dict(updated = [False])), posterior = ColumnDataSource(data = dict(updated = [False])))
         self._sel_var_inds = {}
         self._sel_space = ""
@@ -227,10 +229,12 @@ class IC:
         self._widget_threads.append(t)
         self._widget_lock.release()
 
-    def set_sample_inds(self, space, dict_data):
+    def set_sample_inds(self, space, inds_dict, non_inds_dict):
         self._sample_inds_lock.acquire()
         if space in self.sample_inds:
-            self.sample_inds[space].data = dict_data
+            self.sample_inds[space].data = inds_dict
+        if space in self.sample_non_inds:
+            self.sample_non_inds[space].data = non_inds_dict
         self._sample_inds_lock.release()
         isup = self._get_sample_inds_update(space)
         self._set_sample_inds_update(space, dict(updated = [not isup]))
@@ -238,19 +242,22 @@ class IC:
     def reset_sample_inds(self, space):
         self._sample_inds_lock.acquire()
         self.sample_inds[space].data = dict(inds=[])
+        self.sample_non_inds[space].data = dict(non_inds=[])
         self._sample_inds_lock.release()
         isup = self._get_sample_inds_update(space)
         self._set_sample_inds_update(space, dict(updated = [not isup]))
 
     def get_sample_inds(self, space = None):
         inds = []
+        non_inds = []
         self._sample_inds_lock.acquire()
-        if space in self.sample_inds:
+        if space in self.sample_inds and space in self.sample_non_inds:
             inds = self.sample_inds[space].data['inds']
+            non_inds = self.sample_non_inds[space].data['non_inds']
         else:
             inds = self.sample_inds
         self._sample_inds_lock.release()
-        return inds
+        return inds, non_inds
 
     def _set_sample_inds_update(self, space, dict_data):
         self._sample_inds_update_lock.acquire()
@@ -270,7 +277,9 @@ class IC:
 
     def set_sel_var_inds(self, space, var_name, inds):
         self._sel_var_inds_lock.acquire()
-        self._sel_var_inds[(space,var_name)] = inds
+        if space not in self._sel_var_inds:
+            self._sel_var_inds[space] = {}        
+        self._sel_var_inds[space][var_name] = inds
         self._sel_var_inds_lock.release()
 
     def reset_sel_var_inds(self):
@@ -278,11 +287,13 @@ class IC:
         self._sel_var_inds = {}
         self._sel_var_inds_lock.release()
 
-    def get_sel_var_inds(self, space=None, var_name=None):
+    def get_sel_var_inds(self, space = None, var_name = None):
         inds = []
         self._sel_var_inds_lock.acquire()
-        if (space,var_name) in self._sel_var_inds:
-            inds =  self._sel_var_inds[(space,var_name)]
+        if space in self._sel_var_inds:
+            inds =  self._sel_var_inds[space]
+            if var_name in self._sel_var_inds[space]:
+                inds = inds[var_name]
         else:
             inds =  self._sel_var_inds
         self._sel_var_inds_lock.release()
@@ -290,8 +301,8 @@ class IC:
 
     def delete_sel_var_inds(self, space, var_name):
         self._sel_var_inds_lock.acquire()
-        if (space,var_name) in self._sel_var_inds:
-            del self._sel_var_inds[(space,var_name)]
+        if space in self._sel_var_inds and var_name in self._sel_var_inds[space]:
+            del self._sel_var_inds[space][var_name]
         self._sel_var_inds_lock.release()
 
     def _set_sel_space(self, space):

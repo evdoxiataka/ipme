@@ -10,7 +10,8 @@ class InteractiveScatterCell(ScatterCell):
                 name            A String within the set {"<variableName>"}.
                 control         A Control object
         """
-        self.sel_samples = {}
+        self.sel_samples_view = {}
+        self.non_sel_samples_view = {}
         ScatterCell.__init__(self, vars, control)
 
     def initialize_cds(self, space):

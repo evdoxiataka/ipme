@@ -138,18 +138,23 @@ class VariableCell(Cell):
             Computes intersection of sample points based on user's
             restrictions per parameter.
         """
-        sel_var_inds = self.ic.get_sel_var_inds()
-        sp_keys = [k for k in sel_var_inds if k[0] == space]
+        sel_var_inds = self.ic.get_sel_var_inds(space = space)
+        sp_keys = list(sel_var_inds.keys())
+        all_inds = [k for k in range(len(self.samples[space].data['x']))]
+        all_inds_set = set(all_inds)
+        inds_set = None
+        inds_list = []
         if len(sp_keys)>1:
             sets = []
-            for i in range(0, len(sp_keys)):
-                sets.append(set(sel_var_inds[sp_keys[i]]))
-            union = set.intersection(*sorted(sets, key = len))
-            self.ic.set_sample_inds(space, dict(inds = list(union)))
+            for var in sp_keys:
+                sets.append(set(sel_var_inds[var]))
+            inds_set = set.intersection(*sorted(sets, key = len))
+            inds_list = list(inds_set)
         elif len(sp_keys) == 1:
-            self.ic.set_sample_inds(space, dict(inds = sel_var_inds[sp_keys[0]]))
-        else:
-            self.ic.set_sample_inds(space, dict(inds = []))
+            inds_list = sel_var_inds[sp_keys[0]]
+            inds_set = set(inds_list)
+        diff = all_inds_set.difference(inds_set)
+        self.ic.set_sample_inds(space, dict(inds = inds_list), dict(non_inds = list(diff)))
 
     def _initialize_toggle_div(self):
         """"

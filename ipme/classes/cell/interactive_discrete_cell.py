@@ -12,7 +12,6 @@ class InteractiveDiscreteCell(VariableCell):
                 control         A Control object
         """
         self.selection = {}
-        self.sel_samples = {}
         self.reconstructed = {}
         self.clear_selection = {}
         VariableCell.__init__(self, name, control)

@@ -4,7 +4,8 @@ from ipme.utils.constants import  COLORS, BORDER_COLORS, PLOT_HEIGHT, PLOT_WIDTH
 from ipme.utils.stats import kde
 from ipme.utils.functions import find_inds_before_after, find_indices
 
-from bokeh.models import ColumnDataSource, BoxSelectTool, HoverTool
+from bokeh.models import ColumnDataSource, BoxSelectTool, HoverTool, CDSView, IndexFilter
+
 from bokeh import events
 from bokeh.plotting import figure
 
@@ -22,8 +23,8 @@ class CellContinuousHandler:
         so = variableCell.plot[space].line('x', 'y', line_color = COLORS[0], line_width = 2, source = variableCell.source[space])
         re = variableCell.plot[space].line('x', 'y', line_color = COLORS[1], line_width = 2, source = variableCell.reconstructed[space])
         variableCell.plot[space].line('x', 'y', line_color = COLORS[2], line_width = 2, source = variableCell.selection[space])
-        variableCell.plot[space].dash('x', 'y', size='size', angle = 90.0, angle_units = 'deg', line_color = COLORS[0], source = variableCell.samples[space])
-        variableCell.plot[space].dash('x', 'y', size='size', angle = 90.0, angle_units = 'deg', line_color = COLORS[1], source = variableCell.sel_samples[space])
+        variableCell.plot[space].dash('x', 'y', size='size', angle = 90.0, angle_units = 'deg', line_color = COLORS[0], source = variableCell.samples[space], view = variableCell.non_sel_samples_view[space])
+        variableCell.plot[space].dash('x', 'y', size='size', angle = 90.0, angle_units = 'deg', line_color = COLORS[1], source = variableCell.samples[space], view = variableCell.sel_samples_view[space])
         ##Add BoxSelectTool
         variableCell.plot[space].add_tools(BoxSelectTool(dimensions = 'width', renderers = [so]))
         ##Tooltips
@@ -75,7 +76,9 @@ class CellContinuousHandler:
     @staticmethod
     def initialize_cds_interactive(variableCell, space):
         CellContinuousHandler.initialize_cds(variableCell, space)
-        variableCell.sel_samples[space] = ColumnDataSource(data = dict(x = np.array([]), y = np.array([]), size = np.array([])))
+        inds, non_inds = variableCell.ic.get_sample_inds(space)
+        variableCell.sel_samples_view[space] = CDSView(source = variableCell.samples[space], filters=[IndexFilter(inds)])
+        variableCell.non_sel_samples_view[space] = CDSView(source = variableCell.samples[space], filters=[IndexFilter(non_inds)])
         variableCell.selection[space] = ColumnDataSource(data = dict(x = np.array([]), y = np.array([])))
         variableCell.reconstructed[space] = ColumnDataSource(data = dict(x = np.array([]), y = np.array([])))
         variableCell.clear_selection[space] = ColumnDataSource(data = dict(x = [], y = [], isIn = []))
@@ -112,7 +115,7 @@ class CellContinuousHandler:
             Update source & samples cds in the static mode
         """
         samples = variableCell.get_data_for_cur_idx_dims_values(variableCell.name, space)
-        inds = variableCell.ic.get_sample_inds(space)
+        inds, _ = variableCell.ic.get_sample_inds(space)
         if len(inds):
             sel_sample = samples[inds]
             variableCell.source[space].data = kde(sel_sample)
@@ -216,15 +219,17 @@ class CellContinuousHandler:
             Updates reconstructed ColumnDataSource (cds).
         """
         samples = variableCell.samples[space].data['x']
-        inds = variableCell.ic.get_sample_inds(space)
+        inds, non_inds = variableCell.ic.get_sample_inds(space)
+        variableCell.sel_samples_view[space].filters = [IndexFilter(inds)]
+        variableCell.non_sel_samples_view[space].filters = [IndexFilter(non_inds)]
         if len(inds):
             sel_sample = samples[inds]
             variableCell.reconstructed[space].data = kde(sel_sample)
-            max_v = variableCell.get_max_prob(space)
-            variableCell.sel_samples[space].data = dict( x = sel_sample, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(sel_sample)), size = np.asarray([RUG_SIZE]*len(sel_sample)))
+            max_v = variableCell.get_max_prob(space)            
+            # variableCell.sel_samples[space].data = dict( x = sel_sample, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(sel_sample)), size = np.asarray([RUG_SIZE]*len(sel_sample)))
         else:
             variableCell.reconstructed[space].data = dict( x = np.array([]), y = np.array([]))
-            variableCell.sel_samples[space].data = dict( x = np.array([]), y = np.array([]), size = np.array([]))
+            # variableCell.sel_samples[space].data = dict( x = np.array([]), y = np.array([]), size = np.array([]))
         max_v = variableCell.get_max_prob(space)
         if max_v!=-1:
             variableCell.samples[space].data['y'] = np.asarray([-max_v/RUG_DIST_RATIO]*len(variableCell.samples[space].data['x']))
