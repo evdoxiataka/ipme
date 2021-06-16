@@ -32,7 +32,8 @@ def find_x_range(data):
 
 def kde(samples, filled = False):
     try:
-        # samples = np.asarray(samples, dtype=np.float64).flatten()
+        if len(samples) == 0:
+            return dict(x = np.array([]), y = np.array([]))
         samples = samples.flatten()
         if ~np.isfinite(samples).all():
             samples = get_finite_samples(samples)
@@ -42,13 +43,13 @@ def kde(samples, filled = False):
         x = kde_support(bw, bin_range=(samples.min(),samples.max()))      
         y = kde(x)
         if filled:
-            x=np.append(x,x[-1])
-            x=np.insert(x, 0, x[0], axis=0)
-            y=np.append(y,0.0)
-            y=np.insert(y, 0, 0.0, axis=0)
-        return dict(x=x,y=y)
+            x = np.append(x, x[-1])
+            x = np.insert(x, 0, x[0], axis=0)
+            y = np.append(y, 0.0)
+            y = np.insert(y, 0, 0.0, axis=0)
+        return dict(x = x,y = y)
     except ValueError:
-        print("KDE cannot be estimated because %s samples were provided to kde" % str(len(samples)))
+        print("KDE cannot be estimated because {} samples were provided to kde".format(len(samples)))
         return dict(x=np.array([]),y=np.array([])) 
     except LinAlgError as err:
         if 'singular matrix' in str(err):

@@ -1,6 +1,6 @@
 from ipme.utils.constants import  COLORS, BORDER_COLORS, PLOT_HEIGHT, PLOT_WIDTH, SIZING_MODE
 
-from bokeh.models import ColumnDataSource, HoverTool, CDSView, IndexFilter
+from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.plotting import figure
 
 import numpy as np
@@ -13,8 +13,8 @@ class CellScatterHandler:
 
     @staticmethod
     def initialize_glyphs_interactive(scatterCell, space):
-        so = scatterCell.plot[space].circle(x="x", y="y", source=scatterCell.samples[space], size=7, color=COLORS[0], line_color=None, fill_alpha = 0.5, view = scatterCell.non_sel_samples_view[space])
-        re = scatterCell.plot[space].circle(x="x", y="y", source=scatterCell.samples[space], size=7, color=COLORS[1], line_color=None, fill_alpha = 0.5, view = scatterCell.sel_samples_view[space])
+        so = scatterCell.plot[space].circle(x="x", y="y", source = scatterCell.non_sel_samples[space], size=7, color=COLORS[0], line_color=None, fill_alpha = 0.1)
+        re = scatterCell.plot[space].circle(x="x", y="y", source = scatterCell.sel_samples[space], size=7, color=COLORS[1], line_color=None, fill_alpha = 0.1)
         ##Tooltips
         TOOLTIPS = [("x", "@x"), ("y","@y"),]
         hover = HoverTool( tooltips = TOOLTIPS, renderers = [so,re], mode = 'mouse')
@@ -22,7 +22,7 @@ class CellScatterHandler:
 
     @staticmethod
     def initialize_glyphs_static(scatterCell, space):
-        so = scatterCell.plot[space].circle(x="x", y="y", source=scatterCell.samples[space], size=7, color=COLORS[0], line_color=None, fill_alpha = 0.5)
+        so = scatterCell.plot[space].circle(x="x", y="y", source = scatterCell.samples[space], size=7, color=COLORS[0], line_color=None, fill_alpha = 0.1)
         ##Tooltips
         TOOLTIPS = [("x", "@x"), ("y","@y"),]
         hover = HoverTool( tooltips = TOOLTIPS, renderers = [so], mode = 'mouse')
@@ -59,17 +59,21 @@ class CellScatterHandler:
         var2 = scatterCell.vars[1]
         samples1 = scatterCell.get_data_for_cur_idx_dims_values(var1, space)
         samples2 = scatterCell.get_data_for_cur_idx_dims_values(var2, space)
-        scatterCell.samples[space] = ColumnDataSource(data = dict(x=samples2, y=samples1))
+        scatterCell.samples[space] = ColumnDataSource(data = dict(x = samples2, y = samples1))
+        scatterCell.ic.initialize_sample_inds(space, dict(inds = [False]*len(scatterCell.samples[space].data['x'])), dict(non_inds = [True]*len(scatterCell.samples[space].data['x'])))
+
         
     @staticmethod
     def initialize_cds_interactive(scatterCell, space):
         CellScatterHandler.initialize_cds(scatterCell, space)
         inds, non_inds = scatterCell.ic.get_sample_inds(space)
-        scatterCell.sel_samples_view[space] = CDSView(source = scatterCell.samples[space], filters=[IndexFilter(inds)])
-        scatterCell.non_sel_samples_view[space] = CDSView(source = scatterCell.samples[space], filters=[IndexFilter(non_inds)])
-        # scatterCell.sel_samples[space] = ColumnDataSource(data = dict(x = np.array([]), y = np.array([]), size = np.array([])))
-        # scatterCell.ic.var_x_range[(space, scatterCell.name)] = ColumnDataSource(data = dict(xmin = np.array([]), xmax = np.array([])))
-
+        sel_y = scatterCell.samples[space].data['y'][inds]
+        non_sel_y = scatterCell.samples[space].data['y'][non_inds]
+        sel_samples = scatterCell.samples[space].data['x'][inds]
+        non_sel_samples = scatterCell.samples[space].data['x'][non_inds]
+        scatterCell.sel_samples[space] = ColumnDataSource(data = dict( x = sel_samples, y = sel_y))
+        scatterCell.non_sel_samples[space] = ColumnDataSource(data = dict( x = non_sel_samples, y = non_sel_y))
+        
     @staticmethod
     def initialize_cds_static(scatterCell, space):
         CellScatterHandler.initialize_cds(scatterCell, space)
@@ -91,8 +95,8 @@ class CellScatterHandler:
         var2 = scatterCell.vars[1]
         samples1 = scatterCell.get_data_for_cur_idx_dims_values(var1, space)
         samples2 = scatterCell.get_data_for_cur_idx_dims_values(var2, space)
-        inds, non_inds = scatterCell.ic.get_sample_inds(space)
-        if len(inds):
+        inds, _ = scatterCell.ic.get_sample_inds(space)
+        if True in inds:
             sel_sample1 = samples1[inds]
             sel_sample2 = samples2[inds]
             scatterCell.samples[space].data = dict(x=sel_sample2, y=sel_sample1)
@@ -119,10 +123,10 @@ class CellScatterHandler:
         samples1 = scatterCell.samples[space].data['x']
         samples2 = scatterCell.samples[space].data['y']
         inds, non_inds = scatterCell.ic.get_sample_inds(space)
-        if len(inds):
-            sel_sample1 = samples1[inds]
-            sel_sample2 = samples2[inds]
-            scatterCell.sel_samples[space].data = dict(x=sel_sample1, y=sel_sample2)
-        else:
-            scatterCell.sel_samples[space].data = dict( x = np.array([]), y = np.array([]))
+        sel_sample1 = samples1[inds]
+        sel_sample2 = samples2[inds]
+        scatterCell.sel_samples[space].data = dict(x=sel_sample1, y=sel_sample2)
+        non_sel_sample1 = samples1[non_inds]
+        non_sel_sample2 = samples2[non_inds]
+        scatterCell.non_sel_samples[space].data = dict(x=non_sel_sample1, y=non_sel_sample2)
 

@@ -52,15 +52,6 @@ class VariableCell(Cell):
             # compute x_range
             self.x_range[var] = {}
             self.x_range[var][space] = find_x_range(self._all_samples[var][space])
-        # space_gsam = space
-        # if self._data.get_var_type(self.name) == "observed":
-        #     if space == "posterior" and "posterior_predictive" in self._data.get_spaces():
-        #         space_gsam = "posterior_predictive"
-        #     elif space == "prior" and "prior_predictive" in self._data.get_spaces():
-        #         space_gsam = "prior_predictive"
-        # self._all_samples[space] = self._data.get_samples(self.name, space_gsam).T
-        # # compute x_range
-        # self.x_range[space] = find_x_range(self._all_samples[space])
 
     def get_data_for_cur_idx_dims_values(self, var_name, space):
         """
@@ -71,14 +62,6 @@ class VariableCell(Cell):
             --------
                 A numpy.ndarray.
         """
-        # if space in self._all_samples:
-        #     data =  self._all_samples[space]
-        # else:
-        #     raise ValueError
-        # if self.name in self.cur_idx_dims_values:
-        #     for dim_name, dim_value in self.cur_idx_dims_values[self.name].items():
-        #         data = data[dim_value]
-        # return np.squeeze(data).T
         if var_name in self._all_samples:
             data =  self._all_samples[var_name]
             if space in data:
@@ -140,21 +123,17 @@ class VariableCell(Cell):
         """
         sel_var_inds = self.ic.get_sel_var_inds(space = space)
         sp_keys = list(sel_var_inds.keys())
-        all_inds = [k for k in range(len(self.samples[space].data['x']))]
-        all_inds_set = set(all_inds)
-        inds_set = None
-        inds_list = []
+        inds_list = np.full((len(self.samples[space].data['x']),), False)
         if len(sp_keys)>1:
             sets = []
             for var in sp_keys:
                 sets.append(set(sel_var_inds[var]))
             inds_set = set.intersection(*sorted(sets, key = len))
-            inds_list = list(inds_set)
+            inds_list[list(inds_set)] = True
         elif len(sp_keys) == 1:
-            inds_list = sel_var_inds[sp_keys[0]]
-            inds_set = set(inds_list)
-        diff = all_inds_set.difference(inds_set)
-        self.ic.set_sample_inds(space, dict(inds = inds_list), dict(non_inds = list(diff)))
+            inds_list[sel_var_inds[sp_keys[0]]] = True
+        non_inds_list = list(~inds_list)
+        self.ic.set_sample_inds(space, dict(inds = list(inds_list)), dict(non_inds = non_inds_list))
 
     def _initialize_toggle_div(self):
         """"
@@ -197,7 +176,8 @@ class VariableCell(Cell):
             max_sv = self.source[space].data['y'].max()
         if hasattr(self,'reconstructed') and self.reconstructed[space].data['y'].size:
             max_rv = self.reconstructed[space].data['y'].max()
-        return max([max_sv,max_rv])
+        max_v = max([max_sv,max_rv])
+        return  max_v if max_v!=-1 else None
 
     def get_plot(self, space, add_info = True):
         if space in self.plot:

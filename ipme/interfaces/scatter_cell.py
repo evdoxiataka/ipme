@@ -16,7 +16,6 @@ class ScatterCell(Cell):
             -----
                 x_range         Figures axes x_range
         """
-        # self.source = {}
         self.samples = {}
         self._all_samples = {}
         self.x_range = {}

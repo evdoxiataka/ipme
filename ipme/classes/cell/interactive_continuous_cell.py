@@ -12,11 +12,10 @@ class InteractiveContinuousCell(VariableCell):
                 control         A Control object
         """
         self.selection = {}
-        # self.sel_samples = {}
+        self.sel_samples = {}
+        self.non_sel_samples = {}
         self.reconstructed = {}
         self.clear_selection = {}
-        self.sel_samples_view = {}
-        self.non_sel_samples_view = {}
         VariableCell.__init__(self, name, control)
 
     def initialize_cds(self, space):

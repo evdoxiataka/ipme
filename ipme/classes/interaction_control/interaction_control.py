@@ -229,6 +229,14 @@ class IC:
         self._widget_threads.append(t)
         self._widget_lock.release()
 
+    def initialize_sample_inds(self, space, inds_dict, non_inds_dict):
+        self._sample_inds_lock.acquire()
+        if space in self.sample_inds:
+            self.sample_inds[space].data = inds_dict
+        if space in self.sample_non_inds:
+            self.sample_non_inds[space].data = non_inds_dict
+        self._sample_inds_lock.release()
+
     def set_sample_inds(self, space, inds_dict, non_inds_dict):
         self._sample_inds_lock.acquire()
         if space in self.sample_inds:
@@ -241,8 +249,9 @@ class IC:
 
     def reset_sample_inds(self, space):
         self._sample_inds_lock.acquire()
-        self.sample_inds[space].data = dict(inds=[])
-        self.sample_non_inds[space].data = dict(non_inds=[])
+        inds = self.sample_inds[space].data['inds']
+        self.sample_inds[space].data = dict(inds = [False]*len(inds))
+        self.sample_non_inds[space].data = dict(non_inds = [True]*len(inds))
         self._sample_inds_lock.release()
         isup = self._get_sample_inds_update(space)
         self._set_sample_inds_update(space, dict(updated = [not isup]))
