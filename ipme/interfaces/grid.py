@@ -2,12 +2,13 @@ from abc import ABC, abstractmethod
 from ..classes.cell.utils.cell_widgets import CellWidgets
 
 class Grid(ABC):
-    def __init__(self, control, mode):
+    def __init__(self, control, mode, vars = 'all'):
         """
             Parameters:
             --------
                 control                 A IC object.
                 mode                    A String in {"i","s"}, "i":interactive, "s":static.
+                vars                    A List of variables to be presented in the graph
             Sets:
             --------
                 ic
@@ -26,6 +27,7 @@ class Grid(ABC):
         self.ic = control
         self._data = control.data
         self._mode = mode
+        self._vars = vars
         self._grids = {}
         self.cells = []
         self.spaces = []

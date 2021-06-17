@@ -10,19 +10,19 @@ from ...utils.constants import COLS_PER_VAR
 import panel as pn
 
 class ScatterMatrixGrid(Grid):
-    def __init__(self, control, mode, vars):
-        """
-            Parameters:
-            --------
-                control                 A IC object.
-                mode                    A String in {"i","s"}, "i":interactive, "s":static.
-                vars                    A List of model variables to be included in the plot.
-            Sets:
-            --------
-                ic
-        """
-        self._vars = vars
-        Grid.__init__(self, control, mode)
+    # def __init__(self, control, mode, vars):
+    #     """
+    #         Parameters:
+    #         --------
+    #             control                 A IC object.
+    #             mode                    A String in {"i","s"}, "i":interactive, "s":static.
+    #             vars                    A List of model variables to be included in the plot.
+    #         Sets:
+    #         --------
+    #             ic
+    #     """
+    #     self._vars = vars
+    #     Grid.__init__(self, control, mode)
 
     def _create_grids(self):
         """

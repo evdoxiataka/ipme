@@ -1,8 +1,8 @@
 from .classes.graph import Graph
 from .classes.scatter_matrix import ScatterMatrix
 
-def graph(data_path, mode = "i", predictive_checks = []):
-    graph = Graph(data_path, mode, predictive_checks)
+def graph(data_path, mode = "i", vars = 'all',predictive_checks = []):
+    graph = Graph(data_path, mode, vars, predictive_checks)
     graph.get_graph().show()
 
 def scatter_matrix(data_path, mode = "i", vars = []):

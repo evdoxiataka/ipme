@@ -66,7 +66,7 @@ class GraphGrid(Grid):
             --------
                 A Dict {<grid_row>: (<graph_level>, List of varnames) }
         """
-        _varnames_per_graph_level = self._data.get_varnames_per_graph_level()
+        _varnames_per_graph_level = self._data.get_varnames_per_graph_level(self._vars)
         num_of_vars_per_graph_level = [len(_varnames_per_graph_level[k]) for k in sorted(_varnames_per_graph_level)]
         graph_grid_map = {}
         for level, num_vars in enumerate(num_of_vars_per_graph_level):

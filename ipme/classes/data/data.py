@@ -6,7 +6,7 @@ from .dimension import Dimension
 
 class Data(Data_Interface):
 
-    def __init__(self,inference_path):
+    def __init__(self, inference_path):
         """
             Parameters:
             --------
@@ -23,7 +23,7 @@ class Data(Data_Interface):
         """
         Data_Interface.__init__(self, inference_path)
 
-    def _load_inference_data(self,datapath):
+    def _load_inference_data(self, datapath):
         """
             Inference data is retrieved from memory in .npz format
 
@@ -89,7 +89,7 @@ class Data(Data_Interface):
         """
         spaces=[]
         if 'header.json' in self._inferencedata:
-            header=self._inferencedata['header.json']
+            header = self._inferencedata['header.json']
             header_js = json.loads(header)
             if 'inference_data' in header_js:
                 for space in ['prior','posterior','prior_predictive','posterior_predictive','observed_data','constant_data', 'sample_stats', 'log_likelihood', 'predictions', 'predictions_constant_data']:
@@ -129,10 +129,6 @@ class Data(Data_Interface):
             return self._graph[var_name]["parents"]
         else:
             return []
-
-    # def get_all_variables(self):
-    #     self.all_variables = self._observed_variables
-    #     for var in self._observed_variables:
 
     def get_samples(self, var_name, space=['prior','posterior']):
         """
@@ -205,7 +201,7 @@ class Data(Data_Interface):
             max = np.amax(data)
         return (min - 0.1*(max-min),max + 0.1*(max-min))
 
-    def get_varnames_per_graph_level(self):
+    def get_varnames_per_graph_level(self, vars):
         """
             Matches variable names to graph levels.
 
@@ -216,7 +212,20 @@ class Data(Data_Interface):
                 {<level>: List of variable names}, level=0,1,2...
         """
         nodes = self._add_nodes_to_graph(self._get_observed_nodes(), 0)
-        return self._reverse_nodes_levels(nodes)
+        varnames_per_graph_level = {}
+        if vars == 'all':
+            varnames_per_graph_level = self._reverse_nodes_levels(nodes)
+        else:
+            vars_per_level = self._reverse_nodes_levels(nodes)
+            level = 0            
+            for l in sorted(vars_per_level):
+                for var in vars:
+                    if var in vars_per_level[l] :
+                        if level not in varnames_per_graph_level:
+                            varnames_per_graph_level[level] = []
+                        varnames_per_graph_level[level].append(var)
+                level+=1
+        return varnames_per_graph_level
 
     def _is_var_in_space(self, var_name, space):
         """
@@ -254,7 +263,7 @@ class Data(Data_Interface):
             print("Graph has no key 'type'")
             return None
 
-    def _get_graph_nodes(self,varnames):
+    def _get_graph_nodes(self, varnames):
         """
             Get the nodes of the graph indicated by a list of varnames.
 
@@ -266,7 +275,7 @@ class Data(Data_Interface):
             --------
                 A List of the model's nodes of the graph (Dictionary objects)
         """
-        nodes=[]
+        nodes = []
         for vn in varnames:
             if vn in self._graph:
                 nodes.append(self._graph[vn])
@@ -313,6 +322,16 @@ class Data(Data_Interface):
 
                 parents_nodes = self._get_graph_nodes(v['parents'])
                 if(len(parents_nodes)):
+                    # if incl_nodes == 'all':
+                    #     par_nodes = self._add_nodes_to_graph(parents_nodes, level+1, 'all')
+                    # else:
+                    #     parents_nodes_to_go_ahead = []
+                    #     rest_nodes = []
+                    #     for node in incl_nodes:
+                    #         if node in parents_nodes:
+                    #             parents_nodes_to_go_ahead.append(node)
+                    #         else:
+                    #             rest_nodes.append(node)
                     par_nodes = self._add_nodes_to_graph(parents_nodes, level+1)
                     for k in par_nodes:
                         if k in nodes:
