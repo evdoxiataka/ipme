@@ -70,9 +70,7 @@ class CellContinuousHandler:
     def initialize_cds(variableCell, space):
         samples = variableCell.get_data_for_cur_idx_dims_values(variableCell.name, space)
         variableCell.samples[space] = ColumnDataSource(data = dict( x = samples))
-
-        variableCell.source[space] = ColumnDataSource(data = kde(samples))
-        # max_v = variableCell.source[space].data['y'].max()        
+        variableCell.source[space] = ColumnDataSource(data = kde(samples))      
         variableCell.ic.initialize_sample_inds(space, dict(inds = [False]*len(variableCell.samples[space].data['x'])), dict(non_inds = [True]*len(variableCell.samples[space].data['x'])))
 
     @staticmethod
@@ -94,6 +92,10 @@ class CellContinuousHandler:
     @staticmethod
     def initialize_cds_static(variableCell, space):
         CellContinuousHandler.initialize_cds(variableCell, space)
+        leng = len(variableCell.samples[space].data['x'])
+        max_v = variableCell.get_max_prob(space)
+        variableCell.samples[space].data['y'] = np.asarray([-max_v/RUG_DIST_RATIO]*leng)
+        variableCell.samples[space].data['size'] = np.asarray([RUG_SIZE]*leng)
         #########TEST###########
 
     @staticmethod
