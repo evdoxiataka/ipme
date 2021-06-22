@@ -7,7 +7,7 @@
 
     Color-blind friendly cycle designed using https://colorcyclepicker.mpetroff.net/
 """
-# COLORS=['#008080','#403F6F','#800080']
+# colors
 COLORS = ['#2a2eec', '#fa7c17', '#328c06', '#c10c90', '#933708', '#65e5f3', '#e6e135', '#1ccd6a', '#bd8ad5', '#b16b57']
 BORDER_COLORS=['#d8d8d8','#FFFFFF']
 
@@ -19,6 +19,10 @@ SIZING_MODE = "fixed"
 ## Rug plot
 RUG_DIST_RATIO = 5.0
 RUG_SIZE = 10 #in screen units
+
+## Data plot
+DATA_DIST_RATIO = 3.0
+DATA_SIZE = 6 #in screen units
 
 """" Grid Interface
 

@@ -35,7 +35,7 @@ class StaticDiscreteCell(VariableCell):
             Sets selection by spliting the ordered sample set
             in 4 equal-sized subsets.
         """
-        samples = self.get_data_for_cur_idx_dims_values(space)
+        samples = self.get_samples_for_cur_idx_dims_values(space)
         xmin,xmax = get_stratum_range(samples, stratum)
         inds = find_indices(samples, lambda e: xmin <= e <= xmax, xmin, xmax)
         self.ic.set_sel_var_inds(space, self.name, inds)

@@ -26,7 +26,9 @@ class VariableCell(Cell):
         self.name = name
         self.source = {}
         self.samples = {}
+        self.data = {}
         self._all_samples = {}
+        self._all_data = {}
         self.x_range = {}
         Cell.__init__(self, [name], control)
         self._toggle = {}
@@ -49,11 +51,15 @@ class VariableCell(Cell):
             if var not in self._all_samples:
                 self._all_samples[var] = {}
             self._all_samples[var][space] = self._data.get_samples(var, space_gsam).T
+            # get observed data
+            data = self._data.get_observations(var)
+            if data is not None:
+                self._all_data[var] = data
             # compute x_range
             self.x_range[var] = {}
             self.x_range[var][space] = find_x_range(self._all_samples[var][space])
 
-    def get_data_for_cur_idx_dims_values(self, var_name, space):
+    def get_samples_for_cur_idx_dims_values(self, var_name, space):
         """
             Returns a numpy.ndarray of the MCMC samples of the <name>
             parameter for current index dimensions values.
@@ -73,7 +79,31 @@ class VariableCell(Cell):
         if var_name in self.cur_idx_dims_values:
             for _, dim_value in self.cur_idx_dims_values[var_name].items():
                 data = data[dim_value]
-        return np.squeeze(data).T
+        if data.shape == (1,)*len(data.shape):
+            return data.flatten()
+        else:
+            return np.squeeze(data).T
+
+    def get_data_for_cur_idx_dims_values(self, var_name):
+        """
+            Returns a numpy.ndarray of the observations of the <var_name>
+            parameter for current index dimensions values.
+
+            Returns:
+            --------
+                A numpy.ndarray.
+        """
+        if var_name in self._all_data:
+            data =  self._all_data[var_name]
+        else:
+            return None
+        if var_name in self.cur_idx_dims_values:
+            for _, dim_value in self.cur_idx_dims_values[var_name].items():
+                data = data[dim_value]
+        if data.shape == (1,)*len(data.shape):
+            return data.flatten()
+        else:
+            return np.squeeze(data).T
 
     ## INITIALIZATION
     def _initialize_plot(self):

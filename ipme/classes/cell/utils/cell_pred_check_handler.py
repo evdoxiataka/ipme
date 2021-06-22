@@ -48,7 +48,7 @@ class CellPredCheckHandler:
     @staticmethod
     def initialize_cds(predcheckCell, space):
         ## ColumnDataSource for full sample set
-        data, samples = predcheckCell.get_data_for_cur_idx_dims_values(space)
+        data, samples = predcheckCell.get_samples_for_cur_idx_dims_values(space)
         predcheckCell.samples[space] = ColumnDataSource(data=dict(x=samples))
         #data func
         if ~np.isfinite(data).all():

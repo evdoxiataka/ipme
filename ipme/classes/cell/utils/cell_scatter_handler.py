@@ -61,8 +61,8 @@ class CellScatterHandler:
     def initialize_cds(scatterCell, space):
         var1 = scatterCell.vars[0]
         var2 = scatterCell.vars[1]
-        samples1 = scatterCell.get_data_for_cur_idx_dims_values(var1, space)
-        samples2 = scatterCell.get_data_for_cur_idx_dims_values(var2, space)
+        samples1 = scatterCell.get_samples_for_cur_idx_dims_values(var1, space)
+        samples2 = scatterCell.get_samples_for_cur_idx_dims_values(var2, space)
         scatterCell.samples[space] = ColumnDataSource(data = dict(x = samples2, y = samples1))
         patch_x, patch_y = CellScatterHandler.get_contours(samples2, samples1)
         scatterCell.contours[space] = ColumnDataSource(data = dict(x = patch_x, y = patch_y, line_color=["black"]*len(patch_x), fill_alpha=[0]*len(patch_x)))
@@ -98,8 +98,8 @@ class CellScatterHandler:
         """
         var1 = scatterCell.vars[0]
         var2 = scatterCell.vars[1]
-        samples1 = scatterCell.get_data_for_cur_idx_dims_values(var1, space)
-        samples2 = scatterCell.get_data_for_cur_idx_dims_values(var2, space)
+        samples1 = scatterCell.get_samples_for_cur_idx_dims_values(var1, space)
+        samples2 = scatterCell.get_samples_for_cur_idx_dims_values(var2, space)
         inds, _ = scatterCell.ic.get_sample_inds(space)
         if True in inds:
             sel_sample1 = samples1[inds]
@@ -120,11 +120,11 @@ class CellScatterHandler:
         """
         var1 = scatterCell.vars[0]
         var2 = scatterCell.vars[1]
-        samples1 = scatterCell.get_data_for_cur_idx_dims_values(var1, space)
-        samples2 = scatterCell.get_data_for_cur_idx_dims_values(var2, space)
+        samples1 = scatterCell.get_samples_for_cur_idx_dims_values(var1, space)
+        samples2 = scatterCell.get_samples_for_cur_idx_dims_values(var2, space)
         scatterCell.samples[space].data = dict(x=samples2, y=samples1)
         patch_x, patch_y = CellScatterHandler.get_contours(samples2, samples1)
-        scatterCell.contours[space].data = dict(x = patch_x, y = patch_y, line_color=[COLORS[0]]*len(patch_x), fill_alpha=[0]*len(patch_x))
+        scatterCell.contours[space].data = dict(x = patch_x, y = patch_y, line_color=["black"]*len(patch_x), fill_alpha=[0]*len(patch_x))
 
     @staticmethod
     def update_sel_samples_cds_interactive(scatterCell, space):

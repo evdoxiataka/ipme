@@ -28,7 +28,7 @@ class PredictiveCheckCell(Cell):
         Cell.__init__(self, [name], control)
 
     ## DATA
-    def get_data_for_cur_idx_dims_values(self, space):
+    def get_samples_for_cur_idx_dims_values(self, space):
         """
             Returns the observed data and predictive samples of the observed variable
             <self._name> in space <space>.

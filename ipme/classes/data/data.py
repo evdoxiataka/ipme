@@ -152,7 +152,7 @@ class Data(Data_Interface):
         """
         array_name=""
         header = self._inferencedata['header.json']
-        header_js=json.loads(header)
+        header_js = json.loads(header)
         if isinstance(space, list):
             data = {}
             for sp in space:
@@ -174,6 +174,32 @@ class Data(Data_Interface):
             return data
         else:
             raise ValueError("space argument of get_sample should be either a List of Strings or a String")
+
+    def get_observations(self, var_name):
+        """
+            Returns the observations of <var_name> variable.
+
+            Parameters:
+            --------
+                var_name      A String of the model's variables name
+            Returns:
+            --------
+                A numpy.ndarray of observations of the <var_name> parameter.
+        """
+        array_name=""
+        header = self._inferencedata['header.json']
+        header_js = json.loads(header)
+        data = None  
+        if var_name in header_js['inference_data']['observed_data']['array_names']:
+            array_name = header_js['inference_data']['observed_data']['array_names'][var_name]
+            dims = header_js['inference_data']['observed_data']['vars'][var_name]['dims']
+            if 'chain' in dims:
+                data = np.mean(self._inferencedata[array_name], axis=0)
+            else:
+                data = self._inferencedata[array_name]
+            return data
+        else:
+            return data
 
     def get_range(self, var_name, space=['prior','posterior']):
         """

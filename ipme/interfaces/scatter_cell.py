@@ -42,7 +42,7 @@ class ScatterCell(Cell):
             self.x_range[var] = {}
             self.x_range[var][space] = find_x_range(self._all_samples[var][space])
 
-    def get_data_for_cur_idx_dims_values(self, var_name, space):
+    def get_samples_for_cur_idx_dims_values(self, var_name, space):
         """
             Returns a numpy.ndarray of the MCMC samples of the <name>
             parameter for current index dimensions values.

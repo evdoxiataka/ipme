@@ -1,6 +1,6 @@
 from ipme.classes.cell.utils.cell_clear_selection import CellClearSelection
 
-from ipme.utils.constants import  COLORS, BORDER_COLORS, PLOT_HEIGHT, PLOT_WIDTH, SIZING_MODE, RUG_DIST_RATIO
+from ipme.utils.constants import  COLORS, BORDER_COLORS, PLOT_HEIGHT, PLOT_WIDTH, SIZING_MODE, RUG_DIST_RATIO, DATA_SIZE
 from ipme.utils.stats import pmf
 from ipme.utils.functions import find_indices
 
@@ -20,6 +20,7 @@ class CellDiscreteHandler:
 
     @staticmethod
     def initialize_glyphs_interactive(variableCell, space):
+        hover_renderer = []
         so_seg = variableCell.plot[space].segment(x0 = 'x', y0 ='y0', x1 = 'x', y1 = 'y', source = variableCell.source[space], line_alpha = 1.0, color = COLORS[0], line_width = 1, selection_color = COLORS[0], \
                                                   nonselection_color = COLORS[0], nonselection_line_alpha = 1.0)
         variableCell.plot[space].scatter('x', 'y', source = variableCell.source[space], size = 4, fill_color = COLORS[0], fill_alpha = 1.0, line_color = COLORS[0], selection_fill_color = COLORS[0], \
@@ -28,22 +29,32 @@ class CellDiscreteHandler:
         variableCell.plot[space].scatter('x', 'y', source = variableCell.selection[space], size = 4, fill_color = COLORS[2], fill_alpha = 0.7, line_color = COLORS[2])
         rec = variableCell.plot[space].segment(x0 = 'x', y0 ='y0', x1 = 'x', y1 = 'y', source = variableCell.reconstructed[space], line_alpha = 0.5, color = COLORS[1], line_width = 1)
         variableCell.plot[space].scatter('x', 'y', source = variableCell.reconstructed[space], size = 4, fill_color = COLORS[1], fill_alpha = 0.5, line_color = COLORS[1])
+        hover_renderer.append(so_seg)
+        hover_renderer.append(rec)
+        if space in variableCell.data:
+            dat = variableCell.plot[space].asterisk('x', 'y', size = DATA_SIZE, line_color = COLORS[3], source = variableCell.data[space])
+            hover_renderer.append(dat)
         ##Add BoxSelectTool
         variableCell.plot[space].add_tools(BoxSelectTool(dimensions = 'width', renderers = [so_seg]))
         ##Tooltips
         TOOLTIPS = [("x", "@x"), ("y","@y"),]
-        hover = HoverTool( tooltips = TOOLTIPS, renderers = [so_seg, rec], mode = 'mouse')
+        hover = HoverTool( tooltips = TOOLTIPS, renderers = hover_renderer, mode = 'mouse')
         variableCell.plot[space].tools.append(hover)
 
     @staticmethod
     def initialize_glyphs_static(variableCell, space):
+        hover_renderer = []
         so_seg = variableCell.plot[space].segment(x0 = 'x', y0 ='y0', x1 = 'x', y1 = 'y', source = variableCell.source[space], line_alpha = 1.0, color = COLORS[0], line_width = 1, selection_color = COLORS[0], \
                                                   nonselection_color = COLORS[0], nonselection_line_alpha = 1.0)
         variableCell.plot[space].scatter('x', 'y', source = variableCell.source[space], size = 4, fill_color = COLORS[0], fill_alpha = 1.0, line_color = COLORS[0], selection_fill_color = COLORS[0], \
                                          nonselection_fill_color = COLORS[0], nonselection_fill_alpha = 1.0, nonselection_line_color = COLORS[0])
+        hover_renderer.append(so_seg)
+        if space in variableCell.data:
+            dat = variableCell.plot[space].asterisk('x', 'y', size = DATA_SIZE, line_color = COLORS[3], source = variableCell.data[space])
+            hover_renderer.append(dat)
         ##Tooltips
         TOOLTIPS = [("x", "@x"), ("y","@y"),]
-        hover = HoverTool( tooltips = TOOLTIPS, renderers = [so_seg], mode = 'mouse')
+        hover = HoverTool( tooltips = TOOLTIPS, renderers = hover_renderer, mode = 'mouse')
         variableCell.plot[space].tools.append(hover)
 
     @staticmethod
@@ -73,9 +84,16 @@ class CellDiscreteHandler:
 
     @staticmethod
     def initialize_cds(variableCell, space):
-        samples = variableCell.get_data_for_cur_idx_dims_values(variableCell.name, space)
+        samples = variableCell.get_samples_for_cur_idx_dims_values(variableCell.name, space)
         variableCell.source[space] = ColumnDataSource(data = pmf(samples))
         variableCell.samples[space] = ColumnDataSource(data = dict(x = samples))
+        # data cds
+        data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
+        if data is not None:
+            max_v = variableCell.source[space].data['y'].max()
+            variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(data))))
+        # initialize sample inds
+        variableCell.ic.initialize_sample_inds(space, dict(inds = [False]*len(variableCell.samples[space].data['x'])), dict(non_inds = [True]*len(variableCell.samples[space].data['x'])))
 
     @staticmethod
     def initialize_cds_interactive(variableCell, space):
@@ -84,7 +102,7 @@ class CellDiscreteHandler:
         variableCell.reconstructed[space] = ColumnDataSource(data = dict(x = np.array([]), y = np.array([]), y0 = np.array([])))
         variableCell.clear_selection[space] = ColumnDataSource(data = dict(x = [], y = [], isIn = []))
         variableCell.ic.var_x_range[(space, variableCell.name)] = ColumnDataSource(data = dict(xmin = np.array([]), xmax = np.array([])))
-
+  
     @staticmethod
     def initialize_cds_static(variableCell, space):
         CellDiscreteHandler.initialize_cds(variableCell, space)
@@ -115,13 +133,18 @@ class CellDiscreteHandler:
         """
             Update source & samples cds in the static mode
         """
-        samples = variableCell.get_data_for_cur_idx_dims_values(variableCell.name, space)
-        inds = variableCell.ic.get_sample_inds(space)
-        if len(inds):
+        samples = variableCell.get_samples_for_cur_idx_dims_values(variableCell.name, space)
+        inds,_ = variableCell.ic.get_sample_inds(space)
+        if True in inds:
             sel_sample = samples[inds]
             variableCell.source[space].data = pmf(sel_sample)
         else:
             variableCell.source[space].data = pmf(samples)
+        # data cds
+        data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
+        if data is not None:
+            max_v = variableCell.get_max_prob(space)
+            variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(data))))
 
     ## ONLY FOR INTERACTIVE CASE
     @staticmethod
@@ -159,7 +182,7 @@ class CellDiscreteHandler:
         """
             Updates source ColumnDataSource (cds).
         """
-        samples = variableCell.get_data_for_cur_idx_dims_values(variableCell.name, space)
+        samples = variableCell.get_samples_for_cur_idx_dims_values(variableCell.name, space)
         variableCell.source[space].data = pmf(samples)
 
     @staticmethod
@@ -186,12 +209,17 @@ class CellDiscreteHandler:
             Updates reconstructed ColumnDataSource (cds).
         """
         samples = variableCell.samples[space].data['x']
-        inds = variableCell.ic.get_sample_inds(space)
-        if len(inds):
-            sel_sample = samples[inds]
-            variableCell.reconstructed[space].data = pmf(sel_sample)
-        else:
-            variableCell.reconstructed[space].data = dict(x = np.array([]), y = np.array([]), y0 = np.array([]))
+        inds,_ = variableCell.ic.get_sample_inds(space)
+        # if Tulen(inds):
+        sel_sample = samples[inds]
+        variableCell.reconstructed[space].data = pmf(sel_sample)
+        # data cds
+        data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
+        if data is not None:
+            max_v = variableCell.get_max_prob(space)
+            variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(data))))
+        # else:
+        #     variableCell.reconstructed[space].data = dict(x = np.array([]), y = np.array([]), y0 = np.array([]))
         ##########TEST###################to be deleted
         # max_v = variableCell.get_max_prob(space)
         # if max_v!=-1:
