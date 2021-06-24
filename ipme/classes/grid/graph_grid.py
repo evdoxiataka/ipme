@@ -50,11 +50,12 @@ class GraphGrid(Grid):
                 ##Add to grid
                 cell_spaces = c.get_spaces()
                 for space in cell_spaces:
-                    if space not in self.spaces:
-                        self.spaces.append(space)
-                    if space not in self._grids:
-                        self._grids[space] = pn.GridSpec(sizing_mode = 'stretch_both')
-                    self._grids[space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = pn.Column(c.get_plot(space), width=220, height=220)
+                    # if space in self._spaces_to_included and space not in self.spaces:
+                    #     self.spaces.append(space)
+                    if space in self.spaces or self.spaces == 'all':
+                        if space not in self._grids:
+                            self._grids[space] = pn.GridSpec(sizing_mode = 'stretch_both')
+                        self._grids[space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = pn.Column(c.get_plot(space), width=220, height=220)
         self.ic.num_cells = len(self.cells)
 
     def _create_graph_grid_mapping(self):
@@ -67,19 +68,20 @@ class GraphGrid(Grid):
                 A Dict {<grid_row>: (<graph_level>, List of varnames) }
         """
         _varnames_per_graph_level = self._data.get_varnames_per_graph_level(self._vars)
-        num_of_vars_per_graph_level = [len(_varnames_per_graph_level[k]) for k in sorted(_varnames_per_graph_level)]
         graph_grid_map = {}
-        for level, num_vars in enumerate(num_of_vars_per_graph_level):
-            row = level
+        grid_level = 0
+        for graph_level in sorted(_varnames_per_graph_level):
+            num_vars = len(_varnames_per_graph_level[graph_level])
+            row = grid_level
             indx = 0
             while num_vars > MAX_NUM_OF_VARS_PER_ROW:
                 while row in graph_grid_map:
                     row+=1
-                graph_grid_map[row] = (level,_varnames_per_graph_level[level][indx:indx+MAX_NUM_OF_VARS_PER_ROW])
+                graph_grid_map[row] = (grid_level,_varnames_per_graph_level[graph_level][indx:indx+MAX_NUM_OF_VARS_PER_ROW])
                 row += 1
                 indx += MAX_NUM_OF_VARS_PER_ROW
                 num_vars -= MAX_NUM_OF_VARS_PER_ROW
             while row in graph_grid_map:
                 row+=1
-            graph_grid_map[row] = (level,_varnames_per_graph_level[level][indx:indx+num_vars])
+            graph_grid_map[row] = (grid_level,_varnames_per_graph_level[graph_level][indx:indx+num_vars])
         return graph_grid_map

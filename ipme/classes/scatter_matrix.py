@@ -5,7 +5,7 @@ from .interaction_control.interaction_control import IC
 import panel as pn
 
 class ScatterMatrix():
-    def __init__(self, data_path, mode = "i", vars = []):
+    def __init__(self, data_path, mode = "i", vars = [], spaces = 'all'):
         """
             Parameters:
             --------
@@ -13,6 +13,7 @@ class ScatterMatrix():
                 mode                    A String in {'i','s'}: defines the type of diagram
                                         (interactive or static).
                 vars                    A List of model variables to be included in the plot.
+                spaces                  A List of spaces to be included in graph
             Sets:
             --------
                 _mode                   A String in {"i","s"}, "i":interactive, "s":static.
@@ -23,6 +24,7 @@ class ScatterMatrix():
             raise ValueError("ValueError: mode should take a value in {'i','s'}")
         self._mode = mode
         self._vars = vars
+        self._spaces = spaces
         self._scatter_matrix_grid = self._create_scatter_matrix_grid()
         self._scatter_matrix = self._create_scatter_matrix()
 
@@ -32,7 +34,7 @@ class ScatterMatrix():
             collection of Panel grids (one per space) and a
             collection of plotted widges.
         """
-        return ScatterMatrixGrid(self.ic, self._mode, self._vars)
+        return ScatterMatrixGrid(self.ic, self._mode, self._vars, self._spaces)
 
     def _create_scatter_matrix(self):
         """

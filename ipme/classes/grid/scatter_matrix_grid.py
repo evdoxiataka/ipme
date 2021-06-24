@@ -53,8 +53,9 @@ class ScatterMatrixGrid(Grid):
                 ##Add to grid
                 cell_spaces = c.get_spaces()
                 for space in cell_spaces:
-                    if space not in self.spaces:
-                        self.spaces.append(space)
-                    if space not in self._grids:
-                        self._grids[space] = pn.GridSpec(sizing_mode = 'stretch_both')
-                    self._grids[space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = pn.Column(c.get_plot(space), width=220, height=220)
+                #     if space not in self.spaces:
+                #         self.spaces.append(space)
+                    if space in self.spaces or self.spaces == 'all':
+                        if space not in self._grids:
+                            self._grids[space] = pn.GridSpec(sizing_mode = 'stretch_both')
+                        self._grids[space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = pn.Column(c.get_plot(space), width=220, height=220)

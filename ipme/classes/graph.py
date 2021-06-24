@@ -6,7 +6,7 @@ from .interaction_control.interaction_control import IC
 import panel as pn
 
 class Graph():
-    def __init__(self, data_path, mode = "i", vars = 'all', predictive_checks = []):
+    def __init__(self, data_path, mode = "i", vars = 'all', spaces = 'all', predictive_checks = []):
         """
             Parameters:
             --------
@@ -14,6 +14,7 @@ class Graph():
                 mode                    A String in {'i','s'}: defines the type of diagram
                                         (interactive or static).
                 vars                    A List of variables to be presented in the graph
+                spaces                  A List of spaces to be included in graph
                 predictive_checks       A List of observed variables to plot predictive checks.
             Sets:
             --------
@@ -25,6 +26,7 @@ class Graph():
             raise ValueError("ValueError: mode should take a value in {'i','s'}")
         self._mode = mode
         self._vars = vars
+        self._spaces = spaces
         self._pred_checks = predictive_checks
         self._graph_grid = self._create_graph_grid()
         self._predictive_checks_grid = self._create_pred_checks_grid()
@@ -36,7 +38,7 @@ class Graph():
             collection of Panel grids (one per space) and a
             collection of plotted widges.
         """
-        return GraphGrid(self.ic, self._mode, self._vars)
+        return GraphGrid(self.ic, self._mode, self._vars, self._spaces)
 
     def _create_pred_checks_grid(self):
         """
@@ -45,7 +47,7 @@ class Graph():
             collection of Panel grids (one per space) and a
             collection of plotted widges.
         """
-        return PredictiveChecksGrid(self.ic, self._mode, self._pred_checks)
+        return PredictiveChecksGrid(self.ic, self._mode, self._spaces, self._pred_checks)
 
     def _create_graph(self):
         """

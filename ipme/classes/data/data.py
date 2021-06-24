@@ -284,7 +284,7 @@ class Data(Data_Interface):
                 A List of the model's observed nodes of the graph (dict objects)
         """
         try:
-            return [v for k,v in self._graph.items() if v['type'] == 'observed']
+            return [v for _,v in self._graph.items() if v['type'] == 'observed']
         except KeyError:
             print("Graph has no key 'type'")
             return None
