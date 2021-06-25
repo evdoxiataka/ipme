@@ -173,7 +173,7 @@ class CellWidgets:
 
     @staticmethod
     def link_cells_widgets(grid):
-        for c_id, cell in enumerate(grid.cells):
+        for c_id, cell in grid.cells.items():
             cell_spaces = cell.get_spaces()
             for space in cell_spaces:
                 for w_id, w in cell.get_widgets_in_space(space).items():
@@ -221,7 +221,7 @@ class CellWidgets:
                         grid.plotted_widgets[space][w_id] = grid.cells[c_id].get_widget(f_space, w_id)
         b = Button(label='Reset Diagram', button_type="primary")
         b.on_click(partial(GlobalReset.global_reset_callback, grid))
-        for space in grid.spaces:
+        for space in grid.get_grids():
             if space not in grid.plotted_widgets:
                 grid.plotted_widgets[space] = {}
             grid.plotted_widgets[space]["resetButton"] = b
@@ -240,6 +240,6 @@ class CellWidgets:
                         if space not in grid.plotted_widgets:
                             grid.plotted_widgets[space] = {}
                         grid.plotted_widgets[space][w_id] = grid.cells[c_id].get_widget(f_space, w_id)
-        for space in grid.spaces:
+        for space in grid.get_grids():
             if space not in grid.plotted_widgets:
                 grid.plotted_widgets[space] = {}

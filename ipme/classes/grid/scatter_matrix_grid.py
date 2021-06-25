@@ -28,7 +28,8 @@ class ScatterMatrixGrid(Grid):
                     break
                 start_point = ( row, int(col*COLS_PER_VAR) )
                 end_point = ( row+1, int((col+1)*COLS_PER_VAR) )
-                if col == row:
+                var =""
+                if col == row:                    
                     ##plot VariableCell
                     var_name = self._vars[col]                    
                     if self._mode == "i":
@@ -41,7 +42,8 @@ class ScatterMatrixGrid(Grid):
                             c = StaticContinuousCell(var_name, self.ic)
                         else:
                             c = StaticDiscreteCell(var_name, self.ic)
-                else:
+                    var = var_name
+                else:                    
                     ##plot pair scatter
                     var1 = self._vars[row] 
                     var2 = self._vars[col] 
@@ -49,7 +51,8 @@ class ScatterMatrixGrid(Grid):
                         c = InteractiveScatterCell([var1, var2], self.ic)
                     elif self._mode == "s":
                         c = StaticScatterCell([var1, var2], self.ic)
-                self.cells.append(c)
+                    var = var1+"_"+var2
+                self.cells[var] = c
                 ##Add to grid
                 cell_spaces = c.get_spaces()
                 for space in cell_spaces:

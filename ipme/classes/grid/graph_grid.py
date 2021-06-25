@@ -46,7 +46,7 @@ class GraphGrid(Grid):
                         c = StaticContinuousCell(var_name, self.ic)
                     else:
                         c = StaticDiscreteCell(var_name, self.ic)
-                self.cells.append(c)
+                self.cells[var_name] = c
                 ##Add to grid
                 cell_spaces = c.get_spaces()
                 for space in cell_spaces:
@@ -55,7 +55,7 @@ class GraphGrid(Grid):
                     if space in self.spaces or self.spaces == 'all':
                         if space not in self._grids:
                             self._grids[space] = pn.GridSpec(sizing_mode = 'stretch_both')
-                        self._grids[space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = pn.Column(c.get_plot(space), width=220, height=220)
+                        self._grids[space][ start_point[0]:end_point[0], start_point[1]:end_point[1] ] = pn.Column(c.get_plot(space, add_info = True), width=220, height=220)
         self.ic.num_cells = len(self.cells)
 
     def _create_graph_grid_mapping(self):
@@ -83,5 +83,5 @@ class GraphGrid(Grid):
                 num_vars -= MAX_NUM_OF_VARS_PER_ROW
             while row in graph_grid_map:
                 row+=1
-            graph_grid_map[row] = (grid_level,_varnames_per_graph_level[graph_level][indx:indx+num_vars])
+            graph_grid_map[row] = (graph_level,_varnames_per_graph_level[graph_level][indx:indx+num_vars])
         return graph_grid_map

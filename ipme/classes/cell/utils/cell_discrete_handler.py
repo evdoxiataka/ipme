@@ -62,7 +62,7 @@ class CellDiscreteHandler:
         variableCell.plot[space] = figure( x_range = variableCell.x_range[variableCell.name][space], tools = "wheel_zoom,reset,box_zoom", toolbar_location = 'right',
                                             plot_width = PLOT_WIDTH, plot_height = PLOT_HEIGHT, sizing_mode = SIZING_MODE)
         variableCell.plot[space].border_fill_color = BORDER_COLORS[0]
-        variableCell.plot[space].xaxis.axis_label = ""
+        variableCell.plot[space].xaxis.axis_label = variableCell.name
         variableCell.plot[space].yaxis.visible = False
         variableCell.plot[space].toolbar.logo = None
         variableCell.plot[space].xaxis[0].ticker.desired_num_ticks = 3

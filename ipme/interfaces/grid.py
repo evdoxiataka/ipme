@@ -31,7 +31,7 @@ class Grid(ABC):
         self._vars = vars
         # self._spaces_to_included = spaces
         self._grids = {}
-        self.cells = []
+        self.cells = {}
         self.spaces = spaces
         self._create_grids()
 

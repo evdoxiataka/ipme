@@ -91,7 +91,8 @@ class IC:
             for s_i, sp in enumerate(spaces[::-1]):
                 w_list = grid.cells_widgets[dim][sp]
                 for c_i, c_id in enumerate(w_list[::-1]):
-                    if c_id >= 0 and len(grid.cells):
+                    if c_id in grid.cells:
+                    # if c_id >= 0 and len(grid.cells):
                         cell = grid.cells[c_id]
                         widget = cell.get_widget(sp, dim)
                         if s_i == 0 and c_i == 0:

@@ -71,10 +71,11 @@ class Data(Data_Interface):
         """
         idx_dimensions={}
         for k,v in self._graph.items():
-            if not k.endswith("__"):
-                idx_dimensions[v["name"]] = {}
+            if not k.endswith("__"):                
                 vdims = v["dims"]
                 vcoords = v["coords"]
+                if len(vdims):
+                    idx_dimensions[v["name"]] = {}
                 for d in vdims:
                     if d in vcoords:
                         idx_dimensions[v["name"]][d] = Dimension(d, values = vcoords[d])

@@ -44,10 +44,10 @@ class PredictiveChecksGrid(Grid):
                 c_max = InteractivePredCheckCell(var, self.ic, "max")
                 c_mean = InteractivePredCheckCell(var,self.ic, "mean")
                 c_std = InteractivePredCheckCell(var, self.ic, "std")
-                self.cells.append(c_min)
-                self.cells.append(c_max)
-                self.cells.append(c_mean)
-                self.cells.append(c_std)
+                self.cells['min'] = c_min
+                self.cells['max'] = c_max
+                self.cells['mean'] = c_mean
+                self.cells['std'] = c_std
                 ##Add to grid
                 cell_spaces = c_min.get_spaces()
                 self._grids[var] = {}

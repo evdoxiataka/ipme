@@ -209,7 +209,7 @@ class VariableCell(Cell):
         max_v = max([max_sv,max_rv])
         return  max_v if max_v!=-1 else None
 
-    def get_plot(self, space, add_info = True):
+    def get_plot(self, space, add_info = False):
         if space in self.plot:
             if add_info and space in self._toggle and space in self._div:
                 return layout([self._toggle[space]], [self._div[space]], [self.plot[space]])
@@ -218,7 +218,7 @@ class VariableCell(Cell):
         else:
             return None
 
-    def get_screenshot(self, space, add_info=True):
+    def get_screenshot(self, space, add_info=False):
         if space in self.plot:
             if add_info and space in self._toggle and space in self._div:
                 return get_screenshot_as_png(layout([self._toggle[space]], [self._div[space]], [self.plot[space]]))
