@@ -138,8 +138,10 @@ class CellDiscreteHandler:
         if True in inds:
             sel_sample = samples[inds]
             variableCell.source[space].data = pmf(sel_sample)
+            variableCell.samples[space].data = dict( x = sel_sample)
         else:
             variableCell.source[space].data = pmf(samples)
+            variableCell.samples[space].data = dict( x = samples)
         # data cds
         data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
         if data is not None:
@@ -184,6 +186,7 @@ class CellDiscreteHandler:
         """
         samples = variableCell.get_samples_for_cur_idx_dims_values(variableCell.name, space)
         variableCell.source[space].data = pmf(samples)
+        variableCell.samples[space].data = dict( x = samples)
 
     @staticmethod
     def update_selection_cds_interactive(variableCell, space, xmin, xmax):
