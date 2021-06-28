@@ -91,7 +91,7 @@ class CellDiscreteHandler:
         data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
         if data is not None:
             max_v = variableCell.source[space].data['y'].max()
-            variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(data))))
+            variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(data))))
         # initialize sample inds
         variableCell.ic.initialize_sample_inds(space, dict(inds = [False]*len(variableCell.samples[space].data['x'])), dict(non_inds = [True]*len(variableCell.samples[space].data['x'])))
 
@@ -146,7 +146,7 @@ class CellDiscreteHandler:
         data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
         if data is not None:
             max_v = variableCell.get_max_prob(space)
-            variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(data))))
+            variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(data))))
 
     ## ONLY FOR INTERACTIVE CASE
     @staticmethod
@@ -220,13 +220,13 @@ class CellDiscreteHandler:
         data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
         if data is not None:
             max_v = variableCell.get_max_prob(space)
-            variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(data))))
+            variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(data))))
         # else:
         #     variableCell.reconstructed[space].data = dict(x = np.array([]), y = np.array([]), y0 = np.array([]))
         ##########TEST###################to be deleted
         # max_v = variableCell.get_max_prob(space)
         # if max_v!=-1:
-        #     variableCell.samples[space].data['y'] = np.asarray([-max_v/RUG_DIST_RATIO]*len(variableCell.samples[space].data['x']))
+        #     variableCell.samples[space].data['y'] = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(variableCell.samples[space].data['x']))
 
     @staticmethod
     def clear_selection_callback(variableCell, space, event):

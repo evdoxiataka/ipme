@@ -1,3 +1,4 @@
+from logging import error
 from ipme.utils.constants import  COLORS, BORDER_COLORS, PLOT_HEIGHT, PLOT_WIDTH, SIZING_MODE
 
 from bokeh.models import ColumnDataSource, HoverTool
@@ -143,14 +144,17 @@ class CellScatterHandler:
 
     @staticmethod
     def get_contours(x, y):
-        _, contour_glyphs = az.plot_kde(x, y,
-        #     hdi_probs=[0.393, 0.865, 0.989],  # 1, 2 and 3 sigma contours
-            contour_kwargs={"line_color":"black", "line_alpha":1},
-            contourf_kwargs={"fill_alpha": 0, "cmap": "viridis"},
-            backend="bokeh", return_glyph = True, show = False )
-        patch_x = []
-        patch_y = []
-        for renderer in contour_glyphs:
-            patch_x.append(renderer.data_source.data['x'].tolist())
-            patch_y.append(renderer.data_source.data['y'].tolist())
-        return patch_x, patch_y
+        try:
+            _, contour_glyphs = az.plot_kde(x, y,
+            #     hdi_probs=[0.393, 0.865, 0.989],  # 1, 2 and 3 sigma contours
+                contour_kwargs={"line_color":"black", "line_alpha":1},
+                contourf_kwargs={"fill_alpha": 0, "cmap": "viridis"},
+                backend="bokeh", return_glyph = True, show = False )
+            patch_x = []
+            patch_y = []
+            for renderer in contour_glyphs:
+                patch_x.append(renderer.data_source.data['x'].tolist())
+                patch_y.append(renderer.data_source.data['y'].tolist())
+            return patch_x, patch_y
+        except ValueError:
+            return [],[]

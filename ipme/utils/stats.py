@@ -37,11 +37,11 @@ def kde(samples, filled = False):
         samples = samples.flatten()
         if ~np.isfinite(samples).all():
             samples = get_finite_samples(samples)
-        kde = gaussian_kde(samples)
-        bw = kde.scotts_factor() * samples.std(ddof=1)
+        kde_samples = gaussian_kde(samples)
+        bw = kde_samples.scotts_factor() * samples.std(ddof=1)
         #x = _kde_support(bw, bin_range=(samples.min(),samples.max()), clip=(samples.min(),samples.max()))
         x = kde_support(bw, bin_range=(samples.min(),samples.max()))      
-        y = kde(x)
+        y = kde_samples(x)
         if filled:
             x = np.append(x, x[-1])
             x = np.insert(x, 0, x[0], axis=0)

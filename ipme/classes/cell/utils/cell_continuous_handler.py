@@ -86,7 +86,7 @@ class CellContinuousHandler:
         data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)        
         if data is not None:
             max_v = variableCell.source[space].data['y'].max()
-            variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-max_v/DATA_DIST_RATIO]*len(data))))
+            variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-1*max_v/DATA_DIST_RATIO]*len(data))))
         # initialize sample inds
         variableCell.ic.initialize_sample_inds(space, dict(inds = [False]*len(variableCell.samples[space].data['x'])), dict(non_inds = [True]*len(variableCell.samples[space].data['x'])))
 
@@ -98,8 +98,8 @@ class CellContinuousHandler:
         max_v = variableCell.source[space].data['y'].max()
         sel_samples = variableCell.samples[space].data['x'][inds]
         non_sel_samples = variableCell.samples[space].data['x'][non_inds]
-        variableCell.sel_samples[space] = ColumnDataSource(data = dict( x = sel_samples, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(sel_samples)), size = np.asarray([RUG_SIZE]*len(sel_samples))))
-        variableCell.non_sel_samples[space] = ColumnDataSource(data = dict( x = non_sel_samples, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(non_sel_samples)), size = np.asarray([RUG_SIZE]*len(non_sel_samples))))
+        variableCell.sel_samples[space] = ColumnDataSource(data = dict( x = sel_samples, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(sel_samples)), size = np.asarray([RUG_SIZE]*len(sel_samples))))
+        variableCell.non_sel_samples[space] = ColumnDataSource(data = dict( x = non_sel_samples, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(non_sel_samples)), size = np.asarray([RUG_SIZE]*len(non_sel_samples))))
         
         variableCell.selection[space] = ColumnDataSource(data = dict(x = np.array([]), y = np.array([])))
         variableCell.reconstructed[space] = ColumnDataSource(data = dict(x = np.array([]), y = np.array([])))
@@ -111,7 +111,7 @@ class CellContinuousHandler:
         CellContinuousHandler.initialize_cds(variableCell, space)
         leng = len(variableCell.samples[space].data['x'])
         max_v = variableCell.source[space].data['y'].max()
-        variableCell.samples[space].data['y'] = np.asarray([-max_v/RUG_DIST_RATIO]*leng)
+        variableCell.samples[space].data['y'] = np.asarray([-1*max_v/RUG_DIST_RATIO]*leng)
         variableCell.samples[space].data['size'] = np.asarray([RUG_SIZE]*leng)
         #########TEST###########
 
@@ -146,16 +146,16 @@ class CellContinuousHandler:
             sel_sample = samples[inds]
             variableCell.source[space].data = kde(sel_sample)
             max_v = variableCell.get_max_prob(space)
-            variableCell.samples[space].data = dict( x = sel_sample, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(sel_sample)), size = np.asarray([RUG_SIZE]*len(sel_sample)))
+            variableCell.samples[space].data = dict( x = sel_sample, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(sel_sample)), size = np.asarray([RUG_SIZE]*len(sel_sample)))
         else:
             variableCell.source[space].data = kde(samples)
             max_v = variableCell.get_max_prob(space)
-            variableCell.samples[space].data = dict( x = samples, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(samples)), size = np.asarray([RUG_SIZE]*len(samples)))
+            variableCell.samples[space].data = dict( x = samples, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(samples)), size = np.asarray([RUG_SIZE]*len(samples)))
         # data cds
         data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
         if data is not None:
             max_v = variableCell.get_max_prob(space)
-            variableCell.data[space].data = dict(x = data, y = np.asarray([-max_v/DATA_DIST_RATIO]*len(data)))
+            variableCell.data[space].data = dict(x = data, y = np.asarray([-1*max_v/DATA_DIST_RATIO]*len(data)))
 
     ## ONLY FOR INTERACTIVE CASE
     @staticmethod
@@ -255,12 +255,12 @@ class CellContinuousHandler:
         variableCell.reconstructed[space].data = kde(sel_sample)        
         max_v = variableCell.get_max_prob(space) 
         # update rug plot            
-        variableCell.sel_samples[space].data = dict( x = sel_sample, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(sel_sample)), size = np.asarray([RUG_SIZE]*len(sel_sample)))
-        variableCell.non_sel_samples[space].data = dict( x = non_sel_samples, y = np.asarray([-max_v/RUG_DIST_RATIO]*len(non_sel_samples)), size = np.asarray([RUG_SIZE]*len(non_sel_samples)))
+        variableCell.sel_samples[space].data = dict( x = sel_sample, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(sel_sample)), size = np.asarray([RUG_SIZE]*len(sel_sample)))
+        variableCell.non_sel_samples[space].data = dict( x = non_sel_samples, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(non_sel_samples)), size = np.asarray([RUG_SIZE]*len(non_sel_samples)))
         # update data
         data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
         if data is not None:
-            variableCell.data[space].data = dict(x = data, y = np.asarray([-max_v/DATA_DIST_RATIO]*len(data)))
+            variableCell.data[space].data = dict(x = data, y = np.asarray([-1*max_v/DATA_DIST_RATIO]*len(data)))
     
     @staticmethod
     def clear_selection_callback(variableCell, space, event):
