@@ -57,6 +57,9 @@ class ScatterMatrix():
     def set_coordinates(self, dim, options, value):
         self.ic.set_coordinates(self._scatter_matrix_grid, dim, options, value)
 
+    def set_coordinate(self, dim, value):
+        self.ic.set_coordinate(self._scatter_matrix_grid, dim, value)
+
     def get_selection_interactions(self):
         return self.ic.get_selection_interactions()
 

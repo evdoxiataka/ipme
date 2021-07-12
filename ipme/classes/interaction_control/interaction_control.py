@@ -104,6 +104,26 @@ class IC:
                         widget.options = options
                         widget.value = value
 
+    def set_coordinate(self, grid, dim, value):
+        if dim in grid.cells_widgets:
+            spaces = list(grid.cells_widgets[dim].keys())
+            # set value and options of all dim widgets
+            # of variables manually, because jslink
+            # is not automatically triggered in this case
+            for s_i, sp in enumerate(spaces[::-1]):
+                w_list = grid.cells_widgets[dim][sp]
+                for c_i, c_id in enumerate(w_list[::-1]):
+                    if c_id in grid.cells:
+                    # if c_id >= 0 and len(grid.cells):
+                        cell = grid.cells[c_id]
+                        widget = cell.get_widget(sp, dim)
+                        if s_i == 0 and c_i == 0:
+                            if value == widget.value:
+                                return
+                            else:
+                                self.decrease_widgets_interactions()
+                        widget.value = value
+
     def _idx_widget_update(self, grid, new, w1_dim, space):
         w1_w2_idx_mapping = self.get_w1_w2_idx_mapping()
         w2_w1_val_mapping = self.get_w2_w1_val_mapping()
