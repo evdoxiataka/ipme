@@ -23,6 +23,7 @@ class IC:
         self.num_cells = 0
         self.widgets_interactions = 0
         self.selection_interactions = 0
+        self.selection_ranges = []
         ##threads lists
         self._selection_threads = {}
         self._space_threads = []
@@ -195,6 +196,7 @@ class IC:
         self._set_sel_space(space)
         self.set_var_x_range(space, var_name, dict(xmin = np.asarray([x_range[0]]), xmax = np.asarray([x_range[1]])))
         self._set_sel_var_idx_dims_values(var_name, dict(cur_idx_dims_values))
+        self.increase_selection_interactions(var_name, x_range)
 
     def add_selection_threads(self, space, t):
         self._sel_lock.acquire()
@@ -429,8 +431,9 @@ class IC:
         self._widgets_interactions_lock.release()
         return w_inters
 
-    def increase_selection_interactions(self):
+    def increase_selection_interactions(self, var_name, x_range):
         self._selection_interactions_lock.acquire()
+        self.selection_ranges.append((self.selection_interactions,var_name,x_range[0],x_range[1]))
         self.selection_interactions = self.selection_interactions + 1
         self._selection_interactions_lock.release()
 
@@ -440,3 +443,9 @@ class IC:
         s_inters = self.selection_interactions
         self._selection_interactions_lock.release()
         return s_inters
+
+    def get_selection_ranges(self):
+        self._selection_interactions_lock.acquire()
+        s_ranges = self.selection_ranges
+        self._selection_interactions_lock.release()
+        return s_ranges

@@ -14,9 +14,9 @@ class CellScatterHandler:
 
     @staticmethod
     def initialize_glyphs_interactive(scatterCell, space):
-        so = scatterCell.plot[space].circle(x="x", y="y", source = scatterCell.non_sel_samples[space], size=7, color=COLORS[0], line_color=None, fill_alpha = 0.1)
-        re = scatterCell.plot[space].circle(x="x", y="y", source = scatterCell.sel_samples[space], size=7, color=COLORS[1], line_color=None, fill_alpha = 0.1)
+        so = scatterCell.plot[space].circle(x="x", y="y", source = scatterCell.non_sel_samples[space], size=4, color=COLORS[0], line_color=None, fill_alpha = 0.1)        
         scatterCell.plot[space].patches(xs="x", ys="y", source = scatterCell.contours[space], line_color="line_color", fill_alpha="fill_alpha")
+        re = scatterCell.plot[space].circle(x="x", y="y", source = scatterCell.sel_samples[space], size=4, color=COLORS[1], line_color=None, fill_alpha = 0.4)
         # {"line_color":"black", "line_alpha":1},
         #     contourf_kwargs={"fill_alpha": 0, "cmap": "viridis"},
         ##Tooltips

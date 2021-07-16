@@ -66,6 +66,12 @@ class ScatterMatrix():
     def get_widgets_interactions(self):
         return self.ic.get_widgets_interactions()
 
+    def get_selection_ranges(self):
+        """
+            Returns List of tuples (xmin,xmax) of selection box
+        """
+        return self.ic.get_selection_ranges()
+
     def get_scatter_matrix(self):
         return self._scatter_matrix
 
