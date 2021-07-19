@@ -196,6 +196,7 @@ class VariableCell(Cell):
                 self._div[space] = Div(text = text, sizing_mode = sizing_mode, margin = (0,0,0,0), background = BORDER_COLORS[0] )
             self._toggle[space].js_link('active', self.plot[space], 'visible')
 
+
     def get_max_prob(self, space):
         """
             Gets highest point --max probability-- of cds
