@@ -16,29 +16,27 @@ class CellScatterHandler:
     def initialize_glyphs_interactive(scatterCell, space):
         so = scatterCell.plot[space].circle(x="x", y="y", source = scatterCell.non_sel_samples[space], size=4, color=COLORS[0], line_color=None, fill_alpha = 0.1)        
         scatterCell.plot[space].patches(xs="x", ys="y", source = scatterCell.contours[space], line_color="line_color", fill_alpha="fill_alpha")
-        re = scatterCell.plot[space].circle(x="x", y="y", source = scatterCell.sel_samples[space], size=4, color=COLORS[1], line_color=None, fill_alpha = 0.4)
-        # {"line_color":"black", "line_alpha":1},
-        #     contourf_kwargs={"fill_alpha": 0, "cmap": "viridis"},
-        ##Tooltips
-        TOOLTIPS = [("x", "@x"), ("y","@y"),]
-        hover = HoverTool( tooltips = TOOLTIPS, renderers = [so,re], mode = 'mouse')
-        scatterCell.plot[space].tools.append(hover)
+        re = scatterCell.plot[space].circle(x="x", y="y", source = scatterCell.sel_samples[space], size=4, color=COLORS[1], line_color=None, fill_alpha = 0.4, name="re")
+        # ##Tooltips
+        # TOOLTIPS = [("x", "@x"), ("y","@y"),]
+        # hover = HoverTool( tooltips = TOOLTIPS, renderers = [so,re], mode = 'mouse')
+        # scatterCell.plot[space].tools.append(hover)
 
     @staticmethod
     def initialize_glyphs_static(scatterCell, space):
         so = scatterCell.plot[space].circle(x="x", y="y", source = scatterCell.samples[space], size=7, color=COLORS[0], line_color=None, fill_alpha = 0.1)
         scatterCell.plot[space].patches(xs="x", ys="y", source = scatterCell.contours[space], line_color="line_color", fill_alpha="fill_alpha")
-        ##Tooltips
-        TOOLTIPS = [("x", "@x"), ("y","@y"),]
-        hover = HoverTool( tooltips = TOOLTIPS, renderers = [so], mode = 'mouse')
-        scatterCell.plot[space].tools.append(hover)
+        # ##Tooltips
+        # TOOLTIPS = [("x", "@x"), ("y","@y"),]
+        # hover = HoverTool( tooltips = TOOLTIPS, renderers = [so], mode = 'mouse')
+        # scatterCell.plot[space].tools.append(hover)
 
     @staticmethod
     def initialize_fig(scatterCell, space):
         var1 = scatterCell.vars[0]
         var2 = scatterCell.vars[1]
-        scatterCell.plot[space] = figure(x_range = scatterCell.x_range[var2][space], y_range = scatterCell.x_range[var1][space],tools = "wheel_zoom,reset,box_zoom", toolbar_location = None,
-                                    plot_width = PLOT_WIDTH, plot_height = PLOT_HEIGHT, sizing_mode = SIZING_MODE)#toolbar_location = 'right'
+        scatterCell.plot[space] = figure(x_range = scatterCell.x_range[var2][space], y_range = scatterCell.x_range[var1][space],tools = [], toolbar_location = None,
+                                    plot_width = PLOT_WIDTH, plot_height = PLOT_HEIGHT, sizing_mode = SIZING_MODE)#tools = "wheel_zoom,reset,box_zoom",toolbar_location = 'right'
         scatterCell.plot[space].border_fill_color = BORDER_COLORS[0]
         scatterCell.plot[space].min_border = 15
         scatterCell.plot[space].xaxis.axis_label = var2
@@ -136,12 +134,34 @@ class CellScatterHandler:
         samples1 = scatterCell.samples[space].data['x']
         samples2 = scatterCell.samples[space].data['y']
         inds, non_inds = scatterCell.ic.get_sample_inds(space)
+        # update sel samples
         sel_sample1 = samples1[inds]
         sel_sample2 = samples2[inds]
         scatterCell.sel_samples[space].data = dict(x=sel_sample1, y=sel_sample2)
+        # update transparency
+        for re in scatterCell.plot[space].renderers:
+            if re.name == "re" and len(sel_sample1) < 50:
+                re.glyph.fill_alpha = 0.8
+            elif re.name == "re" and len(sel_sample1) < 200:
+                re.glyph.fill_alpha = 0.5
+            elif re.name == "re":
+                re.glyph.fill_alpha = 0.2
+        # update non_sel samples
         non_sel_sample1 = samples1[non_inds]
         non_sel_sample2 = samples2[non_inds]
         scatterCell.non_sel_samples[space].data = dict(x=non_sel_sample1, y=non_sel_sample2)
+
+    # @staticmethod
+    # def set_transparency(samples1, samples2, sel_samples1, sel_samples2):
+    #     s_x_min = samples1.min()
+    #     s_x_max = samples1.max()
+    #     s_y_min = samples2.min()
+    #     s_y_max = samples2.max()
+
+    #     sels_x_min = sel_samples1.min()
+    #     sels_x_max = sel_samples1.max()
+    #     sels_y_min = sel_samples2.min()
+    #     sels_y_max = sel_samples2.max()
 
     @staticmethod
     def get_contours(x, y):

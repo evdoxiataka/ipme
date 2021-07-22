@@ -33,10 +33,10 @@ class CellContinuousHandler:
         #     hover_renderer.append(dat)
         ##Add BoxSelectTool
         variableCell.plot[space].add_tools(BoxSelectTool(dimensions = 'width', renderers = [so]))
-        ##Tooltips
-        TOOLTIPS = [("x", "@x"), ("y","@y"),]
-        hover = HoverTool( tooltips = TOOLTIPS, renderers = hover_renderer, mode = 'mouse')
-        variableCell.plot[space].tools.append(hover)
+        # ##Tooltips
+        # TOOLTIPS = [("x", "@x"), ("y","@y"),]
+        # hover = HoverTool( tooltips = TOOLTIPS, renderers = hover_renderer, mode = 'mouse')
+        # variableCell.plot[space].tools.append(hover)
 
     @staticmethod
     def initialize_glyphs_static(variableCell, space):
@@ -47,15 +47,15 @@ class CellContinuousHandler:
         # if space in variableCell.data:
         #     variableCell.plot[space].asterisk('x', 'y', size = DATA_SIZE, line_color = COLORS[3], source = variableCell.data[space])
         #     hover_renderer.append(so)
-        ##Tooltips
-        TOOLTIPS = [("x", "@x"), ("y","@y"),]
-        hover = HoverTool( tooltips = TOOLTIPS, renderers = hover_renderer, mode = 'mouse')
-        variableCell.plot[space].tools.append(hover)
+        # ##Tooltips
+        # TOOLTIPS = [("x", "@x"), ("y","@y"),]
+        # hover = HoverTool( tooltips = TOOLTIPS, renderers = hover_renderer, mode = 'mouse')
+        # variableCell.plot[space].tools.append(hover)
 
     @staticmethod
     def initialize_fig(variableCell, space):
-        variableCell.plot[space] = figure( x_range = variableCell.x_range[variableCell.name][space], tools = "wheel_zoom,reset,box_zoom", toolbar_location = None,
-                                    plot_width = PLOT_WIDTH, plot_height = PLOT_HEIGHT, sizing_mode = SIZING_MODE)# toolbar_location = 'right'
+        variableCell.plot[space] = figure( x_range = variableCell.x_range[variableCell.name][space], tools = [], toolbar_location = None,
+                                    plot_width = PLOT_WIDTH, plot_height = PLOT_HEIGHT, sizing_mode = SIZING_MODE)# tools = "wheel_zoom,reset,box_zoom", toolbar_location = 'right'
         variableCell.plot[space].border_fill_color = BORDER_COLORS[0]
         variableCell.plot[space].min_border = 15
         variableCell.plot[space].xaxis.axis_label = variableCell.name
