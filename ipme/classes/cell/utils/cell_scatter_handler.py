@@ -35,8 +35,8 @@ class CellScatterHandler:
     def initialize_fig(scatterCell, space):
         var1 = scatterCell.vars[0]
         var2 = scatterCell.vars[1]
-        scatterCell.plot[space] = figure(x_range = scatterCell.x_range[var2][space], y_range = scatterCell.x_range[var1][space],tools = [], toolbar_location = None,
-                                    plot_width = PLOT_WIDTH, plot_height = PLOT_HEIGHT, sizing_mode = SIZING_MODE)#tools = "wheel_zoom,reset,box_zoom",toolbar_location = 'right'
+        scatterCell.plot[space] = figure(tools = [], toolbar_location = None,
+                                    plot_width = PLOT_WIDTH, plot_height = PLOT_HEIGHT, sizing_mode = SIZING_MODE)#x_range = scatterCell.x_range[var2][space], y_range = scatterCell.x_range[var1][space],tools = "wheel_zoom,reset,box_zoom",toolbar_location = 'right'
         scatterCell.plot[space].border_fill_color = BORDER_COLORS[0]
         scatterCell.plot[space].min_border = 15
         scatterCell.plot[space].xaxis.axis_label = var2
