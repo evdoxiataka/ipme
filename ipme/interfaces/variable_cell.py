@@ -57,7 +57,8 @@ class VariableCell(Cell):
                 self._all_data[var] = data
             # compute x_range
             self.x_range[var] = {}
-            self.x_range[var][space] = find_x_range(self._all_samples[var][space])
+            # self.x_range[var][space] = find_x_range(self._all_samples[var][space])
+            self.x_range[var][space] = find_x_range(self.get_samples_for_cur_idx_dims_values(var, space))
 
     def get_samples_for_cur_idx_dims_values(self, var_name, space):
         """
