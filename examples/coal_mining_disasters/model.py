@@ -29,21 +29,21 @@ with pm.Model(coords=coords) as disaster_model:
     late_rate = pm.Exponential('late_rate', 1)
     rate = pm.math.switch(switchpoint >= years, early_rate, late_rate)
     disasters = pm.Poisson('disasters', rate, observed=disaster_data, dims='year')
-	#inference
-	trace = pm.sample(samples, chains=chains, tune=tune)
+    #inference
+    trace = pm.sample(samples, chains=chains, tune=tune)
     prior = pm.sample_prior_predictive(samples=samples)
-    posterior_predictive = pm.sample_posterior_predictive(trace,samples=samples) 
-	
-## STEP 1	
+    posterior_predictive = pm.sample_posterior_predictive(trace,samples=samples)
+
+## STEP 1
 # will also capture all the sampler statistics
 data = az.from_pymc3(trace=trace, prior=prior, posterior_predictive=posterior_predictive)
 
-## STEP 2	
+## STEP 2
 # extract dag
 dag = get_dag(disaster_model)
 # insert dag into sampler stat attributes
 data.sample_stats.attrs["graph"] = str(dag)
 
-## STEP 3  
-# save data      
+## STEP 3
+# save data
 arviz_to_json(data, fileName+'.npz')

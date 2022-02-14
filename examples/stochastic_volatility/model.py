@@ -17,14 +17,14 @@ tune=2000
 chains=2
 coords = {"date": dates}
 with pm.Model(coords=coords) as model:
-	step_size = pm.Exponential('step_size', 10)
+    step_size = pm.Exponential('step_size', 10)
     volatility = pm.GaussianRandomWalk('volatility', sigma=step_size, dims='date')
     nu = pm.Exponential('nu', 0.1)
     returns = pm.StudentT('returns',nu=nu,lam=np.exp(-2*volatility) ,observed=data["change"], dims='date')
-	#inference
-	trace = pm.sample(draws=samples, chains=chains, tune=tune)
+    #inference
+    trace = pm.sample(draws=samples, chains=chains, tune=tune)
     prior = pm.sample_prior_predictive(samples=samples)
-    posterior_predictive = pm.sample_posterior_predictive(trace,samples=samples)    
+    posterior_predictive = pm.sample_posterior_predictive(trace,samples=samples)
 
 ## STEP 1
 # will also capture all the sampler statistics
@@ -36,6 +36,6 @@ dag = get_dag(stochastic_vol_model)
 # insert dag into sampler stat attributes
 data.sample_stats.attrs["graph"] = str(dag)
 
-## STEP 3   
-# save data      
+## STEP 3
+# save data
 arviz_to_json(data, fileName+'.npz')
