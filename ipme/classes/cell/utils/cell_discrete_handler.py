@@ -31,9 +31,10 @@ class CellDiscreteHandler:
         variableCell.plot[space].scatter('x', 'y', source = variableCell.reconstructed[space], size = 4, fill_color = COLORS[1], fill_alpha = 0.5, line_color = COLORS[1])
         hover_renderer.append(so_seg)
         hover_renderer.append(rec)
-        # if space in variableCell.data:
-        #     dat = variableCell.plot[space].asterisk('x', 'y', size = DATA_SIZE, line_color = COLORS[3], source = variableCell.data[space])
-        #     hover_renderer.append(dat)
+        ## Add observations as yellow asterisks
+        if space in variableCell.data:
+            dat = variableCell.plot[space].asterisk('x', 'y', size = DATA_SIZE, line_color = COLORS[3], source = variableCell.data[space])
+            hover_renderer.append(dat)
         ##Add BoxSelectTool
         variableCell.plot[space].add_tools(BoxSelectTool(dimensions = 'width', renderers = [so_seg]))
         ##Tooltips
@@ -49,10 +50,11 @@ class CellDiscreteHandler:
         variableCell.plot[space].scatter('x', 'y', source = variableCell.source[space], size = 4, fill_color = COLORS[0], fill_alpha = 1.0, line_color = COLORS[0], selection_fill_color = COLORS[0], \
                                          nonselection_fill_color = COLORS[0], nonselection_fill_alpha = 1.0, nonselection_line_color = COLORS[0])
         hover_renderer.append(so_seg)
-        # if space in variableCell.data:
-        #     dat = variableCell.plot[space].asterisk('x', 'y', size = DATA_SIZE, line_color = COLORS[3], source = variableCell.data[space])
-        #     hover_renderer.append(dat)
-        ##Tooltips
+        ## Add observations as yellow asterisks
+        if space in variableCell.data:
+            dat = variableCell.plot[space].asterisk('x', 'y', size = DATA_SIZE, line_color = COLORS[3], source = variableCell.data[space])
+            hover_renderer.append(dat)
+        ## Tooltips
         TOOLTIPS = [("x", "@x"), ("y","@y"),]
         hover = HoverTool( tooltips = TOOLTIPS, renderers = hover_renderer, mode = 'mouse')
         variableCell.plot[space].tools.append(hover)
@@ -88,10 +90,10 @@ class CellDiscreteHandler:
         variableCell.source[space] = ColumnDataSource(data = pmf(samples))
         variableCell.samples[space] = ColumnDataSource(data = dict(x = samples))
         # data cds
-        # data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
-        # if data is not None:
-        #     max_v = variableCell.source[space].data['y'].max()
-        #     variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(data))))
+        data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
+        if data is not None:
+            max_v = variableCell.source[space].data['y'].max()
+            variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(data))))
         # initialize sample inds
         variableCell.ic.initialize_sample_inds(space, dict(inds = [False]*len(variableCell.samples[space].data['x'])), dict(non_inds = [True]*len(variableCell.samples[space].data['x'])))
 
@@ -143,10 +145,10 @@ class CellDiscreteHandler:
             variableCell.source[space].data = pmf(samples)
             variableCell.samples[space].data = dict( x = samples)
         # data cds
-        # data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
-        # if data is not None:
-        #     max_v = variableCell.get_max_prob(space)
-        #     variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(data))))
+        data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
+        if data is not None:
+            max_v = variableCell.get_max_prob(space)
+            variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(data))))
 
     ## ONLY FOR INTERACTIVE CASE
     @staticmethod
@@ -217,10 +219,10 @@ class CellDiscreteHandler:
         sel_sample = samples[inds]
         variableCell.reconstructed[space].data = pmf(sel_sample)
         # data cds
-        # data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
-        # if data is not None:
-        #     max_v = variableCell.get_max_prob(space)
-        #     variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(data))))
+        data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
+        if data is not None:
+            max_v = variableCell.get_max_prob(space)
+            variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(data))))
         # # else:
         # #     variableCell.reconstructed[space].data = dict(x = np.array([]), y = np.array([]), y0 = np.array([]))
         # ##########TEST###################to be deleted

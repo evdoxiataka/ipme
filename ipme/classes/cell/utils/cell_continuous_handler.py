@@ -28,15 +28,16 @@ class CellContinuousHandler:
         variableCell.plot[space].dash('x', 'y', size='size', angle = 90.0, angle_units = 'deg', line_color = COLORS[1], source = variableCell.sel_samples[space])
         hover_renderer.append(so)
         hover_renderer.append(re)
-        # if space in variableCell.data:
-        #     dat = variableCell.plot[space].asterisk('x', 'y', size = DATA_SIZE, line_color = COLORS[3], source = variableCell.data[space])
-        #     hover_renderer.append(dat)
+        ## Add observations as yellow asterisks
+        if space in variableCell.data:
+            dat = variableCell.plot[space].asterisk('x', 'y', size = DATA_SIZE, line_color = COLORS[3], source = variableCell.data[space])
+            hover_renderer.append(dat)
         ##Add BoxSelectTool
         variableCell.plot[space].add_tools(BoxSelectTool(dimensions = 'width', renderers = [so]))
-        # ##Tooltips
-        # TOOLTIPS = [("x", "@x"), ("y","@y"),]
-        # hover = HoverTool( tooltips = TOOLTIPS, renderers = hover_renderer, mode = 'mouse')
-        # variableCell.plot[space].tools.append(hover)
+        ##Tooltips
+        TOOLTIPS = [("x", "@x"), ("y","@y"),]
+        hover = HoverTool( tooltips = TOOLTIPS, renderers = hover_renderer, mode = 'mouse')
+        variableCell.plot[space].tools.append(hover)
 
     @staticmethod
     def initialize_glyphs_static(variableCell, space):
@@ -44,18 +45,18 @@ class CellContinuousHandler:
         so = variableCell.plot[space].line('x', 'y', line_color = COLORS[0], line_width = 2, source = variableCell.source[space])
         variableCell.plot[space].dash('x', 'y', size='size', angle = 90.0, angle_units = 'deg', line_color = COLORS[0], source = variableCell.samples[space])
         hover_renderer.append(so)
-        # if space in variableCell.data:
-        #     variableCell.plot[space].asterisk('x', 'y', size = DATA_SIZE, line_color = COLORS[3], source = variableCell.data[space])
-        #     hover_renderer.append(so)
-        # ##Tooltips
-        # TOOLTIPS = [("x", "@x"), ("y","@y"),]
-        # hover = HoverTool( tooltips = TOOLTIPS, renderers = hover_renderer, mode = 'mouse')
-        # variableCell.plot[space].tools.append(hover)
+        ## Add observations as yellow asterisks
+        if space in variableCell.data:
+            variableCell.plot[space].asterisk('x', 'y', size = DATA_SIZE, line_color = COLORS[3], source = variableCell.data[space])
+            hover_renderer.append(so)
+        ##Tooltips
+        TOOLTIPS = [("x", "@x"), ("y","@y"),]
+        hover = HoverTool( tooltips = TOOLTIPS, renderers = hover_renderer, mode = 'mouse')
+        variableCell.plot[space].tools.append(hover)
 
     @staticmethod
     def initialize_fig(variableCell, space):
-        variableCell.plot[space] = figure(x_range = variableCell.x_range[variableCell.name][space], tools = [], toolbar_location = None,
-                                    plot_width = PLOT_WIDTH, plot_height = PLOT_HEIGHT, sizing_mode = SIZING_MODE)# tools = "wheel_zoom,reset,box_zoom", toolbar_location = 'right'
+        variableCell.plot[space] = figure(x_range = variableCell.x_range[variableCell.name][space], tools = "wheel_zoom,reset,box_zoom", toolbar_location = 'right', plot_width = PLOT_WIDTH, plot_height = PLOT_HEIGHT, sizing_mode = SIZING_MODE)# toolbar_location = None,
         variableCell.plot[space].border_fill_color = BORDER_COLORS[0]
         variableCell.plot[space].min_border = 15
         variableCell.plot[space].xaxis.axis_label = variableCell.name
@@ -84,10 +85,10 @@ class CellContinuousHandler:
         variableCell.samples[space] = ColumnDataSource(data = dict( x = samples))
         variableCell.source[space] = ColumnDataSource(data = kde(samples)) 
         # data cds
-        # data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)        
-        # if data is not None:
-        #     max_v = variableCell.source[space].data['y'].max()
-        #     variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-1*max_v/DATA_DIST_RATIO]*len(data))))
+        data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)        
+        if data is not None:
+            max_v = variableCell.source[space].data['y'].max()
+            variableCell.data[space] =  ColumnDataSource(data = dict(x = data, y = np.asarray([-1*max_v/DATA_DIST_RATIO]*len(data))))
         # initialize sample inds
         variableCell.ic.initialize_sample_inds(space, dict(inds = [False]*len(variableCell.samples[space].data['x'])), dict(non_inds = [True]*len(variableCell.samples[space].data['x'])))
 
@@ -153,10 +154,10 @@ class CellContinuousHandler:
             max_v = variableCell.get_max_prob(space)
             variableCell.samples[space].data = dict( x = samples, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(samples)), size = np.asarray([RUG_SIZE]*len(samples)))
         # data cds
-        # data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
-        # if data is not None:
-        #     max_v = variableCell.get_max_prob(space)
-        #     variableCell.data[space].data = dict(x = data, y = np.asarray([-1*max_v/DATA_DIST_RATIO]*len(data)))
+        data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
+        if data is not None:
+            max_v = variableCell.get_max_prob(space)
+            variableCell.data[space].data = dict(x = data, y = np.asarray([-1*max_v/DATA_DIST_RATIO]*len(data)))
 
     ## ONLY FOR INTERACTIVE CASE
     @staticmethod
@@ -259,9 +260,9 @@ class CellContinuousHandler:
         variableCell.sel_samples[space].data = dict( x = sel_sample, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(sel_sample)), size = np.asarray([RUG_SIZE]*len(sel_sample)))
         variableCell.non_sel_samples[space].data = dict( x = non_sel_samples, y = np.asarray([-1*max_v/RUG_DIST_RATIO]*len(non_sel_samples)), size = np.asarray([RUG_SIZE]*len(non_sel_samples)))
         # update data
-        # data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
-        # if data is not None:
-        #     variableCell.data[space].data = dict(x = data, y = np.asarray([-1*max_v/DATA_DIST_RATIO]*len(data)))
+        data = variableCell.get_data_for_cur_idx_dims_values(variableCell.name)
+        if data is not None:
+            variableCell.data[space].data = dict(x = data, y = np.asarray([-1*max_v/DATA_DIST_RATIO]*len(data)))
     
     @staticmethod
     def clear_selection_callback(variableCell, space, event):

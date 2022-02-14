@@ -17,26 +17,26 @@ class CellScatterHandler:
         so = scatterCell.plot[space].circle(x="x", y="y", source = scatterCell.non_sel_samples[space], size=4, color=COLORS[0], line_color=None, fill_alpha = 0.1)        
         scatterCell.plot[space].patches(xs="x", ys="y", source = scatterCell.contours[space], line_color="line_color", fill_alpha="fill_alpha")
         re = scatterCell.plot[space].circle(x="x", y="y", source = scatterCell.sel_samples[space], size=4, color=COLORS[1], line_color=None, fill_alpha = 0.4, name="re")
-        # ##Tooltips
-        # TOOLTIPS = [("x", "@x"), ("y","@y"),]
-        # hover = HoverTool( tooltips = TOOLTIPS, renderers = [so,re], mode = 'mouse')
-        # scatterCell.plot[space].tools.append(hover)
+        ##Tooltips
+        TOOLTIPS = [("x", "@x"), ("y","@y"),]
+        hover = HoverTool( tooltips = TOOLTIPS, renderers = [so,re], mode = 'mouse')
+        scatterCell.plot[space].tools.append(hover)
 
     @staticmethod
     def initialize_glyphs_static(scatterCell, space):
         so = scatterCell.plot[space].circle(x="x", y="y", source = scatterCell.samples[space], size=7, color=COLORS[0], line_color=None, fill_alpha = 0.1)
         scatterCell.plot[space].patches(xs="x", ys="y", source = scatterCell.contours[space], line_color="line_color", fill_alpha="fill_alpha")
-        # ##Tooltips
-        # TOOLTIPS = [("x", "@x"), ("y","@y"),]
-        # hover = HoverTool( tooltips = TOOLTIPS, renderers = [so], mode = 'mouse')
-        # scatterCell.plot[space].tools.append(hover)
+        ##Tooltips
+        TOOLTIPS = [("x", "@x"), ("y","@y"),]
+        hover = HoverTool( tooltips = TOOLTIPS, renderers = [so], mode = 'mouse')
+        scatterCell.plot[space].tools.append(hover)
 
     @staticmethod
     def initialize_fig(scatterCell, space):
         var1 = scatterCell.vars[0]
         var2 = scatterCell.vars[1]
-        scatterCell.plot[space] = figure(x_range = scatterCell.x_range[var2][space], y_range = scatterCell.x_range[var1][space], tools = [], toolbar_location = None,
-                                    plot_width = PLOT_WIDTH, plot_height = PLOT_HEIGHT, sizing_mode = SIZING_MODE)#tools = "wheel_zoom,reset,box_zoom",toolbar_location = 'right'
+        scatterCell.plot[space] = figure(x_range = scatterCell.x_range[var2][space], y_range = scatterCell.x_range[var1][space], tools = "wheel_zoom,reset,box_zoom", toolbar_location = 'right',
+                                    plot_width = PLOT_WIDTH, plot_height = PLOT_HEIGHT, sizing_mode = SIZING_MODE)#tools = [], toolbar_location = None
         scatterCell.plot[space].border_fill_color = BORDER_COLORS[0]
         scatterCell.plot[space].min_border = 15
         scatterCell.plot[space].xaxis.axis_label = var2
