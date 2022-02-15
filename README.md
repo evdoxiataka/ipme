@@ -53,6 +53,8 @@ The folder `/examples` in this repository includes some examples of use. The exa
 * *`model.py`*: includes the definition of the model in PyMC3, and exports the inference data into a *.npz* file. 
 * *`ipme.py`*: demonstrates the use of the ipme package for the visualization of the model.
 
+The folder `/examples/user_study` contains the models used in the user study presented in *Taka et al. 2022*.
+
 **Note:** To run these scripts, you need to install the following Python libraries: PyMC3, ArviZ, and the arviz_json and ipme packages (the last two can only be installed through github).  
 
 # References
