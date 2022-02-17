@@ -1,6 +1,7 @@
 import pandas as pd
 import pymc3 as pm
 import arviz as az
+import numpy as np
 from arviz_json import get_dag, arviz_to_json
 
 #StudentT Timeseries Model
@@ -8,7 +9,7 @@ from arviz_json import get_dag, arviz_to_json
 #Reference2: https://docs.pymc.io/notebooks/stochastic_volatility.html#Stochastic-Volatility-model
 #data
 returns = pd.read_csv(pm.get_data('SP500.csv'), parse_dates=True, index_col=0)
-dates=returns.index.strftime("%Y/%m/%d").tolist()
+dates = returns.index.strftime("%Y/%m/%d").tolist()
 
 #model-inference
 fileName='stochastic_volatility_PyMC3'
@@ -18,13 +19,13 @@ chains=2
 coords = {"date": dates}
 with pm.Model(coords=coords) as model:
     step_size = pm.Exponential('step_size', 10)
-    volatility = pm.GaussianRandomWalk('volatility', sigma=step_size, dims='date')
+    volatility = pm.GaussianRandomWalk('volatility', sigma = step_size, dims='date')
     nu = pm.Exponential('nu', 0.1)
-    returns = pm.StudentT('returns',nu=nu,lam=np.exp(-2*volatility) ,observed=data["change"], dims='date')
+    returns = pm.StudentT('returns', nu = nu, lam = np.exp(-2*volatility) , observed = returns["change"], dims='date')
     #inference
     trace = pm.sample(draws=samples, chains=chains, tune=tune)
     prior = pm.sample_prior_predictive(samples=samples)
-    posterior_predictive = pm.sample_posterior_predictive(trace,samples=samples)
+    posterior_predictive = pm.sample_posterior_predictive(trace, samples=samples)
 
 ## STEP 1
 # will also capture all the sampler statistics
@@ -32,7 +33,7 @@ data = az.from_pymc3(trace=trace, prior=prior, posterior_predictive=posterior_pr
 
 ## STEP 2
 #dag
-dag = get_dag(stochastic_vol_model)
+dag = get_dag(model)
 # insert dag into sampler stat attributes
 data.sample_stats.attrs["graph"] = str(dag)
 

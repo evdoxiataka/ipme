@@ -1,5 +1,6 @@
 from ..interfaces.cell import Cell
 
+import threading
 from abc import abstractmethod
 
 class PredictiveCheckCell(Cell):
@@ -18,16 +19,17 @@ class PredictiveCheckCell(Cell):
                 _seg
 
         """
+        self.name = name
         self.source = {}
         self.reconstructed = {}
         self.samples = {}
         self.seg = {}
         self.pvalue = {}
         self.pvalue_rec = {}
-        Cell.__init__(self, name, control)
+        Cell.__init__(self, [name], control)
 
     ## DATA
-    def get_data_for_cur_idx_dims_values(self, space):
+    def get_samples_for_cur_idx_dims_values(self, space):
         """
             Returns the observed data and predictive samples of the observed variable
             <self._name> in space <space>.
@@ -68,3 +70,19 @@ class PredictiveCheckCell(Cell):
     @abstractmethod
     def widget_callback(self, attr, old, new, w_title, space):
         pass
+
+    ## UPDATE
+    @abstractmethod
+    def update_cds(self, space):
+        pass
+
+    def sample_inds_callback(self, space, attr, old, new):
+        """
+            Updates cds when indices of selected samples -- Cell._sample_inds--
+            are updated.
+        """
+        self.ic.add_selection_threads(space, threading.Thread(target = self._sample_inds_thread, args = (space,), daemon = True))
+        self.ic.sel_lock_event.set()
+
+    def _sample_inds_thread(self, space):
+        self.update_cds(space)

@@ -12,14 +12,14 @@ class Data_Interface(ABC):
                 _inferencedata      A structure of the inference data.
                 _graph              A structure of the  model's variables graph data.
                 _observed_variables A List of Strings of the observed variables.
-                _idx_dimensions     A List of Dimension Objects defining 
-                                    the indexing dimensions of the data. 
+                _idx_dimensions     A Dict {<var_name>:{<dim_name>:Dimension obj}}. 
                 _spaces             A List of Strings in {'prior', 'posterior'} of all  
                                     the available MCMC sample spaces in the inference data        
         """
         self._inferencedata = self._load_inference_data(inference_path)
         self._graph = self._get_graph()
         self._observed_variables = self._get_obeserved_variables()
+        self.all_variables = []
         self._idx_dimensions = self._get_idx_dimensions()      
         self._spaces = self._get_spaces_from_data()
 
@@ -84,11 +84,14 @@ class Data_Interface(ABC):
     def get_inferencedata(self):
         return self._inferencedata 
 
-    def get_idx_dimensions(self, var_name):
-        if var_name in self._idx_dimensions:
-            return self._idx_dimensions[var_name]
-        else:
-            return {}
+    def get_idx_dimensions(self, var_names):
+        idx_dims = {}
+        for var in var_names:
+            if var in self._idx_dimensions:
+                idx_dims[var] = {}
+                for dim in self._idx_dimensions[var]:
+                    idx_dims[var][dim] = self._idx_dimensions[var][dim]
+        return idx_dims
 
     def get_indx_for_idx_dim(self, var_name, d_name, d_value):
         indx=-1     

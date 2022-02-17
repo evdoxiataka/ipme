@@ -4,8 +4,8 @@
 
 from setuptools import setup, find_packages,find_namespace_packages
 
-with open('README.md') as readme_file:
-    readme = readme_file.read()
+# with open('README.md') as readme_file:
+#     readme = readme_file.read()
 
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
@@ -31,7 +31,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    description="Interactive multiverse diagram is an interactive tool for visualizating and exploring Bayesian probabilistic programming models and inference data.",
+    description="Interactive probabilistic models explorer is an interactive tool for visualizating and exploring Bayesian probabilistic programming models and inference data.",
     entry_points={
         'console_scripts': [
             'ipme=ipme.cli:main',
@@ -39,7 +39,7 @@ setup(
     },
     install_requires=requirements,
     license="MIT license",
-    long_description=readme + '\n\n' + history,
+    # long_description=readme + '\n\n' + history,
     include_package_data=True,
     keywords='Bayesian probabilistic modeling, Bayesian inference, Markov Chain Monte Carlo, interactive visualization, uncertainty visualization, interpetability',
     name='ipme',

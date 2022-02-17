@@ -1,6 +1,5 @@
 import numpy as np
 from math import gcd, ceil
-# import itertools
 
 def lcm(list_of_int):
     """
@@ -159,7 +158,6 @@ def get_w2_w1_val_mapping(dim):
         A Dict {<opt1_val>: A List of <opt2_val> for this <opt1_val>}
     """
     options1 = dim.values
-    options2 = []
     values = np.array(dim.values)
     options1 = np.unique(values)
     val_dict = {}

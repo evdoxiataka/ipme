@@ -1,14 +1,15 @@
 from abc import ABC, abstractmethod
 from ..classes.cell.utils.cell_widgets import CellWidgets
-#import pyautogui
 
 class Grid(ABC):
-    def __init__(self, control, mode):
+    def __init__(self, control, mode, vars = 'all', spaces = 'all'):
         """
             Parameters:
             --------
                 control                 A IC object.
                 mode                    A String in {"i","s"}, "i":interactive, "s":static.
+                vars                    A List of variables to be presented in the graph
+                spaces                  A List of spaces to be included in graph
             Sets:
             --------
                 ic
@@ -27,9 +28,11 @@ class Grid(ABC):
         self.ic = control
         self._data = control.data
         self._mode = mode
+        self._vars = vars
+        # self._spaces_to_included = spaces
         self._grids = {}
         self.cells = {}
-        self.spaces = []
+        self.spaces = spaces
         self._create_grids()
 
         self.cells_widgets = {}

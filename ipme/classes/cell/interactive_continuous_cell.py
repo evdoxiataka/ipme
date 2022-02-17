@@ -13,6 +13,7 @@ class InteractiveContinuousCell(VariableCell):
         """
         self.selection = {}
         self.sel_samples = {}
+        self.non_sel_samples = {}
         self.reconstructed = {}
         self.clear_selection = {}
         VariableCell.__init__(self, name, control)

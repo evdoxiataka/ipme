@@ -1,4 +1,4 @@
-from ..utils.functions import get_w2_w1_val_mapping
+from ...utils.functions import get_w2_w1_val_mapping
 
 from bokeh.models import ColumnDataSource
 
@@ -14,13 +14,16 @@ class IC:
                 data_obj                A Data object.
             Sets:
             --------
-
+            _sel_var_inds           A Dict {<space>: Dict {<var_name>: List of indices} }
+            _w1_w2_idx_mapping      A Dict {<space>: Dict {<w_name1>:(w_name2,widgets_idx)}}.
+            _w2_w1_idx_mapping      A Dict {<space>: Dict {<w_name2>:(w_name1,widgets_idx)}}.
+            _w2_w1_val_mapping      A Dict {<space>: Dict {<w_name2>:{<w1_value>: A List of <w_name2> values for <w1_value>}}.
         """
         self.data = data_obj
         self.num_cells = 0
         self.widgets_interactions = 0
         self.selection_interactions = 0
-        # self._idx_widget_flag = False
+        self.selection_ranges = []
         ##threads lists
         self._selection_threads = {}
         self._space_threads = []
@@ -50,6 +53,7 @@ class IC:
         self._w2_w1_val_mapping = {}
         ##Interaction-related variables
         self.sample_inds = dict(prior = ColumnDataSource(data = dict(inds = [])), posterior = ColumnDataSource(data = dict(inds=[])))
+        self.sample_non_inds = dict(prior = ColumnDataSource(data = dict(non_inds = [])), posterior = ColumnDataSource(data = dict(non_inds=[])))
         self.sample_inds_update = dict(prior = ColumnDataSource(data = dict(updated = [False])), posterior = ColumnDataSource(data = dict(updated = [False])))
         self._sel_var_inds = {}
         self._sel_space = ""
@@ -89,6 +93,7 @@ class IC:
                 w_list = grid.cells_widgets[dim][sp]
                 for c_i, c_id in enumerate(w_list[::-1]):
                     if c_id in grid.cells:
+                    # if c_id >= 0 and len(grid.cells):
                         cell = grid.cells[c_id]
                         widget = cell.get_widget(sp, dim)
                         if s_i == 0 and c_i == 0:
@@ -98,6 +103,26 @@ class IC:
                             else:
                                 self.decrease_widgets_interactions()
                         widget.options = options
+                        widget.value = value
+
+    def set_coordinate(self, grid, dim, value):
+        if dim in grid.cells_widgets:
+            spaces = list(grid.cells_widgets[dim].keys())
+            # set value and options of all dim widgets
+            # of variables manually, because jslink
+            # is not automatically triggered in this case
+            for s_i, sp in enumerate(spaces[::-1]):
+                w_list = grid.cells_widgets[dim][sp]
+                for c_i, c_id in enumerate(w_list[::-1]):
+                    if c_id in grid.cells:
+                    # if c_id >= 0 and len(grid.cells):
+                        cell = grid.cells[c_id]
+                        widget = cell.get_widget(sp, dim)
+                        if s_i == 0 and c_i == 0:
+                            if value == widget.value:
+                                return
+                            else:
+                                self.decrease_widgets_interactions()
                         widget.value = value
 
     def _idx_widget_update(self, grid, new, w1_dim, space):
@@ -171,6 +196,7 @@ class IC:
         self._set_sel_space(space)
         self.set_var_x_range(space, var_name, dict(xmin = np.asarray([x_range[0]]), xmax = np.asarray([x_range[1]])))
         self._set_sel_var_idx_dims_values(var_name, dict(cur_idx_dims_values))
+        self.increase_selection_interactions(var_name, x_range)
 
     def add_selection_threads(self, space, t):
         self._sel_lock.acquire()
@@ -226,30 +252,44 @@ class IC:
         self._widget_threads.append(t)
         self._widget_lock.release()
 
-    def set_sample_inds(self, space, dict_data):
+    def initialize_sample_inds(self, space, inds_dict, non_inds_dict):
         self._sample_inds_lock.acquire()
         if space in self.sample_inds:
-            self.sample_inds[space].data = dict_data
+            self.sample_inds[space].data = inds_dict
+        if space in self.sample_non_inds:
+            self.sample_non_inds[space].data = non_inds_dict
+        self._sample_inds_lock.release()
+
+    def set_sample_inds(self, space, inds_dict, non_inds_dict):
+        self._sample_inds_lock.acquire()
+        if space in self.sample_inds:
+            self.sample_inds[space].data = inds_dict
+        if space in self.sample_non_inds:
+            self.sample_non_inds[space].data = non_inds_dict
         self._sample_inds_lock.release()
         isup = self._get_sample_inds_update(space)
         self._set_sample_inds_update(space, dict(updated = [not isup]))
 
     def reset_sample_inds(self, space):
         self._sample_inds_lock.acquire()
-        self.sample_inds[space].data = dict(inds=[])
+        inds = self.sample_inds[space].data['inds']
+        self.sample_inds[space].data = dict(inds = [False]*len(inds))
+        self.sample_non_inds[space].data = dict(non_inds = [True]*len(inds))
         self._sample_inds_lock.release()
         isup = self._get_sample_inds_update(space)
         self._set_sample_inds_update(space, dict(updated = [not isup]))
 
     def get_sample_inds(self, space = None):
         inds = []
+        non_inds = []
         self._sample_inds_lock.acquire()
-        if space in self.sample_inds:
+        if space in self.sample_inds and space in self.sample_non_inds:
             inds = self.sample_inds[space].data['inds']
+            non_inds = self.sample_non_inds[space].data['non_inds']
         else:
             inds = self.sample_inds
         self._sample_inds_lock.release()
-        return inds
+        return inds, non_inds
 
     def _set_sample_inds_update(self, space, dict_data):
         self._sample_inds_update_lock.acquire()
@@ -269,7 +309,9 @@ class IC:
 
     def set_sel_var_inds(self, space, var_name, inds):
         self._sel_var_inds_lock.acquire()
-        self._sel_var_inds[(space,var_name)] = inds
+        if space not in self._sel_var_inds:
+            self._sel_var_inds[space] = {}        
+        self._sel_var_inds[space][var_name] = inds
         self._sel_var_inds_lock.release()
 
     def reset_sel_var_inds(self):
@@ -277,11 +319,13 @@ class IC:
         self._sel_var_inds = {}
         self._sel_var_inds_lock.release()
 
-    def get_sel_var_inds(self, space=None, var_name=None):
+    def get_sel_var_inds(self, space = None, var_name = None):
         inds = []
         self._sel_var_inds_lock.acquire()
-        if (space,var_name) in self._sel_var_inds:
-            inds =  self._sel_var_inds[(space,var_name)]
+        if space in self._sel_var_inds:
+            inds =  self._sel_var_inds[space]
+            if var_name in self._sel_var_inds[space]:
+                inds = inds[var_name]
         else:
             inds =  self._sel_var_inds
         self._sel_var_inds_lock.release()
@@ -289,8 +333,8 @@ class IC:
 
     def delete_sel_var_inds(self, space, var_name):
         self._sel_var_inds_lock.acquire()
-        if (space,var_name) in self._sel_var_inds:
-            del self._sel_var_inds[(space,var_name)]
+        if space in self._sel_var_inds and var_name in self._sel_var_inds[space]:
+            del self._sel_var_inds[space][var_name]
         self._sel_var_inds_lock.release()
 
     def _set_sel_space(self, space):
@@ -387,8 +431,9 @@ class IC:
         self._widgets_interactions_lock.release()
         return w_inters
 
-    def increase_selection_interactions(self):
+    def increase_selection_interactions(self, var_name, x_range):
         self._selection_interactions_lock.acquire()
+        self.selection_ranges.append((self.selection_interactions,var_name,x_range[0],x_range[1]))
         self.selection_interactions = self.selection_interactions + 1
         self._selection_interactions_lock.release()
 
@@ -398,3 +443,9 @@ class IC:
         s_inters = self.selection_interactions
         self._selection_interactions_lock.release()
         return s_inters
+
+    def get_selection_ranges(self):
+        self._selection_interactions_lock.acquire()
+        s_ranges = self.selection_ranges
+        self._selection_interactions_lock.release()
+        return s_ranges

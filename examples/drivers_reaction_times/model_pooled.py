@@ -4,7 +4,7 @@ import arviz as az
 from arviz_json import get_dag, arviz_to_json
 
 ## data
-DATAPATH='./data/evaluation_sleepstudy.csv'
+DATAPATH='../data/evaluation_sleepstudy.csv' ## data from Belenky et al. (2003)
 reactions = pd.read_csv(DATAPATH,usecols=['Reaction','Days','Subject'])
 
 ## Drivers Reaction Times Pooled Model

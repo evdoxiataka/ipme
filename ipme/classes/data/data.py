@@ -1,13 +1,12 @@
-# import pandas as pd
 import numpy as np
 import json
 
-from ..interfaces.data_interface import Data_Interface
+from ...interfaces.data_interface import Data_Interface
 from .dimension import Dimension
 
 class Data(Data_Interface):
 
-    def __init__(self,inference_path):
+    def __init__(self, inference_path):
         """
             Parameters:
             --------
@@ -24,7 +23,7 @@ class Data(Data_Interface):
         """
         Data_Interface.__init__(self, inference_path)
 
-    def _load_inference_data(self,datapath):
+    def _load_inference_data(self, datapath):
         """
             Inference data is retrieved from memory in .npz format
 
@@ -72,10 +71,11 @@ class Data(Data_Interface):
         """
         idx_dimensions={}
         for k,v in self._graph.items():
-            if not k.endswith("__"):
-                idx_dimensions[v["name"]] = {}
+            if not k.endswith("__"):                
                 vdims = v["dims"]
                 vcoords = v["coords"]
+                if len(vdims):
+                    idx_dimensions[v["name"]] = {}
                 for d in vdims:
                     if d in vcoords:
                         idx_dimensions[v["name"]][d] = Dimension(d, values = vcoords[d])
@@ -90,7 +90,7 @@ class Data(Data_Interface):
         """
         spaces=[]
         if 'header.json' in self._inferencedata:
-            header=self._inferencedata['header.json']
+            header = self._inferencedata['header.json']
             header_js = json.loads(header)
             if 'inference_data' in header_js:
                 for space in ['prior','posterior','prior_predictive','posterior_predictive','observed_data','constant_data', 'sample_stats', 'log_likelihood', 'predictions', 'predictions_constant_data']:
@@ -153,7 +153,7 @@ class Data(Data_Interface):
         """
         array_name=""
         header = self._inferencedata['header.json']
-        header_js=json.loads(header)
+        header_js = json.loads(header)
         if isinstance(space, list):
             data = {}
             for sp in space:
@@ -175,6 +175,32 @@ class Data(Data_Interface):
             return data
         else:
             raise ValueError("space argument of get_sample should be either a List of Strings or a String")
+
+    def get_observations(self, var_name):
+        """
+            Returns the observations of <var_name> variable.
+
+            Parameters:
+            --------
+                var_name      A String of the model's variables name
+            Returns:
+            --------
+                A numpy.ndarray of observations of the <var_name> parameter.
+        """
+        array_name=""
+        header = self._inferencedata['header.json']
+        header_js = json.loads(header)
+        data = None  
+        if var_name in header_js['inference_data']['observed_data']['array_names']:
+            array_name = header_js['inference_data']['observed_data']['array_names'][var_name]
+            dims = header_js['inference_data']['observed_data']['vars'][var_name]['dims']
+            if 'chain' in dims:
+                data = np.mean(self._inferencedata[array_name], axis=0)
+            else:
+                data = self._inferencedata[array_name]
+            return data
+        else:
+            return data
 
     def get_range(self, var_name, space=['prior','posterior']):
         """
@@ -202,7 +228,7 @@ class Data(Data_Interface):
             max = np.amax(data)
         return (min - 0.1*(max-min),max + 0.1*(max-min))
 
-    def get_varnames_per_graph_level(self):
+    def get_varnames_per_graph_level(self, vars):
         """
             Matches variable names to graph levels.
 
@@ -212,8 +238,21 @@ class Data(Data_Interface):
                 Level 0 corresponds to the higher level.
                 {<level>: List of variable names}, level=0,1,2...
         """
-        nodes=self._add_nodes_to_graph(self._get_observed_nodes(), 0)
-        return self._reverse_nodes_levels(nodes)
+        nodes = self._add_nodes_to_graph(self._get_observed_nodes(), 0)
+        varnames_per_graph_level = {}
+        if vars == 'all':
+            varnames_per_graph_level = self._reverse_nodes_levels(nodes)
+        else:
+            vars_per_level = self._reverse_nodes_levels(nodes)
+            level = 0            
+            for l in sorted(vars_per_level):
+                for var in vars:
+                    if var in vars_per_level[l] :
+                        if level not in varnames_per_graph_level:
+                            varnames_per_graph_level[level] = []
+                        varnames_per_graph_level[level].append(var)
+                level+=1
+        return varnames_per_graph_level
 
     def _is_var_in_space(self, var_name, space):
         """
@@ -246,12 +285,12 @@ class Data(Data_Interface):
                 A List of the model's observed nodes of the graph (dict objects)
         """
         try:
-            return [v for k,v in self._graph.items() if v['type'] == 'observed']
+            return [v for _,v in self._graph.items() if v['type'] == 'observed']
         except KeyError:
             print("Graph has no key 'type'")
             return None
 
-    def _get_graph_nodes(self,varnames):
+    def _get_graph_nodes(self, varnames):
         """
             Get the nodes of the graph indicated by a list of varnames.
 
@@ -263,7 +302,7 @@ class Data(Data_Interface):
             --------
                 A List of the model's nodes of the graph (Dictionary objects)
         """
-        nodes=[]
+        nodes = []
         for vn in varnames:
             if vn in self._graph:
                 nodes.append(self._graph[vn])
@@ -300,7 +339,7 @@ class Data(Data_Interface):
                 Level 0 corresponds to the lowest level.
                 {<level>: List of variables names}, level=0,1,2...
         """
-        nodes={}
+        nodes = {}
         try:
             for v in level_nodes:
                 if level in nodes and v['name'] not in nodes[level]:
@@ -308,16 +347,26 @@ class Data(Data_Interface):
                 else:
                     nodes[level]=[v['name']]
 
-                parents_nodes=self._get_graph_nodes(v['parents'])
+                parents_nodes = self._get_graph_nodes(v['parents'])
                 if(len(parents_nodes)):
-                    par_nodes=self._add_nodes_to_graph(parents_nodes,level+1)
+                    # if incl_nodes == 'all':
+                    #     par_nodes = self._add_nodes_to_graph(parents_nodes, level+1, 'all')
+                    # else:
+                    #     parents_nodes_to_go_ahead = []
+                    #     rest_nodes = []
+                    #     for node in incl_nodes:
+                    #         if node in parents_nodes:
+                    #             parents_nodes_to_go_ahead.append(node)
+                    #         else:
+                    #             rest_nodes.append(node)
+                    par_nodes = self._add_nodes_to_graph(parents_nodes, level+1)
                     for k in par_nodes:
                         if k in nodes:
                             for n in par_nodes[k]:
                                 if n not in nodes[k]:
                                     nodes[k].append(n)
                         else:
-                            nodes[k]=par_nodes[k]
+                            nodes[k] = par_nodes[k]
             return nodes
         except KeyError:
             print("Graph node has no key 'name' or 'parents' ")
