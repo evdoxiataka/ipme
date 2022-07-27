@@ -1,12 +1,14 @@
-# Interactive Probabilistic Models Explorer (IPME)
-This tool provides an interactive visual explorer for the probabilistc models' graphs and inference results. This tool requires that:
-* probabilistic models are expressed in a Probabilistic Programming Language (PPL), and 
-* a sample-based inference algorithm is used for the inference (e.g. MCMC). 
+# Interactive Visualizations of Probabilistic Models
+This package provides interactive visualizations of probabilistc models' inherent uncertainty in the prior and posterior sample space. 
 
-*IPME* is intented for interactive exploration of the *uncertainty* of Bayesian probabilistic models and enhancement of their interpretability. 
+These visualizations are intented for interactive exploration of the *uncertainty* in Bayesian probabilistic models and enhancement of their interpretability. 
 
-## IPME Input
-IPME takes as an input a zip file in the *.npz* format. This file contains a description of the model's structure and the inference results (MCMC samples) 
+## Requirements
+* Probabilistic models are expressed in a Probabilistic Programming Language (PPL), and 
+* A sample-based inference algorithm is used for the inference (e.g. MCMC). 
+
+## Input
+The visualizations provided by this package take as an input a zip file in the *.npz* format. This file contains a description of the model's structure and the inference results (MCMC samples) 
 in a standardized form of a collection of npy arrays and metadata (in a json format). 
 The [arviz_json](https://github.com/johnhw/arviz_json) package creates this standardized output of probabilistic models expressed in *PyMC3*. For more details about the standardization of the IPME input see *Taka et al. 2020*.
 
@@ -14,14 +16,13 @@ The following figure presents the pipeline for the automatic transformation of a
 
 ![method](https://user-images.githubusercontent.com/37831445/97790524-20ed6900-1bc1-11eb-950c-838ea67b4163.jpg)
 
-## IPME Visualizations
-### Example of Probabilistic Model
+## Example of a Probabilistic Model
 The following probabilistic statements describe the drivers' reaction times model under sleep-deprivation conditions for 10 consecutive days and 18 lorry drivers. This is a hierarchical linear regression probabilistic model. The problem and data for this model retrieved from *Belenky et al. 2003*.
 
 ![image](https://user-images.githubusercontent.com/37831445/120328046-56d30700-c2e2-11eb-8e4f-05d891e4b2d4.png)
 
-### IPME Graph
-The IPME graph for the probabilistic model of the drivers' reaction times is presented in the following figure. See more details about this representation in *Taka et al. 2020*. A demo of this tool can be found in my [talk](https://www.youtube.com/watch?v=2hadiSJRAJI&feature=youtu.be) to PyMCON 2020.
+## Interactive Probabilistic Models Explorer (IPME)
+The *IPME* representation of the model is presented in the following figure. See more details about this representation in *Taka et al. 2020*. A demo of this visualization can be found in my [talk](https://www.youtube.com/watch?v=2hadiSJRAJI&feature=youtu.be) to PyMCON 2020.
 ```python
 import ipme
 """
@@ -35,8 +36,8 @@ ipme.graph("reaction_times_hierarchical.npz", mode = "i", vars = 'all', spaces =
 
 ![image](https://user-images.githubusercontent.com/37831445/97790652-3616c780-1bc2-11eb-948b-54797f199ecb.png)
 
-### Interactive Pair Plot (IPP)
-The IPP for the probabilistic model of the drivers' reaction times is presented in the following figure. See more details about this representation in *Taka et al. 2022*.
+## Interactive Pair Plot (IPP)
+The *IPP* representation of the model is presented in the following figure. This visualization was introduced and evaluated in *Taka et al. 2022*.
 ```python
 import ipme
 """
