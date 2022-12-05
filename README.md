@@ -34,7 +34,11 @@ predictive_checks:  List of observed variables names
 ipme.graph("reaction_times_hierarchical.npz", mode = "i", vars = 'all', spaces = 'all', predictive_checks = ['y_pred'])
 ```
 
-![image](https://user-images.githubusercontent.com/37831445/97790652-3616c780-1bc2-11eb-948b-54797f199ecb.png)
+<!--![image](https://user-images.githubusercontent.com/37831445/97790652-3616c780-1bc2-11eb-948b-54797f199ecb.png)-->
+
+
+https://user-images.githubusercontent.com/37831445/205636036-ec1a6820-f368-4332-9fcf-0a508c8dd63f.mp4
+
 
 ## Interactive Pair Plot (IPP)
 The *IPP* representation of the model is presented in the following figure. This visualization was introduced and evaluated in *Taka et al. 2022*.
@@ -47,7 +51,11 @@ spaces:             String in {'all','prior','posterior'} or List of spaces e.g.
 """
 ipme.scatter_matrix('reaction_times_hierarchical.npz', mode = "i", vars = ['sigma_a','sigma_b','sigma_sigma','mu_a','mu_b','sigma','a','b','y_pred'], spaces = 'all')
 ```
-![image](https://user-images.githubusercontent.com/37831445/154061049-1666eb8c-28fb-4346-9741-c166152a1ab8.png)
+<!--![image](https://user-images.githubusercontent.com/37831445/154061049-1666eb8c-28fb-4346-9741-c166152a1ab8.png)-->
+
+
+https://user-images.githubusercontent.com/37831445/205637701-ac11ff87-c240-4882-8b69-8b0b15d8e344.mp4
+
 
 # Examples
 The folder `/examples` in this repository includes some examples of use. The examples illustrates the definition of Bayesian probabilistic models and running of sample-based inference in PyMC3. The examples are organized per problem. Each problem's directory includes the following Python scripts:
