@@ -66,10 +66,15 @@ The folder `/examples/user_study` contains the models used in the user study pre
 
 **Note:** To run these scripts, you need to install the following Python libraries: PyMC3, ArviZ, and the arviz_json and ipme packages (the last two can only be installed through github).  
 
+# Please Cite:
+*E. Taka,  S. Stein,  and J. H. Williamson.*  Increasing interpretability of Bayesian probabilistic programming models through interactive representations. Frontiers in Computer Science, 2:52, 2020. doi:  10.3389/fcomp.2020.567344.  URL: https://www.frontiersin.org/article/10.3389/fcomp.2020.567344
+
+*E. Taka, S. Stein and J. H. Williamson,* "Does Interactive Conditioning Help Users Better Understand the Structure of Probabilistic Models?," in IEEE Transactions on Visualization and Computer Graphics, doi: 10.1109/TVCG.2022.3231967
+
 # References
 *E. Taka,  S. Stein,  and J. H. Williamson.*  Increasing interpretability of Bayesian probabilistic programming models through interactive representations. Frontiers in Computer Science, 2:52, 2020. doi:  10.3389/fcomp.2020.567344.  URL: https://www.frontiersin.org/article/10.3389/fcomp.2020.567344
 
-*E. Taka, S. Stein, and J. H. Williamson.*  Does interaction help users better understandthe structure of probabilistic models? arXiv, 2022. URL: https://arxiv.org/abs/2201.03605
+*E. Taka, S. Stein and J. H. Williamson,* "Does Interactive Conditioning Help Users Better Understand the Structure of Probabilistic Models?," in IEEE Transactions on Visualization and Computer Graphics, doi: 10.1109/TVCG.2022.3231967
 
 *G.  Belenky,  N.  J.  Wesensten,  D.  R.  Thorne,  M.  L.  Thomas,  H.  C.  Sing,  D.  P.  Redmond,  M.  B.  Russo,  and  T.  J.Balkin.*  Patterns  of  performance  degradation and restoration during sleep restriction  and subsequent recovery: a sleep dose-response study. Journal of Sleep Research, vol. 12, no. 1, pp. 1–12, 2003. URL: https://onlinelibrary.wiley.com/doi/abs/10.1046/j.1365-2869.2003.00337.x
 
